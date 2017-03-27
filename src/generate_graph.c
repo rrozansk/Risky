@@ -214,7 +214,7 @@ int main() {
        printf("%d", BOARD[i][j]);
        if(j < 41) { printf(","); }
     }
-    printf("} // %s\n", REGION_NAME[i]);
+    printf("}, // %s\n", REGION_NAME[i]);
   }
   printf("};\n");
 
