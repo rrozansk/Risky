@@ -16,8 +16,10 @@
 *******************************************************************************/
 //#include <board.h>
 #include <deck.h>
+#include <conf.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 
 /*******************************************************************************
 
@@ -46,49 +48,36 @@ void takeTurn(int player) {
   // 5) manuver
 }
 
-int main(int argc, char *argv[]) {
-  printf("Risky\nv1.0\nRyan Rozanski\n\n");
+//void claimRegions() {  }
+//void setDefenses() {  }
 
-  if(argc != 5) {
-    printf("Incorrect nubmer of arguments to %s\n", argv[0]);
-    printf("%d given, %d expected:\n", argc-1, 4);
-    printf("[int 0-8] Human Players\n");
-    printf("[int 0-8] Computer Players\n");
-    printf("[int 0-1] Randomly divide up territories\n");
-    printf("[int 0-1] Randomly divide up armies\n");
-    printf("exiting...\n");
-    exit(EXIT_FAILURE);
-  }
-
-  int hp = atoi(argv[1]);
-  int cp = atoi(argv[2]);
-  if(!hp && !cp) {
-    printf("error! you cannot play a game with no players. exiting...\n");
-    exit(EXIT_FAILURE);
-  }
-
-  if(hp + cp > 8) {
-    printf("error! you cannot have more than 8 players in a single game. exiting...\n");
-    exit(EXIT_FAILURE);
-  }
-
-  int randomRegions = atoi(argv[3]);
-  if(!(randomRegions == 0 || randomRegions == 1)) {
-    printf("error! invalid input, expected 0-1, given: %d. exiting...\n", randomRegions);
-    exit(EXIT_FAILURE);  
-  }
-
-  int randomArmies = atoi(argv[4]);
-  if(!(randomArmies == 0 || randomArmies== 1)) {
-    printf("error! invalid input, expected 0-1, given: %d. exiting...\n", randomArmies);
-    exit(EXIT_FAILURE);  
-  }
-
-  //claimRegions(hp, cp, randomRegions);
+// the main game. set up regions and armies then take turns until 1 person left
+void risk(conf_t *conf) {
+   //claimRegions(hp, cp, randomRegions);
   //setDefenses(hp, cp, randomArmies);
   //while ((cp + hp) > 1) {
   //  takeTurn(player % 5);
   //}
+}
 
+// print out version information, attempt to parse conf and then play risk
+int main(int argc, char *argv[]) {
+  printf("Risky\nv1.0\nRyan Rozanski\n\n");
+
+  if(argc != 2) {
+    printf("error! must specify a conf file, exiting...\n");
+    exit(EXIT_FAILURE);  
+  }
+
+  conf_t *conf = malloc(sizeof(conf_t));
+  if(parseConf(conf, argv[1])) {
+    printf("error! failure to parse conf\nirritant: %s\nexiting...\n", conf->err);
+    free(conf);
+    exit(EXIT_FAILURE);  
+  }
+
+  risk(conf);
+  
+  free(conf);
   exit(EXIT_SUCCESS);
 }
