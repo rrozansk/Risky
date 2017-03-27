@@ -19,6 +19,21 @@
 
 /*******************************************************************************
 
+    S T R U C T S
+
+*******************************************************************************/
+char *LABEL_NAMES[5] = {
+  "[Players]",     // keys: human, computer
+  "[Random]",      // keys: region, armies
+  "[Chromosomes]"  // keys: cp[chromosome#]
+};
+
+typedef enum label {
+  HUMAN_PLAYER = 0, COMPUTER_PLAYER, RANDOM_REGIONS, RANDOM_ARMIES, CHROMOSOMES,
+} label_t;
+
+/*******************************************************************************
+
     F U N C T I O N S
 
 *******************************************************************************/

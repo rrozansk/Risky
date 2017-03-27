@@ -12,18 +12,11 @@
 #ifndef RISKY_CONF_DEFS
 #define RISKY_CONF_DEFS
 
-char *LABEL_NAMES[5] = {
-  "[Human Players]",
-  "[Computer Players]",
-  "[Random Regions]",
-  "[Random Armies]",
-  "[Chromosomes]",
-};
+/*******************************************************************************
 
-typedef enum label {
-  HUMAN_PLAYER = 0, COMPUTER_PLAYER, RANDOM_REGIONS, RANDOM_ARMIES, CHROMOSOMES,
-} label_t;
+    S T R U C T S
 
+*******************************************************************************/
 typedef struct conf {      // conf file headers
   char hp;                 // [Human Players]
   char cp;                 // [Computer Players]
