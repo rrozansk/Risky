@@ -12,13 +12,15 @@
 #ifndef RISKY_CARD_DEFS
 #define RISKY_CARD_DEFS
 
+#include <board.h>
+
 typedef enum card {
   CANNON, SOILDER, CALVARY, WILD
 } card_t;
 
 int CARDS[44][2] = {
-  { NULL,                  WILD    },
-  { NULL,                  WILD    },
+  { -1,                    WILD    },
+  { -1,                    WILD    },
   { GREENLAND,             CALVARY },
   { ALBERTA,               CALVARY },
   { ONTARIO,               CALVARY },
@@ -31,7 +33,7 @@ int CARDS[44][2] = {
   { IRKUTSK,               CALVARY },
   { AFGHANISTAN,           CALVARY },
   { INDIA,                 CALVARY },
-  { NORTH_AFRICA           CALVARY },
+  { NORTH_AFRICA,          CALVARY },
   { MADAGASCAR,            CALVARY },
   { NORTHWEST_TERRITORY,   CANNON  },
   { WESTERN_UNITED_STATES, CANNON  },
@@ -44,13 +46,13 @@ int CARDS[44][2] = {
   { JAPAN,                 CANNON  },
   { BRAZIL,                CANNON  },
   { SOUTH_AFRICA,          CANNON  },
-  { INDONESIA              CANNON  },
+  { INDONESIA,             CANNON  },
   { WESTERN_AUSTRALIA,     CANNON  },
   { EASTERN_AUSTRALIA,     CANNON  },
   { CONGO,                 SOILDER },
   { ALASKA,                SOILDER },
   { ICELAND,               SOILDER },
-  { KAMCHATKA,             SOLIDER },
+  { KAMCHATKA,             SOILDER },
   { MONGOLIA,              SOILDER },
   { CHINA,                 SOILDER },
   { MIDDLE_EAST,           SOILDER },

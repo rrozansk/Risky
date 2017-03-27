@@ -83,55 +83,136 @@ int main() {
   region_t alaska_regions[] = { NORTHWEST_TERRITORY, ALBERTA, KAMCHATKA };
   set(ALASKA, alaska_regions, 3);
 
-  BOARD[ALASKA][0] = 1; // NORTHWEST_TERRITORY, ALBERTA, KAMCHATKA
-  BOARD[NORTHWEST_TERRITORY][0] = 1; // ALASKA, ALBERTA, ONTARIO, GREENLAND
-  BOARD[GREENLAND][0] = 1; // QUEBEC, ONTARIO, NORTHWEST_TERRITORY, ICELAND
-  BOARD[ALBERTA][0] = 1; // ALASKA, NORTHWEST_TERRITORY, ONTARIO, WESTERN_US
-  BOARD[ONTARIO][0] = 1; // ALBERTA, NORTHWEST_TERRITORY, GREENLAND, QUEBEC, WESTERN_US, EASTERN_US
-  BOARD[QUEBEC][0] = 1; // ONTARIO, GREENLAND, EASTERN_US
-  BOARD[WESTERN_UNITED_STATES][0] = 1; // ALBERTA, ONTARIO, EASTERN_US, CENTRAL_AMERICA
-  BOARD[EASTERN_UNITED_STATES][0] = 1; // WESTERN_US, ONTARIO, QUEBEC, CENTRAL_AMERICA
-  BOARD[CENTRAL_AMERICA][0] = 1; // WESTERN_US, EASTERN_US, VENEZUELA
-  BOARD[ICELAND][0] = 1; // GREENLAND, GREAT_BRITAIN, SCANDINAVIA
-  BOARD[SCANDINAVIA][0] = 1; // ICELAND, GREAT_BRITAIN, NORTHERN_EUROPE, UKRAINE
-  BOARD[UKRAINE][0] = 1; // SCANDINAVIA, NORTHERN_EUROPE, SOUTHERN_EUROPE, URAL, MIDDLE_EAST, AFGHANISTAN
-  BOARD[GREAT_BRITAIN][0] = 1; // ICELAND, WESTERN_EUROPE, SCANDINAVIA, NORTHERN_EUROPE
-  BOARD[NORTHERN_EUROPE][0] = 1; // WESTERN_EUROPE, SOUTHER_EUROPE, UKRAINE, GREAT_BRITAIN, SCANDINAVIA 
-  BOARD[WESTERN_EUROPE][0] = 1; // GREAT_BRITAIN, NORTHERN_EUROPE, SOUTHERN_EUROPE, NORTH_AFRICA
-  BOARD[SOUTHERN_EUROPE][0] = 1; // WESTERN_EUROPE, NORTHERN_EUROPE, UKRAINE, MIDDLE_EAST, EGYPT, NORTH_AFRICA
-  BOARD[URAL][0] = 1; // UKRAINE, SIBERIA, CHINA, AFGHANISTAN
-  BOARD[SIBERIA][0] = 1; // URAL, YAKUTSK, IRKUTSK, MONGOLIA, CHINA
-  BOARD[YAKUTSK][0] = 1; // SIBERIA, KAMCHATKA, IRKUTSK
-  BOARD[KAMCHATKA][0] = 1; // YAKUTSK, IRKUTSK, MONGOLIA, JAPAN, ALASKA
-  BOARD[IRKUTSK][0] = 1;  // SIBERIA, YAKUTSK, KAMCHATKA, MONGOLIA
-  BOARD[MONGOLIA][0] = 1; // SIBERIA, IRKUTSK, KAMCHATKA, JAPAN, CHINA
-  BOARD[JAPAN][0] = 1; // KAMCHATKA, MONGOLIA
-  BOARD[AFGHANISTAN][0] = 1; // URAL, CHINA, INDIA, MIDDLE_EAST, UKRAINE
-  BOARD[CHINA][0] = 1; // SIAM, INDIA, AFGHANISTAN, URAL, SIBERIA, MONGOLIA
-  BOARD[MIDDLE_EAST][0] = 1; // SOUTHERN_EUROPE, UKRAINE, AFGHANISTAN, INDIA, EGYPT, EAST_AFRICA
-  BOARD[INDIA][0] = 1; // MIDDLE_EAST, AFGHANISTAN, CHINA, SIAM
-  BOARD[SIAM][0] = 1; // INDIA, CHINA, INDONESIA
-  BOARD[VENEZUELA][0] = 1; // CENTRAL_AMERICA, PERU, BRAZIL
-  BOARD[PERU][0] = 1; // VENEZUELA, BRAZIL, ARGENTINA
-  BOARD[BRAZIL][0] = 1; // VENEZUELA, PERU, ARGENTINA, NORTH_AFRICA
-  BOARD[ARGENTINA][0] = 1; // PERU, BRAZIL
-  BOARD[NORTH_AFRICA][0] = 1; // BRAZIL, WESTERN_EUROPE, SOUTHERN_EUROPE, EGYPT, EAST_AFRICA, CONGO
-  BOARD[EGYPT][0] = 1; // NORTH_AFRICA, SOUTHERN_EUROPE, MIDDLE_EAST, EAST_AFRICA
-  BOARD[CONGO][0] = 1; // NORTH_AFRICA, EAST_AFRICA, SOUTH_AFRICA
-  BOARD[EAST_AFRICA][0] = 1; // EGYPT, NORTH_AFRICA, CONGO, SOUTH_AFRICA, MADAGASCAR, MIDDLE_EAST
-  BOARD[SOUTH_AFRICA][0] = 1; // CONGO, EAST_AFRICA, MADAGASCAR
-  BOARD[MADAGASCAR][0] = 1; // SOUTH_AFRICA, EAST_AFRICA
-  BOARD[INDONESIA][0] = 1; // SIAM, NEW_GUINEA, WESTERN_AUSTRALIA
-  BOARD[NEW_GUINEA][0] = 1; // INDONESIA, EASTERN_AUSTRALIA
-  BOARD[WESTERN_AUSTRALIA][0] = 1; // INDONESIA, EATERN_AUSTRALIA
-  BOARD[EASTERN_AUSTRALIA][0] = 1; // WESTERN_AUSTRALIA, NEW_GUINEA
+  region_t nw_regions[] = { ALASKA, ALBERTA, ONTARIO, GREENLAND };
+  set(NORTHWEST_TERRITORY, nw_regions, 4);
+
+  region_t green_regions[] = { QUEBEC, ONTARIO, NORTHWEST_TERRITORY, ICELAND };
+  set(GREENLAND, green_regions, 4);
+
+  region_t alb_regions[] = { ALASKA, NORTHWEST_TERRITORY, ONTARIO, WESTERN_UNITED_STATES };
+  set(ALBERTA, alb_regions, 4);
+
+  region_t ont_regions[] = { ALBERTA, NORTHWEST_TERRITORY, GREENLAND, QUEBEC, WESTERN_UNITED_STATES, EASTERN_UNITED_STATES };
+  set(ONTARIO, ont_regions, 6);
+
+  region_t que_regions[] = { ONTARIO, GREENLAND, EASTERN_UNITED_STATES };
+  set(QUEBEC, que_regions, 3);
+
+  region_t wus_regions[] = { ALBERTA, ONTARIO, EASTERN_UNITED_STATES, CENTRAL_AMERICA };
+  set(WESTERN_UNITED_STATES, wus_regions, 4);
+
+  region_t eus_regions[] = { WESTERN_UNITED_STATES, ONTARIO, QUEBEC, CENTRAL_AMERICA };
+  set(EASTERN_UNITED_STATES, eus_regions, 4);
+
+  region_t ca_regions[] = { WESTERN_UNITED_STATES, EASTERN_UNITED_STATES, VENEZUELA };
+  set(CENTRAL_AMERICA, ca_regions, 3);
+
+  region_t ice_regions[] = { GREENLAND, GREAT_BRITAIN, SCANDINAVIA };
+  set(ICELAND, ice_regions, 3);
+
+  region_t scan_regions[] = { ICELAND, GREAT_BRITAIN, NORTHERN_EUROPE, UKRAINE };
+  set(SCANDINAVIA, scan_regions, 4);
+
+  region_t uk_regions[] = { SCANDINAVIA, NORTHERN_EUROPE, SOUTHERN_EUROPE, URAL, MIDDLE_EAST, AFGHANISTAN };
+  set(UKRAINE, uk_regions, 6);
+
+  region_t brit_regions[] = { ICELAND, WESTERN_EUROPE, SCANDINAVIA, NORTHERN_EUROPE };
+  set(GREAT_BRITAIN, brit_regions, 4);
+
+  region_t neu_regions[] = { WESTERN_EUROPE, SOUTHERN_EUROPE, UKRAINE, GREAT_BRITAIN, SCANDINAVIA  };
+  set(NORTHERN_EUROPE, neu_regions, 5);
+
+  region_t weu_regions[] = { GREAT_BRITAIN, NORTHERN_EUROPE, SOUTHERN_EUROPE, NORTH_AFRICA };
+  set(WESTERN_EUROPE, weu_regions, 4);
+
+  region_t seu_regions[] = { WESTERN_EUROPE, NORTHERN_EUROPE, UKRAINE, MIDDLE_EAST, EGYPT, NORTH_AFRICA };
+  set(SOUTHERN_EUROPE, seu_regions, 6);
+
+  region_t ural_regions[] = { UKRAINE, SIBERIA, CHINA, AFGHANISTAN };
+  set(URAL, ural_regions, 4);
+
+  region_t sib_regions[] = { URAL, YAKUTSK, IRKUTSK, MONGOLIA, CHINA };
+  set(SIBERIA, sib_regions, 5);
+
+  region_t yak_regions[] = { SIBERIA, KAMCHATKA, IRKUTSK };
+  set(YAKUTSK, yak_regions, 3);
+
+  region_t kam_regions[] = { YAKUTSK, IRKUTSK, MONGOLIA, JAPAN, ALASKA };
+  set(KAMCHATKA, kam_regions, 5);
+
+  region_t irk_regions[] = { SIBERIA, YAKUTSK, KAMCHATKA, MONGOLIA };
+  set(IRKUTSK, irk_regions, 4); 
+
+  region_t mon_regions[] = { SIBERIA, IRKUTSK, KAMCHATKA, JAPAN, CHINA };
+  set(MONGOLIA, mon_regions, 5);
+
+  region_t jap_regions[] = { KAMCHATKA, MONGOLIA };
+  set(JAPAN, jap_regions, 2);
+
+  region_t afghan_regions[] = { URAL, CHINA, INDIA, MIDDLE_EAST, UKRAINE };
+  set(AFGHANISTAN, afghan_regions, 5);
+
+  region_t china_regions[] = { SIAM, INDIA, AFGHANISTAN, URAL, SIBERIA, MONGOLIA };
+  set(CHINA, china_regions, 6);
+
+  region_t mide_regions[] = { SOUTHERN_EUROPE, UKRAINE, AFGHANISTAN, INDIA, EGYPT, EAST_AFRICA };
+  set(MIDDLE_EAST, mide_regions, 6);
+
+  region_t ind_regions[] = { MIDDLE_EAST, AFGHANISTAN, CHINA, SIAM };
+  set(INDIA, ind_regions, 4);
+
+  region_t sia_regions[] = { INDIA, CHINA, INDONESIA };
+  set(SIAM, sia_regions, 3);
+
+  region_t ven_regions[] = { CENTRAL_AMERICA, PERU, BRAZIL };
+  set(VENEZUELA, ven_regions, 3);
+
+  region_t peru_regions[] = { VENEZUELA, BRAZIL, ARGENTINA };
+  set(PERU, peru_regions, 3);
+
+  region_t brazil_regions[] = { VENEZUELA, PERU, ARGENTINA, NORTH_AFRICA };
+  set(BRAZIL, brazil_regions, 4);
+
+  region_t arg_regions[] = { PERU, BRAZIL };
+  set(ARGENTINA, arg_regions, 2);
+
+  region_t na_regions[] = { BRAZIL, WESTERN_EUROPE, SOUTHERN_EUROPE, EGYPT, EAST_AFRICA, CONGO };
+  set(NORTH_AFRICA, na_regions, 6);
+
+  region_t eg_regions[] = { NORTH_AFRICA, SOUTHERN_EUROPE, MIDDLE_EAST, EAST_AFRICA };
+  set(EGYPT, eg_regions, 4);
+
+  region_t co_regions[] = { NORTH_AFRICA, EAST_AFRICA, SOUTH_AFRICA };
+  set(CONGO, co_regions, 3);
+
+  region_t ea_regions[] = { EGYPT, NORTH_AFRICA, CONGO, SOUTH_AFRICA, MADAGASCAR, MIDDLE_EAST };
+  set(EAST_AFRICA, ea_regions, 6);
+
+  region_t sa_regions[] = { CONGO, EAST_AFRICA, MADAGASCAR };
+  set(SOUTH_AFRICA, sa_regions, 3);
+
+  region_t ma_regions[] = { SOUTH_AFRICA, EAST_AFRICA };
+  set(MADAGASCAR, ma_regions, 2);
+
+  region_t in_regions[] = { SIAM, NEW_GUINEA, WESTERN_AUSTRALIA };
+  set(INDONESIA, in_regions, 3);
+
+  region_t ng_regions[] = { INDONESIA, EASTERN_AUSTRALIA };
+  set(NEW_GUINEA, ng_regions, 2);
+
+  region_t wa_regions[] = { INDONESIA, EASTERN_AUSTRALIA };
+  set(WESTERN_AUSTRALIA, wa_regions, 2);
+
+  region_t eaa_regions[] = { WESTERN_AUSTRALIA, NEW_GUINEA };
+  set(EASTERN_AUSTRALIA, eaa_regions, 2);
 
   printf("bool BOARD[42][42] = {\n");
   int i, j;
   for(i = 0; i < 42; i++) {
     printf("\t{");
     for(j = 0; j < 42; j++) {
-       printf("%d,", BOARD[i][j]);
+       printf("%d", BOARD[i][j]);
+       if(j < 41) { printf(","); }
     }
     printf("} // %s\n", REGION_NAME[i]);
   }
