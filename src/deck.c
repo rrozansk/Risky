@@ -9,16 +9,10 @@
  Edited:  3/26/17
 */
 
-#ifndef RISKY_DEFS
-#define RISKY_DEFS
+#include <deck.h>
 
 /*******************************************************************************
 
-    F U N C T I O N   P R O T O T Y P E S
+    F U N C T I O N S
 
 *******************************************************************************/
-attack(region_t attacker, region_t defender, unsigned char soilders);
-defend(int soilders);
-maneuver(region_t src, region_t dest, unsigned short soilders);
-
-#endif

@@ -14,10 +14,24 @@
     I N C L U D E S
 
 *******************************************************************************/
-#include <risky.h>
+#include <board.h>
+#include <deck.h>
 
 /*******************************************************************************
 
     F U N C T I O N S
 
 *******************************************************************************/
+// attack a given territory
+char attack(region_t attacker, region_t defender, unsigned char soilders);
+
+// defend against attackers
+void defend(int soilders) {
+  
+}
+
+// move troops from any src territory to any reachable dest territory
+void maneuver(region_t src, region_t dest, unsigned short soilders) {
+  // check reachability
+  // manipulate map
+}
