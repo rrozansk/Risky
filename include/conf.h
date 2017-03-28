@@ -18,14 +18,13 @@
 
 *******************************************************************************/
 typedef struct conf {      // conf file headers
-  char hp;                 // [Human Players]
-  char cp;                 // [Computer Players]
-  char randRegion;         // [Random Regions]
-  char randArmies;         // [Random Armies]
-  char sets;               // tracks # sets traded in
-  // deck_t deck = newDeck();
+  char hp;                 // [Players]
+  char cp;                 // [Players]
+  char randRegion;         // [Random]
+  char randArmies;         // [Random]
   char chromosomes[8][10]; // [Chromosomes] 
-  char err[320];           // error msg if parse failure
+  char sets;               // tracks # sets traded in
+  char err[160];           // error msg if parse failure
 } conf_t;
 
 /*******************************************************************************
@@ -33,7 +32,7 @@ typedef struct conf {      // conf file headers
     F U N C T I O N   P R O T O T Y P E S
 
 *******************************************************************************/
-char parseConf(conf_t *conf, char *fname);
-void writeConf(conf_t *conf, char *fname);
+int parseConf(conf_t *conf, char *fname);
+int writeConf(conf_t *conf, char *fname);
 
 #endif

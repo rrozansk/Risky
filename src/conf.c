@@ -16,50 +16,97 @@
 *******************************************************************************/
 #include <conf.h>
 #include <stdio.h>
-
-/*******************************************************************************
-
-    S T R U C T S
-
-*******************************************************************************/
-char *LABEL_NAMES[5] = {
-  "[Players]",     // keys: human, computer
-  "[Random]",      // keys: region, armies
-  "[Chromosomes]"  // keys: cp[chromosome#]
-};
-
-typedef enum label {
-  HUMAN_PLAYER = 0, COMPUTER_PLAYER, RANDOM_REGIONS, RANDOM_ARMIES, CHROMOSOMES,
-} label_t;
+#include <stdlib.h>
 
 /*******************************************************************************
 
     F U N C T I O N S
 
 *******************************************************************************/
-// write out a new conf file with the given name (in case computers dna changed)
-void writeConf(conf_t *conf, char *fname) {
-  // open file 'conf.c'
-  // print header then key:val prs with newline after each
-  // final newline
-  // etc...
-}
-
-// read in a game config with the given name (mostly for computers dna)
-char parseConf(conf_t *conf, char *fname) {
-  /*
-  if(argc != 5) {
-    sprintf(conf->err, "\n\nIncorrect number of arguments to %s\n%d given, %d expected:\n[int 0-8] Human Players\n[int 0-8] Computer Players\n[int 0-1] Randomly divide up territories\n[int 0-1] Randomly divide up armies\n", argv[0], argc-1, 4);
+// [over]write a conf file reflecting the current games configuration
+int writeConf(conf_t *conf, char *fname) {
+  FILE *fp = fopen(fname, "w+"); // w+ overwrite files
+  if(!fp) { 
+    sprintf(conf->err, "error! failure to open conf file: %s, exiting...\n", fname); 
     return 1;
   }
 
-  conf->hp = atoi(argv[1]);
+  fprintf(fp,
+   "# type := int (0-8)\n"
+   "# keys:\n"
+   "#   - human:    [number of human players]\n"
+   "#   - computer: [number of computer players]\n"
+   "[Players]\n"
+   "human:%d\n"
+   "computer:%d\n\n"
+   
+   "# type := bool (0/1)\n"
+   "# keys:\n"
+   "#   - regions: [randomly distribute the regions among the players]\n"
+   "#   - armies:  [randomly distribute armies among the players regions]\n"
+   "[Random]\n"
+   "regions:%d\n"
+   "armies:%d\n\n"
+   
+   "# type := char[10]\n"
+   "# keys:\n"
+   "#   - ATTR1:  [description]\n"
+   "#   - ATTR2:  [description]\n"
+   "#   - ATTR3:  [description]\n"
+   "#   - ATTR4:  [description]\n"
+   "#   - ATTR5:  [description]\n"
+   "#   - ATTR6:  [description]\n"
+   "#   - ATTR7:  [description]\n"
+   "#   - ATTR8:  [description]\n"
+   "#   - ATTR9:  [description]\n"
+   "#   - ATTR10: [description]\n"
+   "[Chromosomes]\n",
+    conf->hp, conf->cp, conf->randRegion, conf->randArmies);
+
+  int c, i;
+  for(c = 0; c < 8; c++) { // FIXME: const @CHROMOSOMES?
+    fprintf(fp, "c%d:{", c);
+    for(i = 0; i < 10; i++) { // FIXME: const @ATTRIBUTES?
+      fprintf(fp, "%d", conf->chromosomes[c][i]);
+      if(i < 9) { fprintf(fp, ","); }
+    }
+    fprintf(fp, "}\n");
+  }
+
+  if(fclose(fp)) {
+    sprintf(conf->err, "error! failure to close conf file: %s, exiting...\n", fname);
+    return 1;
+  }
+
+  return 0;
+}
+
+// read in and error check a conf file to configure the current game
+int parseConf(conf_t *conf, char *fname) {
+  FILE *fp = fopen(fname, "r"); // r reads files
+  if(!fp) { 
+    sprintf(conf->err, "error! failure to open conf file: %s, exiting...\n", fname); 
+    return 1;
+  }
+
+  char line[81]; // include str teminator
+  while(fgets(line, 81, fp) != NULL) { // read until EOF
+    //  # is line comment
+    //  [headers]
+    //  key:value pairs accepted under header
+  }
+
+  if(fclose(fp)) {
+    sprintf(conf->err, "error! failure to close conf file: %s, exiting...\n", fname);
+    return 1;
+  }
+    
+  // error checking conf
   if(conf->hp < 0) {
     sprintf(conf->err, "error! invalid input (arg 1), expected 0-8, given: %d\n", conf->hp);
     return 1;
   }
 
-  conf->cp = atoi(argv[2]);
   if(conf->cp < 0) {
     sprintf(conf->err, "error! invalid input (arg 2), expected 0-8, given: %d\n", conf->cp);
     return 1;
@@ -75,17 +122,15 @@ char parseConf(conf_t *conf, char *fname) {
     return 1;
   }
 
-  conf->randRegion = atoi(argv[3]);
   if(!(conf->randRegion == 0 || conf->randRegion == 1)) {
     sprintf(conf->err, "error! invalid input (arg 3), expected 0-1, given: %d\n", conf->randRegion);
     return 1;
   }
 
-  conf->randArmies = atoi(argv[4]);
   if(!(conf->randArmies == 0 || conf->randArmies== 1)) {
     sprintf(conf->err, "error! invalid input (arg 4), expected 0-1, given: %d\n", conf->randArmies);
     return 1;
   }
-  */
+
   return 0;
 }

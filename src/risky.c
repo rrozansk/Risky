@@ -60,7 +60,8 @@ void risk(conf_t *conf) {
   //}
 }
 
-// print out version information, attempt to parse conf and then play risk
+// print out version information, attempt to parse conf and then play risk.
+// rewrite conf after game is over in case computers dna/chromosomes changed
 int main(int argc, char *argv[]) {
   printf("Risky\nv1.0\nRyan Rozanski\n\n");
 
@@ -70,14 +71,20 @@ int main(int argc, char *argv[]) {
   }
 
   conf_t *conf = malloc(sizeof(conf_t));
-  if(parseConf(conf, argv[1])) {
-    printf("error! failure to parse conf\nirritant: %s\nexiting...\n", conf->err);
+  if(!parseConf(conf, argv[1])) { 
+    printf("error! %s, exiting...\n", conf->err);
     free(conf);
     exit(EXIT_FAILURE);  
   }
 
   risk(conf);
   
+  if(!writeConf(conf, argv[1])) {
+    printf("error! %s, exiting...\n", conf->err);
+    free(conf);
+    exit(EXIT_FAILURE);  
+  }
+
   free(conf);
   exit(EXIT_SUCCESS);
 }
