@@ -9,7 +9,7 @@ An implementation of risk which supports up to 8 players and 3 modes:
 
 The third mode is used for training the ai's which can then be used as an opponent in mode 2.
 All gameplay is configurable through a conf file, which among other things, holds the chromosomes of the ai.
-This makes it possible for the ai's to keep there intellegence between games.
+This makes it possible for the ai's to keep there intelligence between games.
 An example conf file (conf.txt) is included in the repo.
 
 ## Prerequisites
