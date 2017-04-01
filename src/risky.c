@@ -210,14 +210,14 @@ int main(int argc, char *argv[]) {
   
   ini_t *ini = parseINI(argv[1]);
   if(!ini) {
-    printf("error! failure to parse cond file: %s, exiting...\n", argv[1]);
-    free(ini);
+    printf("error! failure to parse conf file: %s, exiting...\n", argv[1]);
     exit(EXIT_FAILURE);  
   }
 
   risk(ini);
 
   writeINI(ini, argv[1]);
+  freeINI(ini);
 
   exit(EXIT_SUCCESS);
 }

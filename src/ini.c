@@ -156,4 +156,19 @@ void  setINI(ini_t *ini, char *section, char *key, char *val) { // error check f
   tmp_ini->rest = new_ini;
 }
 
-//freeINI(ini_t *ini) { } // FIXME: ??
+void freeINI(ini_t *ini) {
+  settings_t *sets;
+  settings_t *tmp_set;
+  ini_t *tmp_ini;
+  for(; ini; tmp_ini = ini->rest, free(ini), ini = tmp_ini) {
+    if(ini->section) {
+      free(ini->section->header);
+      for(sets = ini->section->settings; sets; tmp_set = sets->rest, free(sets), sets = tmp_set) {
+        free(sets->setting->val);
+        free(sets->setting->key);
+        free(sets->setting);
+      }
+      free(ini->section);
+    }
+  }
+}
