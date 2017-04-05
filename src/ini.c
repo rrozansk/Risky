@@ -6,7 +6,7 @@
 /*
  Author:  Ryan Rozanski
  Created: 3/27/17
- Edited:  4/1/17
+ Edited:  4/4/17
 */
 
 /*******************************************************************************
@@ -14,10 +14,20 @@
     I N C L U D E S
 
 *******************************************************************************/
-#include <ini.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+
+/*******************************************************************************
+
+    P A R S I N G   E R R O R S
+
+*******************************************************************************/
+char *NIL_SECTION = "section cannot be NULL"; 
+char *NIL_KEY = "key cannot be NULL";
+char *NIL_VAL = "val cannot be NULL";
+char *F_OPEN = "failure to open conf file"; 
+char *F_CLOSE = "failure to close conf file"; 
 
 /*******************************************************************************
 
@@ -45,39 +55,82 @@ typedef struct ini {      // list of ( { [section header] . ([key . val] ...) } 
 
 /*******************************************************************************
 
-    F U N C T I O N S
+    P R I V A T E   F U N C T I O N S
 
 *******************************************************************************/
-ini_t *parseINI(char *fname) {
-  FILE *fp = fopen(fname, "r");
-  if(!fp) { 
-    fprintf(stderr, "error! failure to open conf file: %s, exiting...\n", fname); 
-    exit(EXIT_FAILURE);
+setting_t *make_setting(char *key, char *val) {
+  setting_t *new_setting = malloc(sizeof(setting_t));
+  if(!new_setting) { return NULL; }
+  new_setting->key = calloc(strlen(key)+1, sizeof(char));
+  if(!new_setting->key) {
+    free(new_setting);
+    return NULL;
   }
-
-  ini_t *ini = malloc(sizeof(ini_t));
-  ini->section = NULL;
-  ini->rest = NULL;
-
-  // parse the ini file following bnf grammar
-  // if(err) { return NULL; }
-
-  if(fclose(fp)) {
-    fprintf(stderr, "error! failure to close conf file: %s, exiting...\n", fname);
-    exit(EXIT_FAILURE);
+  strcpy(new_setting->key, key);
+  new_setting->val = calloc(strlen(val)+1, sizeof(char));
+  if(!new_setting->val) {
+    free(new_setting->key);
+    free(new_setting);
+    return NULL;
   }
-
-  return ini;
+  strcpy(new_setting->val, val);
+  return new_setting;
 }
 
-void  writeINI(ini_t *ini, char *fname) {
-  FILE *fp = fopen(fname, "w+");
-  if(!fp) { 
-    fprintf(stderr, "error! failure to open conf file: %s, exiting...\n", fname); 
-    exit(EXIT_FAILURE);
-  }
+settings_t *make_settings(setting_t *setting, settings_t *rest) {
+  settings_t *new_settings = malloc(sizeof(settings_t));
+  if(!new_settings) { return NULL; }
+  new_settings->setting = setting;
+  new_settings->rest = rest;
+  return new_settings;
+}
 
-  fprintf(fp, "; ***AUTO GENERATED RISKY INI CONFIG***\n\n");
+section_t *make_section(char *header, settings_t *settings) {
+  section_t *new_section = malloc(sizeof(section_t));
+  if(!new_section) { return NULL; }
+  new_section->header = calloc(strlen(header)+1, sizeof(char));
+  if(!new_section->header) {
+    free(new_section);
+    return NULL;
+  }
+  strcpy(new_section->header, header);
+  new_section->settings = settings;
+  return new_section;
+}
+
+ini_t *make_ini(section_t *section, ini_t *confs) {
+  ini_t *new_ini = malloc(sizeof(ini_t));
+  if(!new_ini) { return NULL; }
+  new_ini->section = section;
+  new_ini->rest = confs;
+  return new_ini;
+}
+
+/*******************************************************************************
+
+    P U B L I C   F U N C T I O N S
+
+*******************************************************************************/
+const char *readINI(ini_t **ini, char *fname) {
+  FILE *fp = fopen(fname, "r");
+  if(!fp) { return F_OPEN; }
+
+  *ini = malloc(sizeof(ini_t));
+  (*ini)->section = NULL;
+  (*ini)->rest = NULL;
+
+  // parse the ini file following bnf grammar
+
+  if(fclose(fp)) { return F_CLOSE; }
+
+  return NULL;
+}
+
+int writeINI(ini_t *ini, char *fname) {
+  if(!ini) { return 1; }
+
+  FILE *fp = fopen(fname, "w+");
+  if(!fp) { return 1; }
 
   settings_t *settings;
   for(; ini; ini = ini->rest) {
@@ -90,18 +143,18 @@ void  writeINI(ini_t *ini, char *fname) {
     }
   }
 
-  if(fclose(fp)) {
-    fprintf(stderr, "error! failure to close conf file: %s, exiting...\n", fname);
-    exit(EXIT_FAILURE);
-  }
+  if(fclose(fp)) { return 1; }
+
+  return 0;
 }
 
-char  *getINI(ini_t *ini, char *section, char *key) { // how to return error?
+char  *getINI(ini_t *ini, char *section, char *key) {
+  if(!ini | !section | !key) { return NULL; }
   settings_t *settings;
   for(; ini; ini = ini->rest) {
-    if(ini->section->header == section) {
+    if(ini->section && !strcmp(ini->section->header, section)) {
       for(settings = ini->section->settings; settings; settings = settings->rest) { 
-        if(settings->setting->key == key) {
+        if(!strcmp(settings->setting->key, key)) {
           return settings->setting->val;  
         }
       }
@@ -110,8 +163,8 @@ char  *getINI(ini_t *ini, char *section, char *key) { // how to return error?
   return NULL; // not found
 }
 
-// over write if found, add if not found
-void  setINI(ini_t *ini, char *section, char *key, char *val) { // error check for NULL char*?
+int setINI(ini_t *ini, char *section, char *key, char *val) {
+  if(!ini | !section | !key | !val) { return 1; }
   settings_t *settings;
   ini_t *tmp_ini = ini;
   for(; ini; ini = ini->rest) {
@@ -121,42 +174,26 @@ void  setINI(ini_t *ini, char *section, char *key, char *val) { // error check f
           if(!strcmp(settings->setting->key ,key)) { // overwrite existing value for pr if found
             free(settings->setting->val);
             settings->setting->val = calloc(strlen(val)+1, sizeof(char));
+            if(!settings->setting->val) { return 1; }
             strcpy(settings->setting->val, val);
-            return;
+            return 0;
           }
         } // add new pr to the settings for this section if key not found
-        setting_t *new_setting = malloc(sizeof(setting_t));
-        new_setting->key = calloc(strlen(key)+1, sizeof(char));
-        strcpy(new_setting->key, key);
-        new_setting->val = calloc(strlen(val)+1, sizeof(char));
-        strcpy(new_setting->val, val);
-        settings_t *new_settings = malloc(sizeof(settings_t));
-        new_settings->setting = new_setting;
-        new_settings->rest = ini->section->settings;
-        ini->section->settings = new_settings;
-        return;
+        ini->section->settings = make_settings(make_setting(key, val), ini->section->settings);
+        return 0;
       }
     }
   } // if never found section, add new section and key/val pr
-  setting_t *new_setting = malloc(sizeof(setting_t));
-  new_setting->key = calloc(strlen(key)+1, sizeof(char));
-  strcpy(new_setting->key, key);
-  new_setting->val = calloc(strlen(val)+1, sizeof(char));
-  strcpy(new_setting->val, val);
-  settings_t *new_settings = malloc(sizeof(settings_t));
-  new_settings->setting = new_setting;
-  new_settings->rest = NULL;
-  section_t *new_section = malloc(sizeof(section_t));
-  new_section->header = calloc(strlen(section)+1, sizeof(char));
-  strcpy(new_section->header, section);
-  new_section->settings = new_settings;
-  ini_t *new_ini = malloc(sizeof(ini_t));
-  new_ini->section = new_section;
-  new_ini->rest = tmp_ini->rest;
-  tmp_ini->rest = new_ini;
+  tmp_ini->rest = make_ini(make_section(section, make_settings(make_setting(key, val), NULL)), tmp_ini->rest);
+  return 0;
+}
+
+ini_t *makeINI() {
+  return make_ini(NULL, NULL);  
 }
 
 void freeINI(ini_t *ini) {
+  if(!ini) { return; }
   settings_t *sets;
   settings_t *tmp_set;
   ini_t *tmp_ini;

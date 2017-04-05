@@ -5,7 +5,7 @@ CFLAGS = -g -Wall -O3
 # include
 INCLUDES = -I/include/ -Iinclude/
 # source files
-SRCS = src/board.c src/deck.c src/risky.c src/ini.c
+SRCS = src/risky.c src/ini.c src/main.c
 # auto-generate the object files
 OBJS = $(SRCS:.c=.o)
 # define the executable file
