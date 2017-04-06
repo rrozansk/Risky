@@ -1,4 +1,4 @@
-/*******************************************************************************
+/******************************************************************************
 
     F I L E   I N F O R M A T I O N
 
@@ -6,7 +6,7 @@
 /*
  Author:  Ryan Rozanski
  Created: 3/27/17
- Edited:  4/4/17
+ Edited:  4/6/17
 */
 
 /*******************************************************************************
@@ -17,15 +17,13 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <ctype.h>
 
 /*******************************************************************************
 
     P A R S I N G   E R R O R S
 
 *******************************************************************************/
-char *NIL_SECTION = "section cannot be NULL"; 
-char *NIL_KEY = "key cannot be NULL";
-char *NIL_VAL = "val cannot be NULL";
 char *F_OPEN = "failure to open conf file"; 
 char *F_CLOSE = "failure to close conf file"; 
 
@@ -106,6 +104,14 @@ ini_t *make_ini(section_t *section, ini_t *confs) {
   return new_ini;
 }
 
+int isDividor(int c) { return c == ':' || c == '=';  }
+
+int isComment(int c) { return c == '#' || c == ';';  }
+
+int isSpecial(int c) { return ispunct(c) && !isDividor(c) && !isComment(c); }
+
+int isChar(int c) { return isalnum(c) | isSpecial(c); }
+
 /*******************************************************************************
 
     P U B L I C   F U N C T I O N S
@@ -115,11 +121,27 @@ const char *readINI(ini_t **ini, char *fname) {
   FILE *fp = fopen(fname, "r");
   if(!fp) { return F_OPEN; }
 
-  *ini = malloc(sizeof(ini_t));
-  (*ini)->section = NULL;
-  (*ini)->rest = NULL;
+  /*
+                   ::BNF GRAMMAR::
 
-  // parse the ini file following bnf grammar
+          <ini>     ::= <section>+
+          <section> ::= <header><setting>+
+          <header>  ::= [<term>]
+          <setting> ::= <term><dividor><term><space>+
+          <term>    ::= <char>+
+          <char>    ::= <lower> | <upper> | <number> | <special>
+          <dividor> ::= : | = 
+          <space>   ::= \t | \v | \f | \n | \r | ' '
+          <lower>   ::= a | b | c | d | e | f | g | h | i | j | k | l | m |
+                        n | o | p | q | r | s | t | u | v | w | x | y | z
+          <upper>   ::= A | B | C | D | E | F | G | H | I | J | K | L | M |
+                        N | O | P | Q | R | S | T | U | V | W | X | Y | Z
+          <number>  ::= 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9
+          <special> ::= ! | " | $ | % | & | ' | ( | ) | * | + | , | - | . | / |
+                        < | > | ? | @ | [ | \ | ] | ^ | _ | ` | { | | | } | ~
+          <comment> ::= #<any> | ;<any>
+          <any>     ::= any characters, except \n, up to \n
+  */
 
   if(fclose(fp)) { return F_CLOSE; }
 
@@ -189,7 +211,7 @@ int setINI(ini_t *ini, char *section, char *key, char *val) {
 }
 
 ini_t *makeINI() {
-  return make_ini(NULL, NULL);  
+  return make_ini(NULL, NULL);   // FIXME: so that NULL isnt possible? doesnt follwo grammar
 }
 
 void freeINI(ini_t *ini) {
