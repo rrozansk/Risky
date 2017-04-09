@@ -18,14 +18,14 @@
           <header>  ::= [<term>]
           <setting> ::= <term><dividor><term><space>+
           <term>    ::= <char>+
-          <char>    ::= <lower> | <upper> | <number> | <special>
+          <char>    ::= <lower> | <upper> | <digit> | <special>
           <dividor> ::= : | = 
           <space>   ::= \t | \v | \f | \n | \r | ' '
           <lower>   ::= a | b | c | d | e | f | g | h | i | j | k | l | m |
                         n | o | p | q | r | s | t | u | v | w | x | y | z
           <upper>   ::= A | B | C | D | E | F | G | H | I | J | K | L | M |
                         N | O | P | Q | R | S | T | U | V | W | X | Y | Z
-          <number>  ::= 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9
+          <digit>   ::= 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9
           <special> ::= ! | " | $ | % | & | ' | ( | ) | * | + | , | - | . | / |
                         < | > | ? | @ | [ | \ | ] | ^ | _ | ` | { | | | } | ~
           <comment> ::= #<any> | ;<any>
@@ -49,7 +49,7 @@ typedef struct ini ini_t; // INI conf files
 *******************************************************************************/
 // Read in and create an ini conf given a file name. Return NULL on success and
 // a descriptive error message on failure.
-const char *readINI(ini_t **ini, char *fname);
+char *readINI(ini_t **ini, char *fname);
 
 // Output the ini conf to a file with the specified name. 0 on success, 1 on fail.
 int writeINI(ini_t *ini, char *fname);
