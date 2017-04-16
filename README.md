@@ -9,17 +9,18 @@ An implementation of a Risk like game which supports up to 8 players and 4 modes
 - Training
 
 The fourth mode is used exclusively for improving the AI's DNA, which can then 
-be used as an opponent in mode two or three. During training all games can also
-be logged and there output placed under a training directory so they can be
-inspected later if so desired.
+be used as an opponent in mode two or three. During training (and all other modes)
+games can be logged and there output placed under a training directory so they 
+can be reviewed or inspected later if so desired.
 
 Risky itself is actually a library which exposes a Risk game like API to
 easily implement Risk like games quickly. Along with this, it also exposes a
 completely configurable command line input/output version of a Risk like game
-which allows the competing and training of custom configured AIs.
+which allows the competing and training of custom configured AIs, and logging
+of all games to file.
 
-Along with Risky is a custom written ini library which allows input and
-output to a file along with dynamic creation and mutation of that conf file.
+Along with Risky is a custom written ini (conf file) library which allows input
+and output to a file along with dynamic creation and mutation of that conf file.
 This allows all gameplay to be easily configured, and also makes it possible for
 the AIs to keep there intelligence between games. An example conf file (conf.ini)
 is included in the repo along with comments explaining the different sections,

@@ -6,7 +6,7 @@
 /*
  Author:  Ryan Rozanski
  Created: 3/27/17
- Edited:  4/6/17
+ Edited:  4/15/17
 */
 
 /*******************************************************************************
@@ -14,18 +14,11 @@
     I N C L U D E S
 
 *******************************************************************************/
+#include <ini.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
-
-/*******************************************************************************
-
-    P A R S I N G   E R R O R S
-
-*******************************************************************************/
-char *F_OPEN = "failure to open conf file"; 
-char *F_CLOSE = "failure to close conf file"; 
 
 /*******************************************************************************
 
@@ -112,15 +105,37 @@ int isSpecial(int c) { return ispunct(c) && !isDividor(c) && !isComment(c); }
 
 int isChar(int c) { return isalnum(c) | isSpecial(c); }
 
+// TODO: use these to make the parser quickly for now - call there make---() counterparts
+section_t *readSection();
+char *readHeader();
+setting_t *readSetting();
+char *readTerm();
+
 /*******************************************************************************
 
     P U B L I C   F U N C T I O N S
 
 *******************************************************************************/
-const char *readINI(ini_t **ini, char *fname) {
-  FILE *fp = fopen(fname, "r");
-  if(!fp) { return F_OPEN; }
+const char *strErrINI(errINI_t errINI) {
+  switch(errINI) {
+  case INI_OPEN_FAILURE: return "failure to open conf file";
+  case INI_CLOSE_FAILURE: return "failure to close conf file";
+  case INI_INVALID_KEY: return "key does not adhere to library grammar";
+  case INI_INVALID_SECTION: return "header does not adhere to library grammar";
+  case INI_INVALID_VAL: return "value does not adhere to library grammar";
+  case INI_OUT_OF_MEMORY: return "out of memory";
+  case INI_NULL_KEY: return "nil key";
+  case INI_NULL_VAL: return "nil value";
+  case INI_NULL_SECTION: return "nil section";
+  case INI_FAILURE: return "general failure";
+  case INI_NIL: return "no error";
+  default: return "unrecognized INI error code";
+  }
+}
 
+errINI_t readINI(ini_t **ini, char *fname) {
+  FILE *fp = fopen(fname, "r");
+  if(!fp) { return INI_OPEN_FAILURE; }
   /*
                    ::BNF GRAMMAR::
 
@@ -129,7 +144,7 @@ const char *readINI(ini_t **ini, char *fname) {
           <header>  ::= [<term>]
           <setting> ::= <term><dividor><term><space>+
           <term>    ::= <char>+
-          <char>    ::= <lower> | <upper> | <number> | <special>
+          <char>    ::= <lower> | <upper> | <digit> | <special>
           <dividor> ::= : | = 
           <space>   ::= \t | \v | \f | \n | \r | ' '
           <lower>   ::= a | b | c | d | e | f | g | h | i | j | k | l | m |
@@ -142,13 +157,11 @@ const char *readINI(ini_t **ini, char *fname) {
           <comment> ::= #<any> | ;<any>
           <any>     ::= any characters, except \n, up to \n
   */
-
-  if(fclose(fp)) { return F_CLOSE; }
-
-  return NULL;
+  if(fclose(fp)) { return INI_CLOSE_FAILURE; }
+  return INI_NIL;
 }
 
-int writeINI(ini_t *ini, char *fname) {
+errINI_t writeINI(ini_t *ini, char *fname) {
   if(!ini) { return 1; }
 
   FILE *fp = fopen(fname, "w+");
@@ -170,22 +183,47 @@ int writeINI(ini_t *ini, char *fname) {
   return 0;
 }
 
-char  *getINI(ini_t *ini, char *section, char *key) {
-  if(!ini | !section | !key) { return NULL; }
+errINI_t makeINI(ini_t **ini) {
+  *ini = make_ini(NULL, NULL);   // FIXME: so that NULL isnt possible? doesnt follwo grammar
+  return ini ? INI_NIL : INI_OUT_OF_MEMORY;
+}
+
+void freeINI(ini_t *ini) {
+  if(!ini) { return; }
+  settings_t *sets;
+  settings_t *tmp_set;
+  ini_t *tmp_ini;
+  for(; ini; tmp_ini = ini->rest, free(ini), ini = tmp_ini) {
+    if(ini->section) {
+      free(ini->section->header);
+      for(sets = ini->section->settings; sets; tmp_set = sets->rest, free(sets), sets = tmp_set) {
+        free(sets->setting->val);
+        free(sets->setting->key);
+        free(sets->setting);
+      }
+      free(ini->section);
+    }
+  }
+}
+
+errINI_t getINI(ini_t *ini, char *section, char *key, char **val) {
+  if(!ini | !section | !key) { return INI_FAILURE; }
   settings_t *settings;
   for(; ini; ini = ini->rest) {
     if(ini->section && !strcmp(ini->section->header, section)) {
       for(settings = ini->section->settings; settings; settings = settings->rest) { 
         if(!strcmp(settings->setting->key, key)) {
-          return settings->setting->val;  
+          //return settings->setting->val;  
+          return INI_FAILURE;
         }
       }
     }
   }
-  return NULL; // not found
+  return INI_FAILURE;
+  //return NULL; // not found
 }
 
-int setINI(ini_t *ini, char *section, char *key, char *val) {
+errINI_t setINI(ini_t *ini, char *section, char *key, char *val) {
   if(!ini | !section | !key | !val) { return 1; }
   settings_t *settings;
   ini_t *tmp_ini = ini;
@@ -210,24 +248,6 @@ int setINI(ini_t *ini, char *section, char *key, char *val) {
   return 0;
 }
 
-ini_t *makeINI() {
-  return make_ini(NULL, NULL);   // FIXME: so that NULL isnt possible? doesnt follwo grammar
-}
-
-void freeINI(ini_t *ini) {
-  if(!ini) { return; }
-  settings_t *sets;
-  settings_t *tmp_set;
-  ini_t *tmp_ini;
-  for(; ini; tmp_ini = ini->rest, free(ini), ini = tmp_ini) {
-    if(ini->section) {
-      free(ini->section->header);
-      for(sets = ini->section->settings; sets; tmp_set = sets->rest, free(sets), sets = tmp_set) {
-        free(sets->setting->val);
-        free(sets->setting->key);
-        free(sets->setting);
-      }
-      free(ini->section);
-    }
-  }
+errINI_t delINI(ini_t *ini, char *section, char *key) {
+  return INI_NIL;  
 }

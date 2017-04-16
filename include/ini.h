@@ -6,10 +6,12 @@
 /*
  Author:  Ryan Rozanski
  Created: 3/27/17
- Edited:  4/7/17
- Info:    A ini conf file interface. Allows static reading from a file as well as
-          dynamic creation, mutation, and output to a file. Below is the grammar
-          accepted, and output by the library.
+ Edited:  4/16/17
+ Info:    A ini configuration file library. Allows the static reading from and
+          output to a file, as well as dynamic CRUD operations. The library API
+          is designed to return errors, which should be checked and handled
+          immediately. In the case of success INI_NIL error is returned. Below
+          is the grammar accepted and output by the library.
 
                  ::BNF GRAMMAR::
 
@@ -40,34 +42,43 @@
     T Y P E S
 
 *******************************************************************************/
-typedef struct ini ini_t; // INI conf files
+// INI conf files.
+typedef struct ini ini_t;
+
+// All the possible errors returned from the library.
+typedef enum errINI {
+  INI_CLOSE_FAILURE, INI_OPEN_FAILURE, INI_INVALID_KEY, INI_INVALID_SECTION,
+  INI_INVALID_VAL, INI_OUT_OF_MEMORY, INI_NULL_KEY, INI_NULL_VAL, INI_NIL,
+  INI_NULL_SECTION, INI_FAILURE
+} errINI_t;
 
 /*******************************************************************************
 
     F U N C T I O N   P R O T O T Y P E S
 
 *******************************************************************************/
-// Read in and create an ini conf given a file name. Return NULL on success and
-// a descriptive error message on failure.
-char *readINI(ini_t **ini, char *fname);
+// Return a string representation of any possible error returned by the library.
+const char *strErrINI(errINI_t errINI);
 
-// Output the ini conf to a file with the specified name. 0 on success, 1 on fail.
-int writeINI(ini_t *ini, char *fname);
+// Read in and create an ini conf given a file name.
+errINI_t readINI(ini_t **ini, char *fname);
 
-// Attempt to create an new ini conf. Return NULL upon failure.
-ini_t *makeINI();
+// Output the ini conf to a file with the specified name.
+errINI_t writeINI(ini_t *ini, char *fname);
+
+// Create an new ini conf.
+errINI_t makeINI(ini_t **ini);
 
 // Free the ini conf.
 void freeINI(ini_t *ini);
 
-// Retrieve a value from the conf given by section and key.
-// Return NULL if ini, section, or key is NULL, or if not found.
-char *getINI(ini_t *ini, char *section, char *key);
+// Read a value from the conf given by section and key.
+errINI_t getINI(ini_t *ini, char *section, char *key, char **val);
 
-// Create a new setting in the conf under the specified section with the given 
-// key and value. Return 0 if successful, 1 on failure. Failure occurs if ini,
-// section, key, or val is NULL or cannot alloc space. Failure can also occur if
-// section, key, or val do not conform to the grammar given above.
-int setINI(ini_t *ini, char *section, char *key, char *val);
+// Create/Update a new key value setting under the specified section.
+errINI_t setINI(ini_t *ini, char *section, char *key, char *val);
+
+// Delete the key value pair under the specified section.
+errINI_t delINI(ini_t *ini, char *section, char *key);
 
 #endif
