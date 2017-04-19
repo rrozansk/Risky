@@ -30,8 +30,8 @@
 *******************************************************************************/
 // All the possible errors from setting up the game.
 typedef enum error {
-  INVALID_ARRAY_LITERAL, NIL, FAILURE, OUT_OF_MEMORY, 
-  INVALID_ARRAY_SEPERATOR, CANNOT_CONVERT_INT_LITERAL,
+  INVALID_ARRAY_LITERAL, INVALID_INT_LITERAL, NIL, OUT_OF_MEMORY, 
+  INVALID_ARRAY_SEPERATOR
 } error_t;
 
 /*******************************************************************************
@@ -39,14 +39,13 @@ typedef enum error {
     F U N C T I O N S
 
 *******************************************************************************/
-// Return the string represnetation of a given error.
+// Return the string representation of a given error.
 const char *errToStr(error_t error) {
   switch(error) {
     case INVALID_ARRAY_LITERAL: return "invalid array literal";
     case OUT_OF_MEMORY: return "out of memory";
     case INVALID_ARRAY_SEPERATOR: return "invalid array literal seperator";
-    case CANNOT_CONVERT_INT_LITERAL: return "cannot convert interger literal to int";
-    case FAILURE: return "failure";
+    case INVALID_INT_LITERAL: return "invalid interger literal";
     case NIL: return "";
     default:  return "unknown error code";
   }
@@ -56,7 +55,7 @@ const char *errToStr(error_t error) {
 error_t parseInt(char *literal, int *dest) {
   char *end;
   *dest = (int)strtol(literal, &end, 10);
-  if(literal == end) { return CANNOT_CONVERT_INT_LITERAL; }
+  if(literal == end) { return INVALID_INT_LITERAL; }
   return NIL;
 }
 
@@ -118,9 +117,8 @@ int readConf(ini_t *ini, char *section, char *key, char **val) {
 
 // Attempt to get the index of country.
 int arrRef(char **countries, char *country, int size) {
- int i;
- for(i = 0; i < size; i++) {
-  if(!strcmp(country, countries[i])) { return i; }  
+ for(; size; size--) {
+  if(!strcmp(country, countries[size-1])) { return size-1; }
  }
  return -1;
 }
@@ -177,155 +175,83 @@ int main(int argc, char *argv[]) {
 
   /******************* PLAYERS *******************/
   if(!readConf(ini, "Players", "humans", &val)) { goto FAIL; }
-  if((error = parseInt(val, &game.hps)) != NIL) {
-    fprintf(stderr, "error! invalid conf\nirritant: %s\nexiting...\n", errToStr(error));
-    goto FAIL;
-  }
+  if((error = parseInt(val, &game.hps)) != NIL) { goto DONE; }
 
   if(!readConf(ini, "Players", "computers", &val)) { goto FAIL; }
-  if((error = parseStrArr(val, &game.computers, &game.cps)) != NIL) {
-    fprintf(stderr, "error! invalid conf\nirritant: %s\nexiting...\n", errToStr(error));
-    goto FAIL;
-  }
+  if((error = parseStrArr(val, &game.computers, &game.cps)) != NIL) { goto DONE; }
 
   /******************* TRAINING *******************/
   if(!readConf(ini, "Training", "games", &val)) { goto FAIL; }
-  if((error = parseInt(val, &game.trains)) != NIL) {
-    fprintf(stderr, "error! invalid conf\nirritant: %s\nexiting...\n", errToStr(error));
-    goto FAIL;
-  }
+  if((error = parseInt(val, &game.trains)) != NIL) { goto DONE; }
 
   if(!readConf(ini, "Training", "log", &val)) { goto FAIL; }
-  if((error = parseInt(val, &game.log)) != NIL) {
-    fprintf(stderr, "error! invalid conf\nirritant: %s\nexiting...\n", errToStr(error));
-    goto FAIL;
-  }
+  if((error = parseInt(val, &game.log)) != NIL) { goto DONE; }
 
   if(!readConf(ini, "Training", "dir", &game.dir)) { goto FAIL; }
 
   /******************* TROOPS *******************/
   if(!readConf(ini, "Troops", "beginning", &val)) { goto FAIL; }
-  if((error = parseInt(val, &game.beginning)) != NIL) {
-    fprintf(stderr, "error! invalid conf\nirritant: %s\nexiting...\n", errToStr(error));
-    goto FAIL;
-  }
+  if((error = parseInt(val, &game.beginning)) != NIL) { goto DONE; }
 
   if(!readConf(ini, "Troops", "minimum", &val)) { goto FAIL; }
-  if((error = parseInt(val, &game.minimum)) != NIL) {
-    fprintf(stderr, "error! invalid conf\nirritant: %s\nexiting...\n", errToStr(error));
-    goto FAIL;
-  }
+  if((error = parseInt(val, &game.minimum)) != NIL) { goto DONE; }
 
   if(!readConf(ini, "Troops", "bonus", &val)) { goto FAIL; }
-  if((error = parseInt(val, &game.bonus)) != NIL) {
-    fprintf(stderr, "error! invalid conf\nirritant: %s\nexiting...\n", errToStr(error));
-    goto FAIL;
-  }
+  if((error = parseInt(val, &game.bonus)) != NIL) { goto DONE; }
 
   if(!readConf(ini, "Troops", "random", &val)) { goto FAIL; }
-  if((error = parseInt(val, &game.random)) != NIL) {
-    fprintf(stderr, "error! invalid conf\nirritant: %s\nexiting...\n", errToStr(error));
-    goto FAIL;
-  }
+  if((error = parseInt(val, &game.random)) != NIL) { goto DONE; }
 
   /******************* CARDS *******************/
   if(!readConf(ini, "Cards", "types", &val)) { goto FAIL; }
-  if((error = parseStrArr(val, &game.cardTypes, &game.numTypes)) != NIL) {
-    fprintf(stderr, "error! invalid conf\nirritant: %s\nexiting...\n", errToStr(error));
-    goto FAIL;
-  }
+  if((error = parseStrArr(val, &game.cardTypes, &game.numTypes)) != NIL) { goto DONE; }
 
   if(!readConf(ini, "Cards", "wilds", &val)) { goto FAIL; }
-  if((error = parseInt(val, &game.wilds)) != NIL) {
-    fprintf(stderr, "error! invalid conf\nirritant: %s\nexiting...\n", errToStr(error));
-    goto FAIL;
-  }
+  if((error = parseInt(val, &game.wilds)) != NIL) { goto DONE; }
 
   if(!readConf(ini, "Cards", "trades", &val)) { goto FAIL; }
-  if((error = parseIntArr(val, &game.tradeIns, &game.numTrades)) != NIL) {
-    fprintf(stderr, "error! invalid conf\nirritant: %s\nexiting...\n", errToStr(error));
-    goto FAIL;
-  }
+  if((error = parseIntArr(val, &game.tradeIns, &game.numTrades)) != NIL) { goto DONE; }
 
   if(!readConf(ini, "Cards", "incr", &val)) { goto FAIL; }
-  if((error = parseInt(val, &game.tradeIncr)) != NIL) {
-    fprintf(stderr, "error! invalid conf\nirritant: %s\nexiting...\n", errToStr(error));
-    goto FAIL;
-  }
+  if((error = parseInt(val, &game.tradeIncr)) != NIL) { goto DONE; }
 
   /******************* CHROMOSOMES *******************/
   if(!readConf(ini, "Chromosomes", "cp0", &val)) { goto FAIL; }
-  if((error = parseIntArr(val, &game.cp0, &game.numChromosomes)) != NIL) {
-    fprintf(stderr, "error! invalid conf\nirritant: %s\nexiting...\n", errToStr(error));
-    goto FAIL;
-  }
+  if((error = parseIntArr(val, &game.cp0, &game.numChromosomes)) != NIL) { goto DONE; }
 
   if(!readConf(ini, "Chromosomes", "cp1", &val)) { goto FAIL; }
-  if((error = parseIntArr(val, &game.cp1, &game.numChromosomes)) != NIL) {
-    fprintf(stderr, "error! invalid conf\nirritant: %s\nexiting...\n", errToStr(error));
-    goto FAIL;
-  }
+  if((error = parseIntArr(val, &game.cp1, &game.numChromosomes)) != NIL) { goto DONE; }
 
   if(!readConf(ini, "Chromosomes", "cp2", &val)) { goto FAIL; }
-  if((error = parseIntArr(val, &game.cp2, &game.numChromosomes)) != NIL) {
-    fprintf(stderr, "error! invalid conf\nirritant: %s\nexiting...\n", errToStr(error));
-    goto FAIL;
-  }
+  if((error = parseIntArr(val, &game.cp2, &game.numChromosomes)) != NIL) { goto DONE; }
 
   if(!readConf(ini, "Chromosomes", "cp3", &val)) { goto FAIL; }
-  if((error = parseIntArr(val, &game.cp3, &game.numChromosomes)) != NIL) {
-    fprintf(stderr, "error! invalid conf\nirritant: %s\nexiting...\n", errToStr(error));
-    goto FAIL;
-  }
+  if((error = parseIntArr(val, &game.cp3, &game.numChromosomes)) != NIL) { goto DONE; }
 
   if(!readConf(ini, "Chromosomes", "cp4", &val)) { goto FAIL; }
-  if((error = parseIntArr(val, &game.cp4, &game.numChromosomes)) != NIL) {
-    fprintf(stderr, "error! invalid conf\nirritant: %s\nexiting...\n", errToStr(error));
-    goto FAIL;
-  }
+  if((error = parseIntArr(val, &game.cp4, &game.numChromosomes)) != NIL) { goto DONE; }
 
   if(!readConf(ini, "Chromosomes", "cp5", &val)) { goto FAIL; }
-  if((error = parseIntArr(val, &game.cp5, &game.numChromosomes)) != NIL) {
-    fprintf(stderr, "error! invalid conf\nirritant: %s\nexiting...\n", errToStr(error));
-    goto FAIL;
-  }
+  if((error = parseIntArr(val, &game.cp5, &game.numChromosomes)) != NIL) { goto DONE; }
 
   if(!readConf(ini, "Chromosomes", "cp6", &val)) { goto FAIL; }
-  if((error = parseIntArr(val, &game.cp6, &game.numChromosomes)) != NIL) {
-    fprintf(stderr, "error! invalid conf\nirritant: %s\nexiting...\n", errToStr(error));
-    goto FAIL;
-  }
+  if((error = parseIntArr(val, &game.cp6, &game.numChromosomes)) != NIL) { goto DONE; }
 
   if(!readConf(ini, "Chromosomes", "cp7", &val)) { goto FAIL; }
-  if((error = parseIntArr(val, &game.cp7, &game.numChromosomes)) != NIL) {
-    fprintf(stderr, "error! invalid conf\nirritant: %s\nexiting...\n", errToStr(error));
-    goto FAIL;
-  }
+  if((error = parseIntArr(val, &game.cp7, &game.numChromosomes)) != NIL) { goto DONE; }
 
   /******************* MAP *******************/
   if(!readConf(ini, "Map", "continents", &val)) { goto FAIL; }
-  if((error = parseStrArr(val, &game.continents, &game.numConts)) != NIL) {
-    fprintf(stderr, "error! invalid conf\nirritant: %s\nexiting...\n", errToStr(error));
-    goto FAIL;
-  }
+  if((error = parseStrArr(val, &game.continents, &game.numConts)) != NIL) { goto DONE; }
 
   if(!readConf(ini, "Map", "continents_bonus", &val)) { goto FAIL; }
-  if((error = parseIntArr(val, &game.contBonuses, &game.numConts)) != NIL) {
-    fprintf(stderr, "error! invalid conf\nirritant: %s\nexiting...\n", errToStr(error));
-    goto FAIL;
-  }
+  if((error = parseIntArr(val, &game.contBonuses, &game.numConts)) != NIL) { goto DONE; }
 
   if(!readConf(ini, "Map", "random", &val)) { goto FAIL; }
-  if((error = parseInt(val, &game.randomCountries)) != NIL) {
-    fprintf(stderr, "error! invalid conf\nirritant: %s\nexiting...\n", errToStr(error));
-    goto FAIL;
-  }
+  if((error = parseInt(val, &game.randomCountries)) != NIL) { goto DONE; }
 
   if(!readConf(ini, "Map", "countries", &val)) { goto FAIL; }
-  if((error = parseStrArr(val, &game.continents, &game.numCountries)) != NIL) {
-    fprintf(stderr, "error! invalid conf\nirritant: %s\nexiting...\n", errToStr(error));
-    goto FAIL;
-  }
+  if((error = parseStrArr(val, &game.continents, &game.numCountries)) != NIL) { goto DONE; }
 
   if(!generateAdjacenyMatrix(ini, &game.countries, game.numCountries, &game.board)) { goto FAIL; }
 
@@ -350,6 +276,12 @@ int main(int argc, char *argv[]) {
       goto FAIL;
     }
   }
+
+  return 0; // EXIT SUCCESSFULLY
+
+DONE:
+    fprintf(stderr, "error! invalid conf\nirritant: %s\nexiting...\n", errToStr(error));
+    goto FAIL;
 
 FAIL:
   freeINI(ini); //free conf file and allocated game arrays

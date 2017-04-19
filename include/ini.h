@@ -15,7 +15,7 @@
 
                  ::BNF GRAMMAR::
 
-          <ini>     ::= <section>+
+          <ini>     ::= <section>*
           <section> ::= <header><setting>+
           <header>  ::= [<term>]
           <setting> ::= <term><dividor><term><space>+
@@ -49,7 +49,8 @@ typedef struct ini ini_t;
 typedef enum errINI {
   INI_CLOSE_FAILURE, INI_OPEN_FAILURE, INI_INVALID_KEY, INI_INVALID_SECTION,
   INI_INVALID_VAL, INI_OUT_OF_MEMORY, INI_NULL_KEY, INI_NULL_VAL, INI_NIL,
-  INI_NULL_SECTION, INI_FAILURE
+  INI_NULL_SECTION, INI_FAILURE, INI_NULL_INI, INI_NULL_FILE_NAME,
+  INI_INVALID_CONF
 } errINI_t;
 
 /*******************************************************************************
@@ -70,7 +71,7 @@ errINI_t writeINI(ini_t *ini, char *fname);
 errINI_t makeINI(ini_t **ini);
 
 // Free the ini conf.
-void freeINI(ini_t *ini);
+errINI_t freeINI(ini_t *ini);
 
 // Read a value from the conf given by section and key.
 errINI_t getINI(ini_t *ini, char *section, char *key, char **val);
@@ -79,6 +80,6 @@ errINI_t getINI(ini_t *ini, char *section, char *key, char **val);
 errINI_t setINI(ini_t *ini, char *section, char *key, char *val);
 
 // Delete the key value pair under the specified section.
-errINI_t delINI(ini_t *ini, char *section, char *key);
+errINI_t deleteINI(ini_t *ini, char *section, char *key);
 
 #endif
