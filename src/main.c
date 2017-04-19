@@ -6,7 +6,7 @@
 /*
  Author:  Ryan Rozanski
  Created: 4/4/17
- Edited:  4/16/17
+ Edited:  4/19/17
  Info:    main.c uses ini.h to read conf files in order to configure the command
           line version of Risky. It also writes the conf back out to file if the
           AIs were training.
@@ -92,15 +92,20 @@ error_t parseStrArr(char *literal, char **dest, int *size) {
   error_t error;
   if((error = parseArrSize(literal, size)) != NIL) { return error; }
   if(!(*dest = malloc(sizeof(char *) * *size))) { return OUT_OF_MEMORY; }
+  //printf("literal: %s\n", literal); fflush(stdout);
+  //printf("&*dest: %p\t*dest: %p\n", &*dest, *dest); fflush(stdout);
 
   char *c;
-  int i, j;
+  int i;
   for(i = 0, literal++, c = strtok(literal, ",}"); i < *size; i++, c = strtok(NULL, ",}")) {
-    if(!(dest[i] = calloc(strlen(c)+1, sizeof(char)))) {
-      for(j = 0; j < i; j++) { free(dest[i]); }
-      return -1;
+    //printf("size: %i\ti: %i\t&dest[%i]: %p\t", *size, i, i, &((char **)*dest)[i]); fflush(stdout);
+    ((char **)*dest)[i] = calloc(strlen(c)+1, sizeof(char));
+    if(!(((char **)*dest)[i])) {
+      free(*dest);
+      return OUT_OF_MEMORY;
     }
-    strncpy(dest[i], c, strlen(c));
+    strcpy((((char **)*dest)[i]), c);
+    //printf("string: %s\n", ((char **)*dest)[i]); fflush(stdout);
   }
   return NIL;
 }
@@ -171,7 +176,7 @@ int main(int argc, char *argv[]) {
 
   char *val;
   game_conf_t game;
-  error_t error;
+  error_t error = NIL;
 
   /******************* PLAYERS *******************/
   if(!readConf(ini, "Players", "humans", &val)) { goto FAIL; }
@@ -253,7 +258,7 @@ int main(int argc, char *argv[]) {
   if(!readConf(ini, "Map", "countries", &val)) { goto FAIL; }
   if((error = parseStrArr(val, &game.continents, &game.numCountries)) != NIL) { goto DONE; }
 
-  if(!generateAdjacenyMatrix(ini, &game.countries, game.numCountries, &game.board)) { goto FAIL; }
+  //if(!generateAdjacenyMatrix(ini, &game.countries, game.numCountries, &game.board)) { goto FAIL; }
 
   char *err;
   if((err = risk(&game))) {
@@ -280,8 +285,8 @@ int main(int argc, char *argv[]) {
   return 0; // EXIT SUCCESSFULLY
 
 DONE:
-    fprintf(stderr, "error! invalid conf\nirritant: %s\nexiting...\n", errToStr(error));
-    goto FAIL;
+  fprintf(stderr, "error! invalid conf\nirritant: %s\nexiting...\n", errToStr(error));
+  goto FAIL;
 
 FAIL:
   freeINI(ini); //free conf file and allocated game arrays

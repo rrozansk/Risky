@@ -6,7 +6,7 @@
 /*
  Author:  Ryan Rozanski
  Created: 3/27/17
- Edited:  4/16/17
+ Edited:  4/18/17
 */
 
 /*******************************************************************************
@@ -103,12 +103,6 @@ int isComment(int c) { return c == '#' || c == ';';  }
 int isSpecial(int c) { return ispunct(c) && !isDividor(c) && !isComment(c); }
 int isChar(int c) { return isalnum(c) | isSpecial(c); }
 
-errINI_t readTerm(FILE *fp, char **term) {
-  // <term> ::= <char>+
-  // <char>    ::= <lower> | <upper> | <digit> | <special>
-  return INI_NIL;
-}
-
 int isValidTerm(char *term) {
   for(; *term; term++) { if(!isChar(*term)) { return 0;  } }
   return 1;
@@ -137,7 +131,6 @@ const char *strErrINI(errINI_t errINI) {
     case INI_NULL_SECTION: return "nil section";
     case INI_NULL_INI: return "nil ini";
     case INI_INVALID_CONF: return "invalid conf file";
-    case INI_FAILURE: return "general failure";
     case INI_NIL: return "no error";
     default: return "unrecognized INI error code";
   }
@@ -156,62 +149,67 @@ errINI_t readINI(ini_t **ini, char *fname) {
   char *section, *key, *val;
   section = key = val = NULL;
   int c, i, size;
-  while((c = fgetc(fp))) {
+  while((c = fgetc(fp)) != EOF) {
     switch(c) {
       case '\t': case '\v': case '\f': case '\n': case '\r': case ' ': break; // read blank space
       case '#': case ';': do { c = fgetc(fp); } while(c != '\n'); break;      // read line comments  ; or #
       case '[':                                                               // read section header [<term>]
         if(section) { free(section); } // free old section
         section = malloc(sizeof(char) * (size = 100));
-        for(i = 0; isChar(c = fgetc(fp)); i++) {
+        for(i = 0; isChar(c = fgetc(fp)) && c != ']';) {
           if(i == (size-1)) { // -1 so always space for str terminator
             section = realloc(section, sizeof(char)*(size *= 2));
           }
-          section[i] = c;
+          section[i++] = c;
         }
-        if(c != ']' || i == 0) { // invalid ending or no term read
+        if(i == 0) { // no term read
           errINI = INI_INVALID_SECTION;
           goto err;
         }
-        section[i] = '\0';
+        section[i++] = '\0';
         section = realloc(section, sizeof(char)*i);
+        //printf("section:\t\t%s\n", section); fflush(stdout);
         break;
       // LABELS
       key: // read a key <term> until <dividor>
         key = malloc(sizeof(char) * (size = 100));
-        for(i = 0; !isDividor(c); i++) {
+        for(i = 0; !isDividor(c); c = fgetc(fp)) {
           if(i == (size-1)) { // -1 so always space for str terminator
             key = realloc(key, sizeof(char)*(size *= 2));
           }
-          key[i] = c;
+          key[i++] = c;
         }
         if(i == 0) { // no term read
           errINI = INI_INVALID_KEY;
           goto err;
         }
-        key[i] = '\0';
+        key[i++] = '\0';
         key = realloc(key, sizeof(char)*i);
+        //printf("%s\t\t", key); fflush(stdout);
         break;
       value: // read a value <term> until <space>
         val = malloc(sizeof(char) * (size = 100));
-        for(i = 0; !isSpace(c); i++) {
+        for(i = 0; !isSpace(c); c = fgetc(fp)) {
           if(i == (size-1)) { // -1 so always space for str terminator
             val = realloc(val , sizeof(char)*(size *= 2));
           }
-          val[i] = c;
+          val[i++] = c;
         }
         if(i == 0) { // no term read
           errINI = INI_INVALID_VAL;
           goto err;
         }
-        val[i] = '\0';
+        val[i++] = '\0';
         val = realloc(val, sizeof(char)*i);
+        //printf("%s\n", val); fflush(stdout);
         if((errINI = setINI(*ini, section, key, val)) != INI_NIL) { goto err; }
         free(key);
         key = NULL;
         free(val);
+        val = NULL;
         break;
       err:                                                                    // error check
+        //printf("**ERROR**\n"); fflush(stdout);
         fclose(fp);    // ignore possible error so syntax error is returned
         freeINI(*ini); // ignore possible error so syntax error is returned
         *ini = NULL;

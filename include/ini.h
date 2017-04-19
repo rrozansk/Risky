@@ -6,7 +6,7 @@
 /*
  Author:  Ryan Rozanski
  Created: 3/27/17
- Edited:  4/16/17
+ Edited:  4/18/17
  Info:    A ini configuration file library. Allows the static reading from and
           output to a file, as well as dynamic CRUD operations. The library API
           is designed to return errors, which should be checked and handled
@@ -49,8 +49,7 @@ typedef struct ini ini_t;
 typedef enum errINI {
   INI_CLOSE_FAILURE, INI_OPEN_FAILURE, INI_INVALID_KEY, INI_INVALID_SECTION,
   INI_INVALID_VAL, INI_OUT_OF_MEMORY, INI_NULL_KEY, INI_NULL_VAL, INI_NIL,
-  INI_NULL_SECTION, INI_FAILURE, INI_NULL_INI, INI_NULL_FILE_NAME,
-  INI_INVALID_CONF
+  INI_NULL_SECTION, INI_NULL_INI, INI_NULL_FILE_NAME, INI_INVALID_CONF
 } errINI_t;
 
 /*******************************************************************************
