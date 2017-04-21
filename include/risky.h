@@ -6,12 +6,8 @@
 /*
  Author:  Ryan Rozanski
  Created: 4/4/17
- Edited:  4/15/17
- Info:    Below is an API for building Risk like games. In addition to the API
-          a command line version of a Risk like game is also exposed. The game
-          allows total customization of gameplay through the use of a game_t
-          type defined below. It also allows for the training and competing of
-          custom configured AIs, and optional logging to files for all game types.
+ Edited:  4/20/17
+ Info:    TODO
 */
 
 #ifndef RISKY_DEFS
@@ -22,46 +18,16 @@
     T Y P E S
 
 *******************************************************************************/
-typedef struct game_conf {
-  // PLAYERS
-  int hps;             // number of human players  FIXME: int 0-8 -> put for all
-  char *computers;     // ptr to array of cps, i.e {cp0,cp1}
-  int cps;             // size of computers
-  // TRAINING
-  int log;             // turn on/off logging during training exercises
-  char *dir;           // directory to put taining logs
-  int trains;          // numer of training exercises to perform
-  // TROOPS
-  int beginning;       // number of troops recieved at game start
-  int minimum;         // minimum troop bonus per turn
-  int bonus;           // 
-  int random;          // 
-  // CARDS
-  char *cardTypes;     // ptr to array of card types
-  int numTypes;        // size of cardTypes
-  int wilds;           // number of wilds in the deck
-  int *tradeIns;       // ptr to array of trade in bonuses
-  int numTrades;       // size of tradeIns
-  int tradeIncr;       // constant trade increment once 
-  // CHROMOSOMES
-  int numChromosomes;  // number of chromosomes in each strand on DNA
-  int *cp0;            // ai 0
-  int *cp1;            // ai 1
-  int *cp2;            // ai 2
-  int *cp3;            // ai 3
-  int *cp4;            // ai 4
-  int *cp5;            // ai 5
-  int *cp6;            // ai 6
-  int *cp7;            // ai 7
-  // MAP
-  char *continents;    // ptr to array of continents
-  int *contBonuses;    // ptr to array of contnent bonuses
-  int numConts;        // size of continents array and contBonuses
-  char *countries;     // ptr to array of countries
-  int numCountries;    // size of countries array
-  int randomCountries; // to split up map randomly or not
-  int *board;          // adjacency matrix (2d array) 
-} game_conf_t;
+typedef struct game game_t;
+typedef struct card card_t;
+typedef struct player player_t;
+typedef struct country country_t;
+typedef struct continent continent_t;
+
+// All the possible errors returned from the library.
+typedef enum errRISKY { // 
+  RISKY_NULL_COUNTRY, RISKY_NULL_TROOPS, RISKY_NIL, RISKY_NULL_GAME,
+} errRISKY_t;
 
 /*******************************************************************************
 
@@ -69,47 +35,61 @@ typedef struct game_conf {
 
 *******************************************************************************/
 
+/***********************************ERRORS*************************************/
+// Return a string representation of any possible error returned by the library.
+const char *strErrRISKY(errRISKY_t errRISKY);
+
+/************************************SETUP*************************************/
+errRISKY_t makeRISKY(game_t **game);
+errRISKY_t freeRISKY(game_t *game);
+errRISKY_t setHumans(game_t *game, char hps);
+errRISKY_t setComputers(game_t *game, unsigned char cps, char **computers);
+errRISKY_t setLogging(game_t *game, unsigned char on, char *dir);
+errRISKY_t setTraining(game_t *game, unsigned short games);
+errRISKY_t setTroops(game_t *game, int beginning, int min, int bonus, int rand);
+errRISKY_t setDeck(game_t *game, int wilds, char **types, int n);
+errRISKY_t setTrades(game_t *game, int *trades, int n, int incr);
+errRISKY_t setCps(game_t *game, int **ais, unsigned short chromosomes, unsigned char traits);
+errRISKY_t setContinents(game_t *game, char **continents, int *bonuses, int n);
+errRISKY_t setCountries(game_t *game, char **countries, int n, int rand);
+errRISKY_t setAdjacencies(game_t *game, int **board, int n);
+errRISKY_t isEvolved(game_t *game, char *changed);
+errRISKY_t risk(game_t *game);
 
 /***********************************PLAYERS************************************/
-typedef struct player player_t;
-int troops(player_t);              // calculate troop bonus
-typedef struct country country_t;
-country_t *owned(player_t);        // list of countries owned by player as array
+errRISKY_t getPlayers(game_t *game, int *players);
+errRISKY_t troops(game_t *game, player_t);
+errRISKY_t owned(game_t *game, player_t);                    // list of countries owned by player as array
 
 /**********************************COUNTRIES***********************************/
-int countriesSize();                    // return the size of countries()
-country_t *countries();                 // get all countries as an array with countrySize()
-int boardersSize(country_t country);    // return the size of boarders()
-country_t *boarders(country_t country); // return all boarding countries as an array with boardersSize()
-char *name(country_t countr);           // get the name of the country
-player_t owner(country_t country);      // player who owns country
-int armies(country_t country);          // # armies on country
-int place(int troops, country_t);       // place armies on a country
-void randomizeBoard();                  // randomly assign countries to players
-void randomizeArmies();                 // randomly assign armies to players countries
+errRISKY_t countriesSize(game_t *game, int *size);           // return the size of countries()
+errRISKY_t countries(game_t *game, char **all);              // get all countries as an array with countrySize()
+errRISKY_t boardersSize(game_t *game, country_t country);    // return the size of boarders()
+errRISKY_t boarders(game_t *game, country_t country);        // return all boarding countries as an array with boardersSize()
+errRISKY_t name(game_t *game, country_t countr);             // get the name of the country
+errRISKY_t owner(game_t *game, country_t country);           // player who owns country
+errRISKY_t armies(game_t *game, country_t country);          // # armies on country
+errRISKY_t place(game_t *game, int troops, country_t);       // place armies on a country
+errRISKY_t randomizeBoard(game_t *game, int rand);           // randomly assign countries to players
+errRISKY_t randomizeArmies(game_t *game, int rand);          // randomly assign armies to players countries
 
 /**********************************CONTINENTS**********************************/
-typedef struct continent continent_t;
-continent_t *continents();              // return ptr to array of all continents
-int bonus(continent_t continent);  // troop bonus for the given continent
+errRISKY_t continents(game_t *game, int foo);                       // return ptr to array of all continents
+errRISKY_t bonus(game_t *game, continent_t continent);       // troop bonus for the given continent
 
 /************************************CARDS*************************************/
-typedef struct card card_t;
-card_t *cards();                   // get all cards as array
-int getcards();                    // get number of cards
-card_t *draw();                    // the next card to draw, takes care to shuffle cards and track cards still out
-int next();                        // number of troops recieved for next trade
-int trade(card_t *thesecards[], int size);   // number of troops recieved for trade
+errRISKY_t cards(game_t *game, int foo);                            // get all cards as array
+errRISKY_t getcards(game_t *game, int foo );                         // get number of cards
+errRISKY_t draw(game_t *game, int foo );                             // the next card to draw, takes care to shuffle cards and track cards still out
+errRISKY_t next(game_t *game, int foo );                             // number of troops recieved for next trade
+errRISKY_t trade(game_t *game, card_t *trade[]);             // number of troops recieved for trade
 
 /***********************************GAMEPLAY***********************************/
-char attack(country_t src, country_t dest, int men);   // attack a given continent
-void defend(int soilders);                             // defend against attackers
-void maneuver(country_t src, country_t dest, int men); // move troops from any src continent to any reachable dest continent
-void claimRegions();                                   //
-void setDefenses();                                    //
-char *printBoard();                                    // print out board as a str rep graph??
-
-/************************************RISKY*************************************/
-char *risk(game_conf_t *game); // play an approximation of Risk board game
+errRISKY_t attack(game_t *game, country_t src, country_t dest, int men);   // attack a given continent
+errRISKY_t defend(game_t *game, int soilders);                             // defend against attackers
+errRISKY_t maneuver(game_t *game, country_t src, country_t dest, int men); // move troops from any src continent to any reachable dest continent
+errRISKY_t claimRegions(game_t *game, country_t country, player_t player); //
+errRISKY_t setDefenses(game_t *game);                        //
+errRISKY_t printBoard(game_t *game);                         // print out board as a str rep graph??
 
 #endif
