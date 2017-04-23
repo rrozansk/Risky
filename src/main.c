@@ -203,10 +203,11 @@ int main(int argc, char *argv[]) {
   if((errGLUE = parseInt(val, &n)) != GLUE_NIL) { goto FAIL_GLUE; }
   if((errRISKY = setTraining(game, n)) != RISKY_NIL) { goto FAIL_RISKY; }
 
-  if((errINI = getINI(ini, "Training", key = "log", &val)) != INI_NIL) { goto FAIL_INI; }
+  /******************* LOGGING ********************/
+  if((errINI = getINI(ini, section = "Logging", key = "log", &val)) != INI_NIL) { goto FAIL_INI; }
   if((errGLUE = parseInt(val, &n)) != GLUE_NIL) { goto FAIL_GLUE; }
 
-  if((errINI = getINI(ini, "Training", key = "dir", &val)) != INI_NIL) { goto FAIL_INI; }
+  if((errINI = getINI(ini, "Logging", key = "dir", &val)) != INI_NIL) { goto FAIL_INI; }
   if((errRISKY = setLogging(game, n, val)) != RISKY_NIL) { goto FAIL_RISKY; }
 
   /******************* TROOPS *******************/

@@ -345,6 +345,7 @@ errRISKY_t isValid(game_t *game) {
   if(game->dimension < 0 || game->dimension > 256) { return RISKY_INVALID_BOARD_SIZE; }
   if(game->numCountries != game->dimension) { return RISKY_INVALID_ADJACENCIES; }
   if(game->chromosomes < 0 || game->chromosomes > 256) { return RISKY_INVALID_CHROMOSOMES; }
+  // FIXME enfore all between 0-256
   if(game->traits < 0 || game->traits > 256) { return RISKY_INVALID_TRAITS; }
   if(game->tradeIncr < 0 || game->tradeIncr > 256) { return RISKY_INVALID_INCR; }
   if(game->trains < 0 || game->trains > 65536) { return RISKY_INVALID_GAMES; }
@@ -465,7 +466,7 @@ errRISKY_t risky(game_t *game) {
     fprintf(game->fp, "\n\n*************************************GAMEPLAY***********************************\n\n");
   }
 
-  fclose(game->fp);
+  if(game->log) { fclose(game->fp); }
 
   return RISKY_NIL;
 }
