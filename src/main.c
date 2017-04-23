@@ -32,7 +32,8 @@
 // All the possible errors produced from this file. Mostly parsing arrays.
 typedef enum errGULE {
   GLUE_INVALID_ARRAY_LITERAL, GLUE_INVALID_INT_LITERAL, GLUE_NIL, 
-  GLUE_OUT_OF_MEMORY, GLUE_INVALID_ARRAY_SEPERATOR
+  GLUE_OUT_OF_MEMORY, GLUE_INVALID_ARRAY_SEPERATOR, GLUE_INVALID_VAL,
+  GLUE_INVALID_CHROMOSOME
 } errGLUE_t;
 
 /*******************************************************************************
@@ -47,6 +48,8 @@ const char *strErrGLUE(errGLUE_t errGLUE) {
     case GLUE_INVALID_ARRAY_LITERAL: return "invalid array literal";
     case GLUE_INVALID_ARRAY_SEPERATOR: return "invalid array literal seperator";
     case GLUE_OUT_OF_MEMORY: return "out of memory";
+    case GLUE_INVALID_VAL: return "nil value";
+    case GLUE_INVALID_CHROMOSOME: return "all chromosomes must be the same size";
     case GLUE_NIL: return "";
     default:  return "unknown errGLUE_t";
   }
@@ -54,6 +57,7 @@ const char *strErrGLUE(errGLUE_t errGLUE) {
 
 // Attempt to parse an integer literal.
 errGLUE_t parseInt(char *literal, int *dest) {
+  if(!literal) { return GLUE_INVALID_VAL; }
   char *end;
   *dest = (int)strtol(literal, &end, 10);
   if(literal == end) { return GLUE_INVALID_INT_LITERAL; }
@@ -64,6 +68,7 @@ errGLUE_t parseInt(char *literal, int *dest) {
 
 // Attempt to parse the size of an array literal.
 errGLUE_t parseArrSize(char *literal, int *size) {
+  if(!literal) { return GLUE_INVALID_VAL; }
   if(*literal != '{') { return GLUE_INVALID_ARRAY_LITERAL;  }
   char *tmp = NULL;
   for(*size = 0, literal++; *literal != '}'; tmp = literal, literal++) {
@@ -78,6 +83,7 @@ errGLUE_t parseArrSize(char *literal, int *size) {
 
 // Attempt to parse an array literal of integers.
 errGLUE_t parseIntArr(char *literal, int **dest, int *size) {
+  if(!literal) { return GLUE_INVALID_VAL; }
   errGLUE_t errGLUE;
   if((errGLUE = parseArrSize(literal, size)) != GLUE_NIL) { return errGLUE; }
   if(!(*dest = malloc(sizeof(int) * *size))) { return GLUE_OUT_OF_MEMORY; }
@@ -88,10 +94,12 @@ errGLUE_t parseIntArr(char *literal, int **dest, int *size) {
     (*dest)[i] = (int)strtol(literal, &tmp, 10);
     if(literal == tmp) {
       free(*dest);
+      *dest = NULL;
       return GLUE_INVALID_INT_LITERAL;  
     }
     if(!(*tmp == ',' || *tmp == '}')) { // invalid seperator or end
       free(*dest);
+      *dest = NULL;
       return GLUE_INVALID_ARRAY_SEPERATOR;
     }
   }
@@ -101,6 +109,7 @@ errGLUE_t parseIntArr(char *literal, int **dest, int *size) {
 
 // Attempt to parse an array literal of strings.
 errGLUE_t parseStrArr(char *literal, char ***dest, int *size) {
+  if(!literal) { return GLUE_INVALID_VAL; }
   errGLUE_t errGLUE;
   if((errGLUE = parseArrSize(literal, size)) != GLUE_NIL) { return errGLUE; }
   if(!(*dest = malloc(sizeof(char *) * (*size)))) { return GLUE_OUT_OF_MEMORY; }
@@ -116,6 +125,7 @@ errGLUE_t parseStrArr(char *literal, char ***dest, int *size) {
     if(!((*dest)[i])) {
       for(j = 0; j < i; j++) { free((*dest)[j]); }
       free(*dest);
+      *dest = NULL;
       return GLUE_OUT_OF_MEMORY;
     }
     strcpy((*dest)[i], token);
@@ -168,12 +178,14 @@ int main(int argc, char *argv[]) {
   game_t *game;
 
   if((errINI = readINI(&ini, argv[1])) != INI_NIL) {
-    fprintf(stderr, "error! failure to read conf file: %s\nirritant: %s\nexiting...\n", argv[1], strErrINI(errINI));
+    fprintf(stderr, "error! failure to read conf file: %s\nirritant: %s\nexiting...\n",
+        argv[1], strErrINI(errINI));
     return 0;
   }
 
   if((errRISKY = makeRISKY(&game)) != RISKY_NIL) {
-    fprintf(stderr, "error! failure to make a risky game\nirritant: %s\nexiting...\n", strErrRISKY(errRISKY));
+    fprintf(stderr, "error! failure to make a risky game\nirritant: %s\nexiting...\n",
+        strErrRISKY(errRISKY));
     goto FREE;
   }
 
@@ -237,43 +249,39 @@ int main(int argc, char *argv[]) {
   if((errRISKY = setCps(game, matrix, strArr1, n, j)) != RISKY_NIL) { goto FAIL_RISKY; }
 
   for(i = 0; i < n; i++) {
-    if((errINI = getINI(ini, "Chromosomes", strArr1[i], &val)) != INI_NIL) { goto FAIL_INI; }
-    // FIXME: invalid CP
-    // FIXME: key =
-    if((errGLUE = parseIntArr(val, matrix+i, &k)) != GLUE_NIL) { goto FAIL_GLUE; } // FIXME: matrix[i] addr??
-    //if(j != k) {  }  FIXME: invalid chromosome!!
+    if((errINI = getINI(ini, "Chromosomes", key = strArr1[i], &val)) != INI_NIL) { goto FAIL_INI; }
+    if((errGLUE = parseIntArr(val, &matrix[i], &k)) != GLUE_NIL) { goto FAIL_GLUE; }
+    if(j != k) {
+      errGLUE = GLUE_INVALID_CHROMOSOME;
+      goto FAIL_GLUE;
+    }
   }
 
   /******************* MAP *******************/
   if((errINI = getINI(ini, section = "Map", key = "continents", &val)) != INI_NIL) { goto FAIL_INI; }
   if((errGLUE = parseStrArr(val, &strArr1, &n)) != GLUE_NIL) { goto FAIL_RISKY; }
+  if((errRISKY = setContinents(game, strArr1, n)) != RISKY_NIL) { goto FAIL_RISKY; }
 
   if((errINI = getINI(ini, "Map", key = "continents_bonus", &val)) != INI_NIL) { goto FAIL_INI; }
   if((errGLUE = parseIntArr(val, &intArr, &i)) != GLUE_NIL) { goto FAIL_RISKY; }
-
-  if((errRISKY = setContinents(game, strArr1, intArr, n)) != RISKY_NIL) { goto FAIL_RISKY; }
-  // FIXME: another just for the bonuses.
+  if((errRISKY = setContinentBonuses(game, intArr, i)) != RISKY_NIL) { goto FAIL_RISKY; }
 
   if((errINI = getINI(ini, "Map", key = "random", &val)) != INI_NIL) { goto FAIL_INI; }
   if((errGLUE = parseInt(val, &i)) != GLUE_NIL) { goto FAIL_GLUE; }
-  // FIXME: another just for random.
 
   if((errINI = getINI(ini, "Map", key = "countries", &val)) != INI_NIL) { goto FAIL_INI; }
   if((errGLUE = parseStrArr(val, &strArr1, &n)) != GLUE_NIL) { goto FAIL_GLUE; }
   if((errRISKY = setCountries(game, strArr1, n, i)) != RISKY_NIL) { goto FAIL_RISKY; }
 
-  // GENERATE THE ADJACENCY MATRIX
   if((errGLUE = mallocMatrix(&matrix, n, n)) != GLUE_NIL) { goto FAIL_GLUE; }
-  if((errRISKY = setAdjacencies(game, matrix, n)) != RISKY_NIL) { goto FAIL_RISKY; } // FIXME: break randomCountries as own setting
+  if((errRISKY = setAdjacencies(game, matrix, n)) != RISKY_NIL) { goto FAIL_RISKY; }
  
   for(i = 0; i < n; i++) {
     if((errINI = getINI(ini, "Map", key = strArr1[i], &val)) != INI_NIL) { goto FAIL_INI; } 
-    // FIXME fprintf(stderr, "error! invalid conf\nirritant: expected '%s' key under [Map]\nexiting...\n", strArr1[i]);
     if((errGLUE = parseStrArr(val, &strArr2, &j)) != GLUE_NIL) { goto FAIL_GLUE; }
-    // FIXME j <= n -- cannot have more adjacencies than there are countries
 
-    for(; j; j--) { // for every country in adjacency list
-      for(k = n; k; k--) { // for every country
+    for(; j; j--) {
+      for(k = n; k; k--) {
         if(!strcmp(strArr1[k-1], strArr2[j-1])) {
           matrix[i][k-1] = 1;
           break;
@@ -285,33 +293,36 @@ int main(int argc, char *argv[]) {
 
   if((errRISKY = risky(game)) != RISKY_NIL) { goto FAIL_RISKY; }
 
-  //unsigned char *uval = NULL;
-  //if((errRISKY = isEvolved(game, uval)) != RISKY_NIL) { goto FAIL_RISKY; }
-  //if(uval) {
-    //  for each ai in game.computers:
-    //     setINI ai new DNA
-    //if((errINI = writeINI(ini, argv[1])) != INI_NIL) { goto FAIL_INI; }
-  //}
+  i = 0;
+  if((errRISKY = isEvolved(game, &i)) != RISKY_NIL) { goto FAIL_RISKY; }
+  if(i) {
+    for(j = 0; j < i; j++) {
+      // set val TODO: for each ai in game.computers
+      if((errINI = setINI(ini, "Chromosomes", key, val)) != INI_NIL) { goto FAIL_INI; }
+    }
+    section = key = NULL;
+    if((errINI = writeINI(ini, argv[1])) != INI_NIL) { goto FAIL_INI; }
+  }
 
   goto FREE;
 
 FAIL_GLUE:
   fprintf(stderr, "error in main.c!\nirritant: %s\nsection: %s, key: %s\nexiting...\n",
-      section, key, strErrGLUE(errGLUE));
+      strErrGLUE(errGLUE), section, key);
   goto FREE;
 
 FAIL_RISKY:
   fprintf(stderr, "error in RISKY lib!\nirritant: %s\nsection: %s, key: %s\nexiting...\n",
-      section, key, strErrRISKY(errRISKY));
+      strErrRISKY(errRISKY), section, key);
   goto FREE;
 
 FAIL_INI:
   fprintf(stderr, "error in INI lib!\nirritant: %s\nsection: %s, key: %s\nexiting...\n",
-      section, key, strErrINI(errINI));
+      strErrINI(errINI), section, key);
   goto FREE;
 
 FREE:
   freeINI(ini);
-  //freeRISKY(game);
+  freeRISKY(game);
   return 0;
 }
