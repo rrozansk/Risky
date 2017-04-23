@@ -98,7 +98,10 @@ errRISKY_t setTrades(game_t *game, int *trades, int n, int incr);
 errRISKY_t setCps(game_t *game, int **ais, char **names, int chromosomes, int traits);
 
 // Configure the continents which make up the map.
-errRISKY_t setContinents(game_t *game, char **continents, int *bonuses, int n);
+errRISKY_t setContinents(game_t *game, char **continents, int n);
+
+// Configure the continent bonuses which make up the map.
+errRISKY_t setContinentBonuses(game_t *game, int *bonuses, int n);
 
 // Configure the contries which make up the map.
 errRISKY_t setCountries(game_t *game, char **countries, int n, int rand);

@@ -126,12 +126,11 @@ const char *strErrRISKY(errRISKY_t errRISKY) {
 errRISKY_t makeRISKY(game_t **game) {
   if(!game) { return RISKY_NULL_GAME; }
 
-  if(!(*game = malloc(sizeof(game_t)))) { return RISKY_OUT_OF_MEMORY; }
+  if(!(*game = calloc(1, sizeof(game_t)))) { return RISKY_OUT_OF_MEMORY; }
 
   return RISKY_NIL;
 }
 
-// check every addr before freeing??
 errRISKY_t freeRISKY(game_t *game) {
   if(!game) { return RISKY_NULL_GAME; }
 
@@ -267,13 +266,24 @@ errRISKY_t setCps(game_t *game, int **ais, char **names, int chromosomes, int tr
   return RISKY_NIL;
 }
 
-errRISKY_t setContinents(game_t *game, char **continents, int *bonuses, int n) {
+errRISKY_t setContinents(game_t *game, char **continents, int n) {
   if(!game) { return RISKY_NULL_GAME; }
   if(!continents) { return RISKY_NULL_CONTINENTS; }
-  if(!bonuses) { return RISKY_NULL_COUNTRY_BONUSES; }
   if(n < 0 || n > 256) { return RISKY_INVALID_CONTINENTS_SIZE; }
+  if(game->contBonuses && game->numConts != n) { return RISKY_INVALID_CONTINENTS_SIZE; }
 
   game->continents = continents;
+  game->numConts = n;
+
+  return RISKY_NIL;
+}
+
+errRISKY_t setContinentBonuses(game_t *game, int *bonuses, int n) {
+  if(!game) { return RISKY_NULL_GAME; }
+  if(!bonuses) { return RISKY_NULL_COUNTRY_BONUSES; }
+  if(n < 0 || n > 256) { return RISKY_INVALID_CONTINENTS_SIZE; }
+  if(game->continents && game->numConts != n) { return RISKY_INVALID_CONTINENTS_SIZE; }
+
   game->contBonuses = bonuses;
   game->numConts = n;
 
@@ -347,7 +357,6 @@ errRISKY_t isValid(game_t *game) {
   if(game->numConts < 0 || game->numConts > 256) { return RISKY_INVALID_CONTINENTS_SIZE; }
   if(game->numCountries < 0 || game->numCountries > 256) { return RISKY_INVALID_COUNTRIES_SIZE; }
   if(game->numCountries < game->numConts) { return RISKY_INVALID_COUNTRY_CONTINENT; }
-
   return RISKY_NIL;  
 }
 
@@ -393,7 +402,7 @@ errRISKY_t risky(game_t *game) {
     time_t t = time(NULL);
     struct tm *date = localtime(&t);
     char *buffer = calloc(80, sizeof(char));
-    strftime(buffer, 80, "%Y_%B_%d_%A_%X", date);
+    strftime(buffer, 80, "%Y_%B_%d_%A_%X", date); // unique to the second.
 
     char *buffer2 = calloc(80, sizeof(char));
     sprintf(buffer2, "%s/%s.txt", game->dir, buffer);
