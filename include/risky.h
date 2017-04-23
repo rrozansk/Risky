@@ -6,7 +6,7 @@
 /*
  Author:  Ryan Rozanski
  Created: 4/4/17
- Edited:  4/21/17
+ Edited:  4/22/17
  Info:    A game library to easily implement Risk like games. It also exposes a
           command line version of risk which is completely configurable and
           allows for the training and competing of AIs.
@@ -37,20 +37,18 @@ typedef struct continent continent_t;
 
 // All the possible errors returned from the library.
 typedef enum errRISKY {
-  RISKY_NULL_COUNTRY, RISKY_NULL_TROOPS, RISKY_NIL, RISKY_NULL_GAME,
-  RISKY_OUT_OF_MEMORY, RISKY_INVALID_HPS, RISKY_INVALID_CPS, 
-  RISKY_INVALID_COMPUTERS, RISKY_NULL_COMPUTERS,
-  RISKY_NULL_DIR, RISKY_NULL_CARD_TYPES, RISKY_NULL_TRADEINS,
-  RISKY_NULL_AIS, RISKY_NULL_NAMES, RISKY_NULL_CONTINENTS,
-  RISKY_NULL_COUNTRY_BONUSES, RISKY_NULL_COUNTRIES, RISKY_NULL_BOARD,
-  RISKY_INVALID_LOGGING, RISKY_PLAYER_MANY, RISKY_PLAYERS_LITTLE,
-  RISKY_INVALID_ADJACENCIES, RISKY_DIR_CREATION_FAILURE,
-  RISKY_FILE_CREATION_FAILURE, RISKY_INVALID_GAMES, RISKY_INVALID_RAND,
-  RISKY_INVALID_BEGINNING, RISKY_INVALID_MINIMUM, RISKY_INVALID_BONUS,
-  RISKY_INVALID_WILDS, RISKY_INVALID_INCR, RISKY_INVALID_CHROMOSOMES,
-  RISKY_INVALID_TRAITS, RISKY_INVALID_DECK, RISKY_INVALID_TRADES_SET,
-  RISKY_INVALID_COUNTRIES_SIZE, RISKY_INVALID_BOARD_SIZE,
-  RISKY_INVALID_CONTINENTS_SIZE, RISKY_INVALID_COUNTRY_CONTINENT,
+  RISKY_NULL_COUNTRY, RISKY_NULL_TROOPS, RISKY_NULL_GAME, RISKY_PLAYER_MANY,
+  RISKY_OUT_OF_MEMORY, RISKY_INVALID_HPS, RISKY_INVALID_CPS, RISKY_NULL_BOARD,
+  RISKY_INVALID_COMPUTERS, RISKY_NULL_COMPUTERS, RISKY_INVALID_INCR, RISKY_NIL,
+  RISKY_NULL_DIR, RISKY_NULL_TRADEINS, RISKY_INVALID_DECK, RISKY_INVALID_WILDS,
+  RISKY_NULL_AIS, RISKY_NULL_NAMES, RISKY_NULL_CONTINENTS, RISKY_INVALID_RAND,
+  RISKY_NULL_COUNTRY_BONUSES, RISKY_NULL_COUNTRIES, RISKY_PLAYERS_LITTLE,
+  RISKY_INVALID_LOGGING, RISKY_NULL_CARD_TYPES, RISKY_INVALID_COUNTRY_CONTINENT,
+  RISKY_INVALID_ADJACENCIES, RISKY_DIR_CREATION_FAILURE, RISKY_INVALID_GAMES,
+  RISKY_FILE_CREATION_FAILURE, RISKY_INVALID_CHROMOSOMES, RISKY_INVALID_BONUS,
+  RISKY_INVALID_BEGINNING, RISKY_INVALID_MINIMUM, RISKY_INVALID_BOARD_SIZE,
+  RISKY_INVALID_TRAITS, RISKY_INVALID_TRADES_SET, RISKY_INVALID_COUNTRIES_SIZE,
+  RISKY_INVALID_CONTINENTS_SIZE,
 } errRISKY_t;
 
 /*******************************************************************************
@@ -72,41 +70,50 @@ errRISKY_t makeRISKY(game_t **game);
 // Free all allocated memory for a game, including parameters which were set.
 errRISKY_t freeRISKY(game_t *game);
 
-// FIXME: document the range/limits of int parameters
-// Configure the number of human players for the game.
+// Configure the number of human players (0-8) for the game.
 errRISKY_t setHumans(game_t *game, int players);
 
-// Configure the AIs which will be playing this game.
+// Configure the number of AIs (0-8) playing by suppling an array of strings
+// corresponding to named chromosomes.
 errRISKY_t setComputers(game_t *game, int players, char **names);
 
-// Turn logging on/off. Must specify a logging directory if turned on.
+// Turn logging on(1)/off(0). Must specify a logging directory if turned on,
+// with length between 1-255 characters.
 errRISKY_t setLogging(game_t *game, int on, char *dir);
 
-// Configure the number of games used to train the AIs.
+// Configure the number of games (0-2^16) used to train the AIs.
 errRISKY_t setTraining(game_t *game, int games);
 
-// Configure how troops will be handled throughout the game.
+// Configure how troops are setup. How much you receive at the game start, the
+// minimum per turn, and ratio of countries to troops to recieve for turn bonus
+// all 0-2^8. Can also choose to randomly assign troops to countries
+// yes(1)/no(0).
 errRISKY_t setTroops(game_t *game, int beginning, int min, int bonus, int rand);
 
-// Configure the deck/cards used for trading.
+// Configure the deck/cards used for trading. The number of wild (0-2^8), and
+// all possible card types besides wilds (len 2-2^8).
 errRISKY_t setDeck(game_t *game, int wilds, char **types, int n);
 
-// Configure how card trades are handled.
+// Configure how card trades are handled. How much each is worth (0-2^8) and 
+// the contant incrment (0-2^8) after the predefined ones run out.
 errRISKY_t setTrades(game_t *game, int *trades, int n, int incr);
 
-// Configure the DNA used for the AIs.
+// Configure the DNA used for the AIs. a 2D array representing the chromosomes,
+// the corresponding names for each AI, and the number of chromosomes and
+// traits in the DNA. All values 0-2^8 and lengths of arrays 0-2^8.
 errRISKY_t setCps(game_t *game, int **ais, char **names, int chromosomes, int traits);
 
-// Configure the continents which make up the map.
+// Configure the continents (1-2^8) which make up the map.
 errRISKY_t setContinents(game_t *game, char **continents, int n);
 
-// Configure the continent bonuses which make up the map.
+// Configure the continent bonuses (val: 0-2^8, len: 0-2^8) which make up the map.
 errRISKY_t setContinentBonuses(game_t *game, int *bonuses, int n);
 
-// Configure the contries which make up the map.
+// Configure the contries (0-2^8) which make up the map, and whether or not to
+// randomly yes(1)/no(0) distribute them at the beginning of the game.
 errRISKY_t setCountries(game_t *game, char **countries, int n, int rand);
 
-// Configure reachability between countries.
+// Configure reachability between countries using 2D array of 1's and 0's. 
 errRISKY_t setAdjacencies(game_t *game, int **board, int n);
 
 // Determine whether or not any chromosomes changed.
