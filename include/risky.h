@@ -23,18 +23,6 @@
 // A representation of the game
 typedef struct game game_t;
 
-// A representation of a card
-typedef struct card card_t;
-
-// A representation of a player
-typedef struct player player_t;
-
-// A representation of a country
-typedef struct country country_t;
-
-// A representation of a continent
-typedef struct continent continent_t;
-
 // All the possible errors returned from the library.
 typedef enum errRISKY {
   RISKY_NULL_COUNTRY, RISKY_NULL_TROOPS, RISKY_NULL_GAME, RISKY_PLAYER_MANY,
@@ -48,7 +36,9 @@ typedef enum errRISKY {
   RISKY_FILE_CREATION_FAILURE, RISKY_INVALID_CHROMOSOMES, RISKY_INVALID_BONUS,
   RISKY_INVALID_BEGINNING, RISKY_INVALID_MINIMUM, RISKY_INVALID_BOARD_SIZE,
   RISKY_INVALID_TRAITS, RISKY_INVALID_TRADES_SET, RISKY_INVALID_COUNTRIES_SIZE,
-  RISKY_INVALID_CONTINENTS_SIZE,
+  RISKY_INVALID_CONTINENTS_SIZE, RISKY_INVALID_PROMPT, RISKY_NULL_CHOICE,
+  RISKY_INVALID_INDEX_SIZE, RISKY_NULL_ELEMS, RISKY_READ_ERROR,
+  RISKY_INVALID_RANGE, RISKY_NULL_PLAYER, RISKY_UNKNOW_ERROR,
 } errRISKY_t;
 
 /*******************************************************************************
@@ -67,7 +57,7 @@ const char *strErrRISKY(errRISKY_t errRISKY);
 // Attempt to malloc the space for a new game.
 errRISKY_t makeRISKY(game_t **game);
 
-// Free all allocated memory for a game, including parameters which were set.
+// Free all alloc'ed memory, including any configured dynamic arrays.
 errRISKY_t freeRISKY(game_t *game);
 
 // Configure the number of human players (0-8) for the game.
@@ -119,13 +109,23 @@ errRISKY_t setAdjacencies(game_t *game, int **board, int n);
 // Determine whether or not any chromosomes changed.
 errRISKY_t isEvolved(game_t *game, int *changed);
 
+// Print an enumerated list of choices starting from 0.
+errRISKY_t printChoices(char **elems, int size);
+
+// Read in an integer, only accepting input between the bounds. Optionally
+// prompt user 'are you sure'. Handles all errors appropriately.
+errRISKY_t readInt(int lbound, int ubound, int *pick, int prompt);
+
 // Kick off a command line version of a Risk like game.
 errRISKY_t risky(game_t *game);
 
-// TODO
 /***********************************PLAYERS************************************/
+typedef struct card card_t; // A representation of a card    // FIXME: are these needed??
+typedef struct player player_t; // A representation of a player
+typedef struct country country_t; // A representation of a country
+typedef struct continent continent_t; // A representation of a continent
 
-errRISKY_t getPlayers(game_t *game, int *players);
+errRISKY_t getPlayers(game_t *game, int *players); // names
 errRISKY_t troops(game_t *game, player_t);
 errRISKY_t owned(game_t *game, player_t); // list of countries owned by player as array
 

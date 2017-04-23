@@ -6,7 +6,7 @@
 /*
  Author:  Ryan Rozanski
  Created: 4/4/17
- Edited:  4/22/17
+ Edited:  4/23/17
 */
 
 /*******************************************************************************
@@ -118,6 +118,14 @@ const char *strErrRISKY(errRISKY_t errRISKY) {
     case RISKY_INVALID_CONTINENTS_SIZE: return "number of defined continents must be between 0-2^8";
     case RISKY_INVALID_BOARD_SIZE: return "number of adjacencies must be between 0-2^8";
     case RISKY_INVALID_COUNTRY_CONTINENT: return "number of defined countries must be greater than or equal to number of defined continents";
+    case RISKY_INVALID_PROMPT: return "prompt must be 1 or 0";
+    case RISKY_NULL_CHOICE: return "nil choice";
+    case RISKY_INVALID_INDEX_SIZE: return "array size must be >= 0";
+    case RISKY_NULL_ELEMS: return "nil list";
+    case RISKY_READ_ERROR: return "error reading input";
+    case RISKY_INVALID_RANGE: return "invalid choice range";
+    case RISKY_NULL_PLAYER: return "nil player";
+    case RISKY_UNKNOW_ERROR: return "congratulations! you broke the game in a way unknow way!";
     case RISKY_NIL: return "";
     default: return "unrecognized RISKY error code";
   }
@@ -152,19 +160,17 @@ errRISKY_t freeRISKY(game_t *game) {
     free(game->ais);
     free(game->names);
   }
-  if(game->continents && game->contBonuses) {
+  if(game->contBonuses) { free(game->contBonuses); }
+  if(game->continents) {
     for(; game->numConts; game->numConts--) { free(game->continents[game->numConts-1]); }
     free(game->continents);
-    free(game->contBonuses);
   }
-  game->cps = game->numCountries; // tmp storage
   if(game->countries) {
     for(; game->numCountries; game->numCountries--) { free(game->countries[game->numCountries-1]); }
     free(game->countries);
   }
-  game->numCountries = game->cps;
   if(game->board) {
-    for(; game->numCountries; game->numCountries--) { free(game->board[game->numCountries-1]); }
+    for(; game->dimension; game->dimension--) { free(game->board[game->dimension-1]); }
     free(game->board);
   }
   free(game);
@@ -345,8 +351,7 @@ errRISKY_t isValid(game_t *game) {
   if(game->dimension < 0 || game->dimension > 256) { return RISKY_INVALID_BOARD_SIZE; }
   if(game->numCountries != game->dimension) { return RISKY_INVALID_ADJACENCIES; }
   if(game->chromosomes < 0 || game->chromosomes > 256) { return RISKY_INVALID_CHROMOSOMES; }
-  // FIXME enfore all between 0-256
-  if(game->traits < 0 || game->traits > 256) { return RISKY_INVALID_TRAITS; }
+  if(game->traits < 0 || game->traits > 256) { return RISKY_INVALID_TRAITS; } // FIXME enfore all between 0-256
   if(game->tradeIncr < 0 || game->tradeIncr > 256) { return RISKY_INVALID_INCR; }
   if(game->trains < 0 || game->trains > 65536) { return RISKY_INVALID_GAMES; }
   if(game->beginning < 0 || game->beginning > 256) { return RISKY_INVALID_BEGINNING; }
@@ -361,6 +366,7 @@ errRISKY_t isValid(game_t *game) {
   return RISKY_NIL;  
 }
 
+/* PRIVATE HELPERS */
 void fprintIntArr(FILE *fp, int *arr, int size) {
   fprintf(fp, "{");
   int i;
@@ -391,6 +397,96 @@ void fprintStrArr(FILE *fp, char **arr, int size) {
   }
   fprintf(fp, "}\n");
 } 
+
+errRISKY_t printChoices(char **elems, int size) {
+  if(!elems) { return RISKY_INVALID_INDEX_SIZE; }
+  if(!size || size < 0) { return RISKY_NULL_ELEMS; }
+
+  int i;
+  for(i = 0; i < size; i++) { printf("\t%i) %s\n", i, elems[i]);  }
+  printf("\n");
+ 
+  return RISKY_NIL;
+}
+
+errRISKY_t readInt(int lbound, int ubound, int *pick, int prompt) {
+  if(lbound == ubound) { return RISKY_INVALID_RANGE; }
+  if(!pick) { return RISKY_NULL_CHOICE; }
+  if(!(prompt == 0 || prompt == 1)) { return RISKY_INVALID_PROMPT; }
+
+  char c;
+  char buffer[80];
+  printf("Enter pick (%i-%i): ", lbound, ubound);
+  while(fgets(buffer, 80, stdin)) {
+    if(!sscanf(buffer, "%d\n", pick) || *pick < lbound || *pick > ubound) {
+      printf("invalid, input must be a single integer between %i-%i\n", lbound, ubound);
+      printf("Enter pick (%i-%i): ", lbound, ubound);
+    } else if(prompt) {
+      printf("Entered choice: %i, are you sure (y/n)? ", *pick);
+      while(fgets(buffer, 80, stdin)) {
+        if(!sscanf(buffer, "%c\n", &c) || !(c == 'y' || c == 'n')) {
+          printf("invalid input, only enter 'y'/'n': ");
+        }
+        else if(c == 'y') { return RISKY_NIL; }
+        else { break; } // c == 'n'
+      }
+      if(c != 'n') { return RISKY_READ_ERROR; }
+      printf("Enter pick (%i-%i): ", lbound, ubound);
+    } else { return RISKY_NIL; }
+  }
+
+  return RISKY_READ_ERROR;
+}
+
+errRISKY_t humanTurn(game_t *game, player_t *player) {
+  if(!game) { return RISKY_NULL_GAME; }
+  //if(!player) { return RISKY_NULL_PLAYER; }
+
+  int choice;
+  int choices = 5;
+  int prompt = 1;
+  char *menu[] = {"Trade", "Attack", "Query", "Manuver", "End"};
+
+  int done = 0;
+  errRISKY_t errRISKY;
+
+  // TODO: printf("Player %s's turn\n", getName(game, player));
+  // typdef player_t int // typdef country_t char * // typdef continent_t char *
+  while(!done) {
+    if((errRISKY = printChoices(menu, choices)) != RISKY_NIL) { return errRISKY; }
+    if((errRISKY = readInt(0, choices-1, &choice, prompt)) != RISKY_NIL) { return errRISKY; }
+    switch(choice) { // TODO always offer back choice in sub menus
+      case 0:
+        // which cards
+        // place troops
+        break;
+      case 1: 
+        // who
+        // how many
+        break;
+      case 2: 
+        // make any query into game (who, what, board, how many, etc...)
+        break;
+      case 3: // always end turn after a manuver, **fall through case**
+        // src, dest, how many
+      case 4: 
+        done = 1;
+        break;
+      default:
+        return RISKY_UNKNOW_ERROR;
+    }
+  }
+
+  return RISKY_NIL;
+}
+
+errRISKY_t computerTurn(game_t *game, player_t *player) { // TODO
+  if(!game) { return RISKY_NULL_GAME; }
+  if(!player) { return RISKY_NULL_PLAYER; }
+
+  return RISKY_NIL;
+}
+
 
 errRISKY_t risky(game_t *game) {
   errRISKY_t errRISKY = isValid(game);
@@ -426,45 +522,57 @@ errRISKY_t risky(game_t *game) {
     fprintf(game->fp, "Training sessions: %i\n", game->trains);
 
     fprintf(game->fp, "\n\t**TROOP**\n");
-    fprintf(game->fp, "Beginning troop count: %i\n", game->beginning);
-    fprintf(game->fp, "Minimum troop per turn: %i\n", game->minimum);
-    fprintf(game->fp, "Troop bonus: %i\n", game->bonus);
-    fprintf(game->fp, "Randomize troops: %i\n", game->random);
+    fprintf(game->fp, "Beginning game troop count: %i\n", game->beginning);
+    fprintf(game->fp, "Minimum troops per turn: %i\n", game->minimum);
+    fprintf(game->fp, "Extra troop bonus ratio per countries: %i\n", game->bonus);
+    fprintf(game->fp, "Randomized troops: %i\n", game->random);
 
     fprintf(game->fp, "\n\t**CARD**\n");
     fprintf(game->fp, "Number of wilds: %i\n", game->wilds);
     fprintf(game->fp, "Number of card types: %i\n", game->numTypes);
     fprintf(game->fp, "Card types: "); 
     fprintStrArr(game->fp, game->cardTypes, game->numTypes);
-    fprintf(game->fp, "Trade increment: %i\n", game->tradeIncr);
     fprintf(game->fp, "Number of trade ins: %i\n", game->numTrades);
     fprintf(game->fp, "Trade Ins: "); 
+    fprintf(game->fp, "Trade increment: %i\n", game->tradeIncr);
     fprintIntArr(game->fp, game->tradeIns, game->numTrades);
 
     fprintf(game->fp, "\n\t**DNA**\n");
-    fprintf(game->fp, "Number chromosomes: %i\n", game->chromosomes);
-    fprintf(game->fp, "Number traits: %i\n", game->traits);
+    fprintf(game->fp, "Number of chromosomes: %i\n", game->chromosomes);
+    fprintf(game->fp, "Number of traits: %i\n", game->traits);
     fprintf(game->fp, "AI names: "); 
     fprintStrArr(game->fp, game->names, game->chromosomes);
     fprintf(game->fp, "Chromosomes:\n"); 
     fprintIntArr2D(game->fp, game->ais, game->chromosomes, game->traits);
 
     fprintf(game->fp, "\n\t**MAP SETTINGS**\n");
-    fprintf(game->fp, "Number continents: %i\n", game->numConts);
+    fprintf(game->fp, "Number of continents: %i\n", game->numConts);
     fprintf(game->fp, "Continents: "); 
     fprintStrArr(game->fp, game->continents, game->numConts);
     fprintf(game->fp, "Continent bonuses: "); 
     fprintIntArr(game->fp, game->contBonuses, game->numConts);
-    fprintf(game->fp, "Randomize countries: %i\n", game->randomCountries);
-    fprintf(game->fp, "Number countries: %i\n", game->numCountries);
-    fprintf(game->fp, "Dimensions: %i\n", game->dimension);
+    fprintf(game->fp, "Randomized countries: %i\n", game->randomCountries);
+    fprintf(game->fp, "Number of countries: %i\n", game->numCountries);
     fprintf(game->fp, "Countries: "); 
     fprintStrArr(game->fp, game->countries, game->numCountries);
+    fprintf(game->fp, "Adjacency dimensions: %i\n", game->dimension);
     fprintf(game->fp, "Adjacency Matrix:\n");
     fprintIntArr2D(game->fp, game->board, game->dimension, game->dimension);
 
     fprintf(game->fp, "\n\n*************************************GAMEPLAY***********************************\n\n");
   }
+
+  // initDeck(game);
+  // initPlayers(game);
+  // while(NumberPlayer(game) > 1) {
+  //   player_t player = getNextPlayer(game);
+  //   if(type(player) == cp) { computerTurn(game); } // AI
+
+  if((errRISKY = humanTurn(game, NULL)) != RISKY_NIL) { return errRISKY; }
+
+  //   else { humanTurn(game, player); }
+  // }
+  // printWinner(game);
 
   if(game->log) { fclose(game->fp); }
 
