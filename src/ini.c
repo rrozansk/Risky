@@ -6,7 +6,7 @@
 /*
  Author:  Ryan Rozanski
  Created: 3/27/17
- Edited:  4/18/17
+ Edited:  4/21/17
 */
 
 /*******************************************************************************
@@ -305,6 +305,7 @@ errINI_t getINI(ini_t *ini, char *section, char *key, char **val) {
     }
   }
 
+  *val = NULL;
   return INI_NIL;
 }
 
@@ -348,25 +349,28 @@ errINI_t deleteINI(ini_t *ini, char *section, char *key) {
   if(!isValidHeader(section)) { return INI_INVALID_SECTION; }
   if(!isValidKey(key)) { return INI_INVALID_KEY; }
 
-  settings_t *settings;
-  //ini_t *tmp_ini = ini;
-  int empty;
-  for(; ini; ini = ini->rest) {
+  settings_t *settings, *prevSetting = NULL;
+  ini_t *prevINI = NULL;
+  int keys;
+  for(; ini; prevINI = ini, ini = ini->rest) {
     if(ini->section) {
       if(!strcmp(ini->section->header, section)) { // found section containg key to delete
-        for(empty = 0, settings = ini->section->settings; settings; settings = settings->rest, empty++) {
+        for(keys = 0, settings = ini->section->settings; settings; settings = settings->rest, keys++) {
           if(!strcmp(settings->setting->key ,key)) { // found setting to delete
             free(settings->setting->val);
-            free(settings->setting->val);
-            empty--;
+            free(settings->setting->key);
+            if(prevSetting) { prevSetting->rest = settings->rest; } // fix settings list
+            free(settings->setting);
+            keys--;
           }
-        } /*
-        if(empty == 0) { // no other settings in section
-          ini_t *conf = ini->section;
-          ini->section = ini->rest->section;
-          ini->rest = ini->rest->rest;
+          prevSetting = settings;
+        }
+        if(keys == 0) { // no other settings in section
+          free(ini->section->settings);
+          free(ini->section->header);
+          if(prevINI) { prevINI->rest = ini->rest; } // fix ini/sections list
           free(ini->section);
-        } */
+        }
         return INI_NIL;  
       }
     }
