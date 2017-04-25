@@ -1,54 +1,50 @@
 /******************************************************************************
+ * FILE:    ini.c                                                             *
+ * AUTHOR:  Ryan Rozanski                                                     *
+ * CREATED: 3/27/17                                                           *
+ * EDITED:  4/24/17                                                           *
+ * INFO:    Implementation of the interface located in ini.h.                 *
+ *                                                                            *
+ ******************************************************************************/
 
-    F I L E   I N F O R M A T I O N
-
-*******************************************************************************/
-/*
- Author:  Ryan Rozanski
- Created: 3/27/17
- Edited:  4/21/17
-*/
-
-/*******************************************************************************
-
-    I N C L U D E S
-
-*******************************************************************************/
+/******************************************************************************
+ *                                                                            *
+ *   I N C L U D E S                                                          *
+ *                                                                            *
+ ******************************************************************************/
 #include <ini.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
 
-/*******************************************************************************
+/******************************************************************************
+ *                                                                            *
+ *   S T R U C T S                                                            *
+ *                                                                            *
+ ******************************************************************************/
+typedef struct setting { char *key, *val; } setting_t; /* [key . val] */
 
-    S T R U C T S
-
-*******************************************************************************/
-typedef struct setting {  // for atomic config setting --> [key . val]
-  char *key, *val; 
-} setting_t;
-
-typedef struct settings { // list of config setting/section  --> ([key . val] ...)
+typedef struct settings { /* ([key . val] ...) */
  setting_t *setting;
  struct settings *rest;
 } settings_t;
 
-typedef struct section {  // config section settings --> { [section header] . ([key . val] ...) }
+typedef struct section { /* { [section header] . ([key . val] ...) } */
   char *header;
   settings_t *settings;
 } section_t;
   
-typedef struct ini {      // list of ( { [section header] . ([key . val] ...) } ... )
+typedef struct ini { /* ( { [section header] . ([key . val] ...) } ... ) */
   section_t *section;
   struct ini *rest;
 } ini_t;
 
-/*******************************************************************************
-
-    P R I V A T E   F U N C T I O N S
-
-*******************************************************************************/
+/******************************************************************************
+ *                                                                            *
+ *   P R I V A T E   F U N C T I O N S                                        *
+ *                                                                            *
+ ******************************************************************************/
 setting_t *make_setting(char *key, char *val) {
   setting_t *new_setting = malloc(sizeof(setting_t));
   if(!new_setting) { return NULL; }
@@ -112,33 +108,33 @@ int isValidKey(char *key) { return isValidTerm(key); }
 int isValidHeader(char *section) { return isValidTerm(section); }
 int isValidVal(char *val) { return isValidTerm(val); }
 
-/*******************************************************************************
-
-    P U B L I C   F U N C T I O N S
-
-*******************************************************************************/
+/******************************************************************************
+ *                                                                            *
+ *   P U B L I C   F U N C T I O N S                                          *
+ *                                                                            *
+ ******************************************************************************/
 const char *strErrINI(errINI_t errINI) {
   switch(errINI) {
     case INI_OPEN_FAILURE: return "failure to open conf file";
     case INI_CLOSE_FAILURE: return "failure to close conf file";
-    case INI_NULL_FILE_NAME: return "nil conf file name";
+    case INI_NULL_FNAME: return "nil conf file name";
+    case INI_INVALID_CONF: return "invalid conf file";
     case INI_INVALID_KEY: return "key does not adhere to library grammar";
-    case INI_INVALID_SECTION: return "header does not adhere to library grammar";
     case INI_INVALID_VAL: return "value does not adhere to library grammar";
-    case INI_OUT_OF_MEMORY: return "out of memory";
+    case INI_INVALID_SECTION: return "header does not adhere to library grammar";
+    case INI_NULL_INI: return "nil ini";
     case INI_NULL_KEY: return "nil key";
     case INI_NULL_VAL: return "nil value";
     case INI_NULL_SECTION: return "nil section";
-    case INI_NULL_INI: return "nil ini";
-    case INI_INVALID_CONF: return "invalid conf file";
-    case INI_NIL: return "no error";
+    case INI_OUT_OF_MEMORY: return "out of memory";
+    case INI_NIL: return "";
     default: return "unrecognized INI error code";
   }
 }
 
 errINI_t readINI(ini_t **ini, char *fname) {
   if(!ini) { return INI_NULL_INI; }
-  if(!fname) { return INI_NULL_FILE_NAME; }
+  if(!fname) { return INI_NULL_FNAME; }
 
   FILE *fp = fopen(fname, "r");
   if(!fp) { return INI_OPEN_FAILURE; }
@@ -235,7 +231,7 @@ errINI_t readINI(ini_t **ini, char *fname) {
 
 errINI_t writeINI(ini_t *ini, char *fname) {
   if(!ini) { return INI_NULL_INI; }
-  if(!fname) { return INI_NULL_FILE_NAME; }
+  if(!fname) { return INI_NULL_FNAME; }
 
   FILE *fp = fopen(fname, "w+");
   if(!fp) { return INI_OPEN_FAILURE; }

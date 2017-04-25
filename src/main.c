@@ -1,55 +1,52 @@
-/*******************************************************************************
+/******************************************************************************
+ * FILE:    main.c                                                            *
+ * AUTHOR:  Ryan Rozanski                                                     *
+ * CREATED: 4/4/17                                                            *
+ * EDITED:  4/24/17                                                           *
+ * INFO:    main.c is the glue which holds together the ini and risky         *
+ *          libraries. This file attempts to parse an ini configuration file  *
+ *          into a risky game and output a new configuration file if any AI   *
+ *          DNA changed during gameplay. It also takes care to report errors, *
+ *          if any.                                                           *
+ *                                                                            *
+ ******************************************************************************/
 
-    F I L E   I N F O R M A T I O N
-
-*******************************************************************************/
-/*
- Author:  Ryan Rozanski
- Created: 4/4/17
- Edited:  4/22/17
- Info:    main.c is the glue which holds together the ini and risky libraries.
-          This file attempts to parse an ini configuration file into a risky
-          game and output a new configuration file if any AI DNA changed during
-          gameplay. It also takes care to report errors, if any.
-*/
-
-/*******************************************************************************
-
-    I N C L U D E S
-
-*******************************************************************************/
+/******************************************************************************
+ *                                                                            *
+ *   I N C L U D E S                                                          *
+ *                                                                            *
+ ******************************************************************************/
 #include <ini.h>
 #include <risky.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-/*******************************************************************************
+/******************************************************************************
+ *                                                                            *
+ *   E R R O R S                                                              *
+ *                                                                            *
+ ******************************************************************************/
+typedef enum errGULE { /* All possible errors produced by this file. */
+  GLUE_INVALID_INT_LITERAL, GLUE_INVALID_ARRAY_LITERAL, GLUE_INVALID_CHROMOSOME,
+  GLUE_INVALID_ARRAY_SEPERATOR, GLUE_NULL_LITERAL, GLUE_NIL, GLUE_OUT_OF_MEMORY,
+} errGLUE_t; 
 
-    T Y P E S
+/******************************************************************************
+ *                                                                            *
+ *   F U N C T I O N S                                                        *
+ *                                                                            *
+ ******************************************************************************/
 
-*******************************************************************************/
-// All the possible errors produced from this file. Mostly parsing arrays.
-typedef enum errGULE {
-  GLUE_INVALID_ARRAY_LITERAL, GLUE_INVALID_INT_LITERAL, GLUE_NIL, 
-  GLUE_OUT_OF_MEMORY, GLUE_INVALID_ARRAY_SEPERATOR, GLUE_INVALID_VAL,
-  GLUE_INVALID_CHROMOSOME
-} errGLUE_t;
-
-/*******************************************************************************
-
-    F U N C T I O N S
-
-*******************************************************************************/
 // Return the string representation of a given error produced from this file. 
 const char *strErrGLUE(errGLUE_t errGLUE) {
   switch(errGLUE) {
     case GLUE_INVALID_INT_LITERAL: return "invalid interger literal";
     case GLUE_INVALID_ARRAY_LITERAL: return "invalid array literal";
     case GLUE_INVALID_ARRAY_SEPERATOR: return "invalid array literal seperator";
+    case GLUE_INVALID_CHROMOSOME: return "invalid chromosomes (unequal sizes)";
     case GLUE_OUT_OF_MEMORY: return "out of memory";
-    case GLUE_INVALID_VAL: return "nil value";
-    case GLUE_INVALID_CHROMOSOME: return "all chromosomes must be the same size";
+    case GLUE_NULL_LITERAL: return "nil literal";
     case GLUE_NIL: return "";
     default:  return "unknown errGLUE_t";
   }
@@ -57,7 +54,7 @@ const char *strErrGLUE(errGLUE_t errGLUE) {
 
 // Attempt to parse an integer literal.
 errGLUE_t parseInt(char *literal, int *dest) {
-  if(!literal) { return GLUE_INVALID_VAL; }
+  if(!literal) { return GLUE_NULL_LITERAL; }
   char *end;
   *dest = (int)strtol(literal, &end, 10);
   if(literal == end) { return GLUE_INVALID_INT_LITERAL; }
@@ -68,7 +65,7 @@ errGLUE_t parseInt(char *literal, int *dest) {
 
 // Attempt to parse the size of an array literal.
 errGLUE_t parseArrSize(char *literal, int *size) {
-  if(!literal) { return GLUE_INVALID_VAL; }
+  if(!literal) { return GLUE_NULL_LITERAL; }
   if(*literal != '{') { return GLUE_INVALID_ARRAY_LITERAL;  }
   char *tmp = NULL;
   for(*size = 0, literal++; *literal != '}'; tmp = literal, literal++) {
@@ -83,7 +80,7 @@ errGLUE_t parseArrSize(char *literal, int *size) {
 
 // Attempt to parse an array literal of integers.
 errGLUE_t parseIntArr(char *literal, int **dest, int *size) {
-  if(!literal) { return GLUE_INVALID_VAL; }
+  if(!literal) { return GLUE_NULL_LITERAL; }
   errGLUE_t errGLUE;
   if((errGLUE = parseArrSize(literal, size)) != GLUE_NIL) { return errGLUE; }
   if(!(*dest = malloc(sizeof(int) * *size))) { return GLUE_OUT_OF_MEMORY; }
@@ -109,15 +106,15 @@ errGLUE_t parseIntArr(char *literal, int **dest, int *size) {
 
 // Attempt to parse an array literal of strings.
 errGLUE_t parseStrArr(char *literal, char ***dest, int *size) {
-  if(!literal) { return GLUE_INVALID_VAL; }
+  if(!literal) { return GLUE_NULL_LITERAL; }
   errGLUE_t errGLUE;
   if((errGLUE = parseArrSize(literal, size)) != GLUE_NIL) { return errGLUE; }
   if(!(*dest = malloc(sizeof(char *) * (*size)))) { return GLUE_OUT_OF_MEMORY; }
 
   int i, j;
-  char *c = calloc(j = strlen(literal)+1, sizeof(char));
-  char *orig = c;
-  char *token;
+  char *c, *orig, *token;
+
+  c = orig = calloc(j = strlen(literal)+1, sizeof(char));
   strncpy(c, literal, j-1);
   for(i = 0, c++, token = strtok(c, ",}"); i < *size; i++, token = strtok(NULL, ",}")) {
     j = strlen(token)+1;
@@ -294,11 +291,14 @@ int main(int argc, char *argv[]) {
 
   if((errRISKY = risky(game)) != RISKY_NIL) { goto FAIL_RISKY; }
 
-  i = 0;
   if((errRISKY = isEvolved(game, &i)) != RISKY_NIL) { goto FAIL_RISKY; }
   if(i) {
-    for(j = 0; j < i; j++) {
-      // set val TODO: for each ai in game.computers
+    //char chromosome[80];
+    // FIXME: errRISKY_t getCps(game, char **names, int *n);
+    for(j = 0; j < n; j++) { 
+      // FIXME errRISKY_t getChromosome(game, names[j], int *dna);
+      // FIXME **chromosome to string**
+      // FIXME errINI = setINI(ini, "Chromosomes", names[j], chromosome);
       if((errINI = setINI(ini, "Chromosomes", key, val)) != INI_NIL) { goto FAIL_INI; }
     }
     section = key = NULL;
