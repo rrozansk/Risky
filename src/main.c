@@ -2,7 +2,7 @@
  * FILE:    main.c                                                            *
  * AUTHOR:  Ryan Rozanski                                                     *
  * CREATED: 4/4/17                                                            *
- * EDITED:  4/24/17                                                           *
+ * EDITED:  4/28/17                                                           *
  * INFO:    main.c is the glue which holds together the ini and risky         *
  *          libraries. This file attempts to parse an ini configuration file  *
  *          into a risky game and output a new configuration file if any AI   *
@@ -30,6 +30,7 @@
 typedef enum errGULE { /* All possible errors produced by this file. */
   GLUE_INVALID_INT_LITERAL, GLUE_INVALID_ARRAY_LITERAL, GLUE_INVALID_CHROMOSOME,
   GLUE_INVALID_ARRAY_SEPERATOR, GLUE_NULL_LITERAL, GLUE_NIL, GLUE_OUT_OF_MEMORY,
+  GLUE_NIL_BUFFER, GLUE_NIL_ARR, GLUE_SPRINT_FAIL,
 } errGLUE_t; 
 
 /******************************************************************************
@@ -47,6 +48,9 @@ const char *strErrGLUE(errGLUE_t errGLUE) {
     case GLUE_INVALID_CHROMOSOME: return "invalid chromosomes (unequal sizes)";
     case GLUE_OUT_OF_MEMORY: return "out of memory";
     case GLUE_NULL_LITERAL: return "nil literal";
+    case GLUE_NIL_BUFFER: return "nil buffer";
+    case GLUE_NIL_ARR: return "nil integer array of traits";
+    case GLUE_SPRINT_FAIL: return "failure to output new chromosome";
     case GLUE_NIL: return "";
     default:  return "unknown errGLUE_t";
   }
@@ -149,6 +153,32 @@ errGLUE_t mallocMatrix(int ***matrix, int r, int c) {
   return GLUE_NIL;
 }
 
+// Attempt to print an integer array into the given buffer
+errGLUE_t outputChromosome(char *buff, int max, int *arr, int size) {
+  if(!buff) { return GLUE_NIL_BUFFER; }
+  if(!arr) { return GLUE_NIL_ARR; }
+
+  int pos = 0;
+  buff[pos++] = '{';
+ 
+  int j, chars;
+  for(j = 0; j < size; j++) {
+    chars = sprintf(&buff[pos], "%d", arr[j]);
+    if(chars < 0) { return GLUE_SPRINT_FAIL; }
+    pos += chars;
+    if(j < size-1) {
+      chars = sprintf(&buff[pos], ",");
+      if(chars < 0) { return GLUE_SPRINT_FAIL; }
+      pos += chars;
+    }
+  }
+
+  buff[pos++] = '}';
+  buff[pos] = '\0';
+  
+  return GLUE_NIL;
+}
+
 // Print out game, version, and author information. Make sure a configuration
 // file is specified. Then attempts to setup, play, and teardown the game.
 // Reports any errors if they occur and free any memory which was allocated.
@@ -167,24 +197,16 @@ int main(int argc, char *argv[]) {
   int *intArr;
   int **matrix;
 
-  errINI_t errINI;
-  errGLUE_t errGLUE;
-  errRISKY_t errRISKY;
+  errINI_t errINI = INI_NIL;
+  errGLUE_t errGLUE = GLUE_NIL;
+  errRISKY_t errRISKY = RISKY_NIL;
 
-  ini_t *ini;
-  game_t *game;
+  ini_t *ini = NULL;
+  game_t *game = NULL;
 
-  if((errINI = readINI(&ini, argv[1])) != INI_NIL) {
-    fprintf(stderr, "error! failure to read conf file: %s\nirritant: %s\nexiting...\n",
-        argv[1], strErrINI(errINI));
-    return 0;
-  }
-
-  if((errRISKY = makeRISKY(&game)) != RISKY_NIL) {
-    fprintf(stderr, "error! failure to make a risky game\nirritant: %s\nexiting...\n",
-        strErrRISKY(errRISKY));
-    goto FREE;
-  }
+  section = key = val = NULL;
+  if((errINI = readINI(&ini, argv[1])) != INI_NIL) { goto FAIL_INI; }
+  if((errRISKY = makeRISKY(&game)) != RISKY_NIL) { goto FAIL_RISKY; }
 
   /******************* PLAYERS *******************/
   if((errINI = getINI(ini, section = "Players", key = "humans", &val)) != INI_NIL) { goto FAIL_INI; }
@@ -293,15 +315,14 @@ int main(int argc, char *argv[]) {
 
   if((errRISKY = isEvolved(game, &i)) != RISKY_NIL) { goto FAIL_RISKY; }
   if(i) {
-    //char chromosome[80];
-    // FIXME: errRISKY_t getCps(game, char **names, int *n);
-    for(j = 0; j < n; j++) { 
-      // FIXME errRISKY_t getChromosome(game, names[j], int *dna);
-      // FIXME **chromosome to string**
-      // FIXME errINI = setINI(ini, "Chromosomes", names[j], chromosome);
-      if((errINI = setINI(ini, "Chromosomes", key, val)) != INI_NIL) { goto FAIL_INI; }
+    char chromosome[80];
+    if((errRISKY = getCps(game, &strArr1, &i)) != RISKY_NIL) { goto FAIL_RISKY; }
+    for(; i; i--) { 
+      if((errRISKY = getChromosome(game, strArr1[i-1], &intArr, &j)) != RISKY_NIL) { goto FAIL_RISKY; }
+      if((errGLUE = outputChromosome(chromosome, 80, intArr, j)) != GLUE_NIL) { goto FAIL_GLUE; }
+      if((errINI = setINI(ini, "Chromosomes", strArr1[i-1], chromosome)) != INI_NIL) { goto FAIL_INI; }
     }
-    section = key = NULL;
+    section = key = val = NULL;
     if((errINI = writeINI(ini, argv[1])) != INI_NIL) { goto FAIL_INI; }
   }
 

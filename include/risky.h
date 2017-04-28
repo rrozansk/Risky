@@ -2,7 +2,7 @@
  * FILE:    risky.h                                                           *
  * AUTHOR:  Ryan Rozanski                                                     *
  * CREATED: 4/4/17                                                            *
- * EDITED:  4/24/17                                                           *
+ * EDITED:  4/28/17                                                           *
  * INFO:    A game library to easily implement Risk like games. It also       *
  *          exposes a command line version of risk which is completely        *
  *          configurable and allows for the training and competing of AIs.    *
@@ -381,5 +381,8 @@ errRISKY_t maneuver(game_t *game, country_t src, country_t dest, int men); // mo
 errRISKY_t claimRegions(game_t *game, country_t country, player_t player);           //
 errRISKY_t setDefenses(game_t *game);                                                //
 errRISKY_t printBoard(game_t *game);                                                 // print out board as a str rep graph??
+
+errRISKY_t getCps(game_t *game, char ***strArr1, int *size);
+errRISKY_t getChromosome(game_t *game, char *name, int **dna, int *size);
 
 #endif

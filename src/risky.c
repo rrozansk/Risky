@@ -2,7 +2,7 @@
  * FILE:    risky.c                                                           *
  * AUTHOR:  Ryan Rozanski                                                     *
  * CREATED: 4/4/17                                                            *
- * EDITED:  4/24/17                                                           *
+ * EDITED:  4/28/17                                                           *
  * INFO:    Implementation of the interface located in risky.h.               *
  *                                                                            *
  ******************************************************************************/
@@ -609,6 +609,14 @@ errRISKY_t risky(game_t *game) {
 
   // FIXME: game mode (hvh, hvc, cvc, train)
 
+  int i,j;
+  for(i = 0; i < game->chromosomes; i++) { // testing output of new chromosome
+    for(j = 0; j < game->traits; j++) {
+      game->ais[i][j] = 5;  
+    }
+  }
+  game->evolved = 1; // to test output of new chromosomes
+
   // if((errRISKY = printRules(game)) != RISKY_NIL) { return errRISKY; }; // TODO print headers for each
   // if((errRISKY = initDeck(game)) != RISKY_NIL) { return errRISKY; }
   // if((errRISKY = initPlayers(game)) != RISKY_NIL) { return errRISKY; }
@@ -628,5 +636,32 @@ errRISKY_t risky(game_t *game) {
 
   if(game->log) { fclose(game->fp); }
 
+  return RISKY_NIL;
+}
+
+// temp getters. should return copies of data since getters
+errRISKY_t getCps(game_t *game, char ***strArr1, int *size) {
+  if(!game) { return RISKY_NIL_GAME; }
+  if(!strArr1) { return RISKY_NIL_ELEMS; }
+  if(!size) { return RISKY_INVALID_INDEX_SIZE; }
+
+  *strArr1 = game->names;
+  *size = game->chromosomes;
+  
+  return RISKY_NIL;
+}
+
+errRISKY_t getChromosome(game_t *game, char *name, int **dna, int *size) {
+  if(!game) { return RISKY_NIL_GAME; }
+  if(!name) { return RISKY_NIL_NAMES; }
+  if(!dna) { return RISKY_NIL_ELEMS; }
+
+  int i;
+  for(i = 0; i < game->chromosomes; i++) {
+    if(!strcmp(name, game->names[i])) { break; }  
+  }
+  *dna = game->ais[i];
+  *size = game->traits;
+ 
   return RISKY_NIL;
 }
