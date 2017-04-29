@@ -2,7 +2,7 @@
  * FILE:    risky.c                                                           *
  * AUTHOR:  Ryan Rozanski                                                     *
  * CREATED: 4/4/17                                                            *
- * EDITED:  4/28/17                                                           *
+ * EDITED:  4/29/17                                                           *
  * INFO:    Implementation of the interface located in risky.h.               *
  *                                                                            *
  ******************************************************************************/
@@ -19,7 +19,7 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <time.h>
- 
+
 /******************************************************************************
  *                                                                            *
  *   T Y P E S                                                                *
@@ -63,10 +63,9 @@ struct game {
   /* PRIVATE (NOT SETTABLE THROUGH API) */
   int evolved;         /* if any DNA changed */
   FILE *fp;            /* file to log to */
+  int playing;         /* bool for starting gameplay to lock down the conf */
 };
 
-typedef struct country { } country_t;
-typedef struct continent { } continent_t;
 typedef struct card { } card_t;
 typedef struct deck { } deck_t;
 typedef struct player { } player_t;
@@ -122,9 +121,11 @@ const char *strErrRISKY(errRISKY_t errRISKY) {
     case RISKY_DIR_CREATION_FAILURE: return "logging directory creation failed";
     case RISKY_FILE_CREATION_FAILURE: return "logging file creation failed";
     case RISKY_READ_ERROR: return "error reading input";
-    case RISKY_UNKNOW_ERROR: return "congratulations! you broke the game in a way unknow way!";
+    case RISKY_UNKNOWN_ERROR: return "congratulations! you broke the game in a way unknown way!";
     case RISKY_CPS_NOT_SUPPORTED: return "computer players/AIs are not yet a supported feature";
     case RISKY_OUT_OF_MEMORY: return "out of memory";
+    case RISKY_GAME_PLAY_MUTATION: return "you cannot change game setting while in play";
+    case RISKY_NOT_SUPPORTED: return "feature not yet implemented (still in dev)";
     case RISKY_NIL: return "";
     default: return "unrecognized errRISKY_t";
   }
@@ -180,6 +181,7 @@ errRISKY_t freeRISKY(game_t *game) {
 errRISKY_t setHumans(game_t *game, int hps) {
   if(!game) { return RISKY_NIL_GAME; }
   if(hps > 8) { return RISKY_INVALID_HPS; }
+  if(game->playing) { return RISKY_GAME_PLAY_MUTATION; }
 
   game->hps = hps;
 
@@ -190,9 +192,10 @@ errRISKY_t setComputers(game_t *game, int cps, char **computers) {
   if(!game) { return RISKY_NIL_GAME; }
   if(cps > 8) { return RISKY_INVALID_CPS; }
   if(!computers) { return RISKY_INVALID_COMPUTERS; }
+  if(game->playing) { return RISKY_GAME_PLAY_MUTATION; }
 
   game->cps = cps;
-  game->computers = computers;
+  game->computers = computers; // TODO: malloc and copy (reset/free)
 
   return RISKY_NIL;
 }
@@ -201,15 +204,17 @@ errRISKY_t setLogging(game_t *game, int on, char *dir) {
   if(!game) { return RISKY_NIL_GAME; }
   if(!(on == 1 || on == 0)) { return RISKY_INVALID_LOGGING; }
   if(on == 1 && (!dir || strlen(dir) > 255)) { return RISKY_NIL_DIR; }
+  if(game->playing) { return RISKY_GAME_PLAY_MUTATION; }
 
   game->log = on;
-  game->dir = dir;
+  game->dir = dir;  // TODO: malloc and copy (reset/free)
 
   return RISKY_NIL;
 }
 errRISKY_t setTraining(game_t *game, int games) {
   if(!game) { return RISKY_NIL_GAME; }
   if(games < 0 || games > 65536) { return RISKY_INVALID_GAMES; }
+  if(game->playing) { return RISKY_GAME_PLAY_MUTATION; }
 
   game->trains = games;
 
@@ -222,6 +227,7 @@ errRISKY_t setTroops(game_t *game, int beginning, int min, int bonus, int rand) 
   if(min < 0 || min > 256) { return RISKY_INVALID_MINIMUM; }
   if(bonus < 0 || bonus > 256) { return RISKY_INVALID_BONUS; }
   if(!(rand == 0 || rand == 1)) { return RISKY_INVALID_RAND; }
+  if(game->playing) { return RISKY_GAME_PLAY_MUTATION; }
 
   game->beginning = beginning;
   game->minimum = min;
@@ -236,6 +242,7 @@ errRISKY_t setDeck(game_t *game, int wilds, char **types, int n) {
   if(!types) { return RISKY_NIL_CARD_TYPES; }
   if(wilds < 0 || wilds > 256) { return RISKY_INVALID_WILDS; }
   if(n < 0 || n > 256) { return RISKY_INVALID_DECK; }
+  if(game->playing) { return RISKY_GAME_PLAY_MUTATION; }
 
   game->wilds = wilds;
   game->cardTypes = types;
@@ -249,8 +256,9 @@ errRISKY_t setTrades(game_t *game, int *trades, int n, int incr) {
   if(!trades) { return RISKY_NIL_TRADEINS; }
   if(incr < 0 || incr > 256) { return RISKY_INVALID_INCR; }
   if(n < 0 || n > 256) { return RISKY_INVALID_TRADES_SET; }
+  if(game->playing) { return RISKY_GAME_PLAY_MUTATION; }
 
-  game->tradeIns = trades;
+  game->tradeIns = trades;  // TODO: malloc and copy (reset/free)
   game->numTrades = n;
   game->tradeIncr = incr;
 
@@ -262,9 +270,10 @@ errRISKY_t setCps(game_t *game, int **ais, char **names, int chromosomes, int tr
   if(!names) { return RISKY_NIL_NAMES; }
   if(chromosomes < 0 || chromosomes > 256) { return RISKY_INVALID_CHROMOSOMES; }
   if(traits < 0 || traits > 256) { return RISKY_INVALID_TRAITS; }
+  if(game->playing) { return RISKY_GAME_PLAY_MUTATION; }
 
-  game->ais = ais;
-  game->names = names;
+  game->ais = ais;  // TODO: malloc and copy (reset/free)
+  game->names = names;  // TODO: malloc and copy (reset/free)
   game->chromosomes = chromosomes;
   game->traits = traits;
 
@@ -276,8 +285,9 @@ errRISKY_t setContinents(game_t *game, char **continents, int n) {
   if(!continents) { return RISKY_NIL_CONTINENTS; }
   if(n < 0 || n > 256) { return RISKY_INVALID_CONTINENTS_SIZE; }
   if(game->contBonuses && game->numConts != n) { return RISKY_INVALID_CONTINENTS_SIZE; }
+  if(game->playing) { return RISKY_GAME_PLAY_MUTATION; }
 
-  game->continents = continents;
+  game->continents = continents;  // TODO: malloc and copy (reset/free)
   game->numConts = n;
 
   return RISKY_NIL;
@@ -288,8 +298,9 @@ errRISKY_t setContinentBonuses(game_t *game, int *bonuses, int n) {
   if(!bonuses) { return RISKY_NIL_COUNTRY_BONUSES; }
   if(n < 0 || n > 256) { return RISKY_INVALID_CONTINENTS_SIZE; }
   if(game->continents && game->numConts != n) { return RISKY_INVALID_CONTINENTS_SIZE; }
+  if(game->playing) { return RISKY_GAME_PLAY_MUTATION; }
 
-  game->contBonuses = bonuses;
+  game->contBonuses = bonuses;  // TODO: malloc and copy (reset/free)
   game->numConts = n;
 
   return RISKY_NIL;
@@ -300,8 +311,9 @@ errRISKY_t setCountries(game_t *game, char **countries, int n, int rand) {
   if(!countries) { return RISKY_NIL_COUNTRIES; }
   if(!(rand == 1 || rand == 0)) { return RISKY_INVALID_RAND; }
   if(n < 0 || n > 256) { return RISKY_INVALID_COUNTRIES_SIZE; }
+  if(game->playing) { return RISKY_GAME_PLAY_MUTATION; }
 
-  game->countries = countries;
+  game->countries = countries;  // TODO: malloc and copy (reset/free)
   game->numCountries = n;
   game->randomCountries = rand;
 
@@ -312,8 +324,9 @@ errRISKY_t setAdjacencies(game_t *game, int **board, int n) {
   if(!game) { return RISKY_NIL_GAME; }
   if(!board) { return RISKY_NIL_BOARD; }
   if(n < 0 || n > 256) { return RISKY_INVALID_BOARD_SIZE; }
+  if(game->playing) { return RISKY_GAME_PLAY_MUTATION; }
 
-  game->board = board;
+  game->board = board;  // TODO: malloc and copy (reset/free)
   game->dimension = n;
 
   return RISKY_NIL;
@@ -486,7 +499,7 @@ errRISKY_t printChoices(char **elems, int size) {
 }
 
 errRISKY_t readInt(int lbound, int ubound, int *pick, int prompt) {
-  if(lbound == ubound) { return RISKY_INVALID_RANGE; }
+  if(lbound >= ubound) { return RISKY_INVALID_RANGE; }
   if(!pick) { return RISKY_NIL_CHOICE; }
   if(!(prompt == 0 || prompt == 1)) { return RISKY_INVALID_PROMPT; }
 
@@ -517,7 +530,7 @@ errRISKY_t readInt(int lbound, int ubound, int *pick, int prompt) {
 errRISKY_t printBoard(game_t *game) {
   if(!game) { return RISKY_NIL_GAME; }
 
-  printf("\nFEATURE NOT YET IMPLEMENTED\n");
+  return RISKY_NOT_SUPPORTED;
 
   return RISKY_NIL;
 }
@@ -530,7 +543,7 @@ errRISKY_t humanTurn(game_t *game, player_t *player) {
   int prompt = 1;
 
   int mainChoices = 6;
-  char *mainMenu[] = {"Trade", "Attack", "Query", "Board", "Maneuver", "End"};
+  char *mainMenu[] = {"Trade", "Attack", "Maneuver", "Query", "Board", "End"};
 
   int queryChoices = 5;
   char *queryMenu[] = {"Players", "Countries", "Continents", "Cards", "Main Menu"};
@@ -538,8 +551,8 @@ errRISKY_t humanTurn(game_t *game, player_t *player) {
   int done = 0;
   errRISKY_t errRISKY;
 
-  // printf("Player %s's turn\n", getName(game, player)); // TODO
   while(!done) {
+    // printf("Player %s's turn\n", getName(game, player)); // TODO
     if((errRISKY = printChoices(mainMenu, mainChoices)) != RISKY_NIL) { return errRISKY; }
     if((errRISKY = readInt(0, mainChoices-1, &choice, prompt)) != RISKY_NIL) { return errRISKY; }
     switch(choice) {
@@ -554,7 +567,12 @@ errRISKY_t humanTurn(game_t *game, player_t *player) {
         // ask defender how many (1 or 2)
         //  - draw card (if win), kill ememy (get card/enfore trade)
         break;
-      case 2: // QUERY
+      case 2: // MANEUVER
+        // src, dest (chain reachable)
+        // how many
+        done = 1;
+        break;
+      case 3: // QUERY
         if((errRISKY = printChoices(queryMenu, queryChoices)) != RISKY_NIL) { return errRISKY; }
         if((errRISKY = readInt(0, queryChoices-1, &choice, prompt)) != RISKY_NIL) { return errRISKY; }
         switch(choice) {
@@ -569,20 +587,17 @@ errRISKY_t humanTurn(game_t *game, player_t *player) {
           case 4: // MAIN MENU
             break;
           default:
-            return RISKY_UNKNOW_ERROR;
+            return RISKY_UNKNOWN_ERROR;
         }
         break;
-      case 3: // BOARD
+      case 4: // BOARD
         if((errRISKY = printBoard(game)) != RISKY_NIL) { return errRISKY; }
         break;
-      case 4: // MANEUVER
-        // src, dest (chain reachable)
-        // how many
       case 5: // END
         done = 1;
         break;
       default:
-        return RISKY_UNKNOW_ERROR;
+        return RISKY_UNKNOWN_ERROR;
     }
   }
 
@@ -607,7 +622,9 @@ errRISKY_t risky(game_t *game) {
 
   if(game->log && (errRISKY = logSetup(game)) != RISKY_NIL) { return errRISKY;  }
 
-  // FIXME: game mode (hvh, hvc, cvc, train)
+  // FIXME: game mode (hvh, hvc, cvc, train) train is just cvc in a loop
+
+  game->playing = 1; // so people can not mutate the game conf with set---();
 
   int i,j;
   for(i = 0; i < game->chromosomes; i++) { // testing output of new chromosome
@@ -639,7 +656,7 @@ errRISKY_t risky(game_t *game) {
   return RISKY_NIL;
 }
 
-// temp getters. should return copies of data since getters
+// FIXME: temp getters. should return copies of data since getters
 errRISKY_t getCps(game_t *game, char ***strArr1, int *size) {
   if(!game) { return RISKY_NIL_GAME; }
   if(!strArr1) { return RISKY_NIL_ELEMS; }
@@ -651,6 +668,7 @@ errRISKY_t getCps(game_t *game, char ***strArr1, int *size) {
   return RISKY_NIL;
 }
 
+// FIXME: temp getters. should return copies of data since getters
 errRISKY_t getChromosome(game_t *game, char *name, int **dna, int *size) {
   if(!game) { return RISKY_NIL_GAME; }
   if(!name) { return RISKY_NIL_NAMES; }
