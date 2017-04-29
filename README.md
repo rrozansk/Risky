@@ -1,6 +1,6 @@
 # Risky
 
-[![LICENSE](https://img.shields.io/badge/LICENSE-MIT-green.svg)](https://github.com/rrozansk/Risky/blob/master/LICENSE.txt) [![BUILD](https://img.shields.io/badge/BUILD-IN-DEV-yellow.svg)]()
+[![LICENSE](https://img.shields.io/badge/LICENSE-MIT-green.svg)](https://github.com/rrozansk/Risky/blob/master/LICENSE.txt) [![BUILD](https://img.shields.io/badge/BUILD-IN DEVELOPMENT-yellow.svg)]()
 
 An implementation of a Risk like game which supports up to 8 players and 4 modes:
 - Human v Human
