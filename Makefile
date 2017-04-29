@@ -1,7 +1,7 @@
 # compiler to use
 CC = gcc
-# flags to compiler
-CFLAGS = -g -Wall -O3
+# flags to compiler -g (debug)
+CFLAGS = -Wall -O3
 # include
 INCLUDES = -I/include/ -Iinclude/
 # source files
