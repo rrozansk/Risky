@@ -2,7 +2,7 @@
  * FILE:    ini.h                                                             *
  * AUTHOR:  Ryan Rozanski                                                     *
  * CREATED: 3/27/17                                                           *
- * EDITED:  4/24/17                                                           *
+ * EDITED:  4/29/17                                                           *
  * INFO:    A ini configuration file library. Allows the static reading from  *
  *          and output to a file, as well as dynamic CRUD operations. The     *
  *          library API is designed to return errors, which should be checked *
@@ -74,10 +74,13 @@ const char *strErrINI(errINI_t errINI);
  *                                                                            *
  * ARGUMENT DESCRIPTION                                                       *
  * -------- -----------                                                       *
- * ini      the error to strigify                                             *
- * fname    ...                                                               *
+ * ini      a pointer which to set with the address of the conf read in       *
+ * fname    the name of the file to read from                                 *
  *                                                                            *
- * RETURNS: error code: -,-,... or RISKY_NIL if no error                      *
+ * RETURNS: INI_NULL_INI, INI_NULL_FNAME, INI_OPEN_FAILURE, INI_OUT_OF_MEMORY,*
+ *          INI_CLOSE_FAILURE, INI_INVALID_CONF, INI_INVALID_SECTION,         *
+ *          INI_INVALID_KEY, INI_INVALID_VAL, INI_NULL_SECTION, INI_NULL_KEY, *
+ *          INI_NULL_VAL, INI_NULL_VAL, or INI_NIL if no error.               *
  *                                                                            *
  ******************************************************************************/
 errINI_t readINI(ini_t **ini, char *fname);
@@ -89,9 +92,10 @@ errINI_t readINI(ini_t **ini, char *fname);
  * ARGUMENT DESCRIPTION                                                       *
  * -------- -----------                                                       *
  * ini      the error to strigify                                             *
- * fname    ...                                                               *
+ * fname    the name of the file to write out the conf to                     *
  *                                                                            *
- * RETURNS: error code: -,-,... or RISKY_NIL if no error                      *
+ * RETURNS: INI_NULL_INI, INI_NULL_FNAME, INI_OPEN_FAILURE, INI_CLOSE_FAILURE,*
+ *          or INI_NIL if no error.                                           *
  *                                                                            *
  ******************************************************************************/
 errINI_t writeINI(ini_t *ini, char *fname);
@@ -102,9 +106,9 @@ errINI_t writeINI(ini_t *ini, char *fname);
  *                                                                            *
  * ARGUMENT DESCRIPTION                                                       *
  * -------- -----------                                                       *
- * ini      ...                                                               *
+ * ini      a pointer which to set with the address of the conf read in       *
  *                                                                            *
- * RETURNS: error code: -,-,... or RISKY_NIL if no error                      *
+ * RETURNS: INI_NULL_INI, INI_OUT_OF_MEMORY, or INI_NIL if no error.          *
  *                                                                            *
  ******************************************************************************/
 errINI_t makeINI(ini_t **ini);
@@ -115,9 +119,9 @@ errINI_t makeINI(ini_t **ini);
  *                                                                            *
  * ARGUMENT DESCRIPTION                                                       *
  * -------- -----------                                                       *
- * ini      ...                                                               *
+ * ini      the ini conf to free                                              *
  *                                                                            *
- * RETURNS: error code: -,-,... or RISKY_NIL if no error                      *
+ * RETURNS: INI_NULL_INI, or INI_NIL if no error.                             *
  *                                                                            *
  ******************************************************************************/
 errINI_t freeINI(ini_t *ini);
@@ -128,12 +132,13 @@ errINI_t freeINI(ini_t *ini);
  *                                                                            *
  * ARGUMENT DESCRIPTION                                                       *
  * -------- -----------                                                       *
- * ini      ...                                                               *
- * section  ...                                                               *
- * key      ...                                                               *
- * val      ...                                                               *
+ * ini      the ini conf to use                                               *
+ * section  the section to look under                                         *
+ * key      the key of the setting to get                                     *
+ * val      a pointer which to set with the val of the setting found, if any  *
  *                                                                            *
- * RETURNS: error code: -,-,... or RISKY_NIL if no error                      *
+ * RETURNS: INI_NULL_INI, INI_NULL_SECTION, INI_NULL_KEY, INI_NULL_VAL,       *
+ *          INI_INVALID_SECTION, INI_INVALID_KEY, or INI_NIL if no error.     *
  *                                                                            *
  ******************************************************************************/
 errINI_t getINI(ini_t *ini, char *section, char *key, char **val);
@@ -144,12 +149,14 @@ errINI_t getINI(ini_t *ini, char *section, char *key, char **val);
  *                                                                            *
  * ARGUMENT DESCRIPTION                                                       *
  * -------- -----------                                                       *
- * ini      ...                                                               *
- * section  ...                                                               *
- * key      ...                                                               *
- * val      ...                                                               *
+ * ini      the ini conf to use                                               *
+ * section  the section to make a new setting under                           *
+ * key      the key of the new setting                                        *
+ * val      the val of the new setting                                        *
  *                                                                            *
- * RETURNS: error code: -,-,... or RISKY_NIL if no error                      *
+ * RETURNS: INI_NULL_INI, INI_NULL_SECTION, INI_NULL_KEY, INI_NULL_VAL,       * 
+ *          INI_INVALID_SECTION, INI_INVALID_KEY, INI_INVALID_VAL,            *
+ *          INI_NULL_VAL, or INI_NIL if no error.                             *
  *                                                                            *
  ******************************************************************************/
 errINI_t setINI(ini_t *ini, char *section, char *key, char *val);
@@ -160,11 +167,12 @@ errINI_t setINI(ini_t *ini, char *section, char *key, char *val);
  *                                                                            *
  * ARGUMENT DESCRIPTION                                                       *
  * -------- -----------                                                       *
- * ini      ...                                                               *
- * section  ...                                                               *
- * key      ...                                                               *
+ * ini      the ini conf to use                                               *
+ * section  the section to look under                                         *
+ * key      the key of the setting to delete                                  *
  *                                                                            *
- * RETURNS: error code: -,-,... or RISKY_NIL if no error                      *
+ * RETURNS: INI_NULL_INI, INI_NULL_SECTION, INI_NULL_KEY, INI_INVALID_SECTION,*
+ *          INI_INVALID_KEY, or INI_NIL if no error.                          *
  *                                                                            *
  ******************************************************************************/
 errINI_t deleteINI(ini_t *ini, char *section, char *key);
