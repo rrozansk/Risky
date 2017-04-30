@@ -61,7 +61,7 @@ struct game {
   int numCountries;    /* size of countries array */
   int randomCountries; /* to split up map randomly or not */
   int **board;         /* adjacency matrix --> board[numCountries][numCountries]; */
-  int dimension;       /* numCountries */
+  int dimension;       /* numCountries */ // FIXME: dont need check when countries is set --> same as continents/bonuses
   /* PRIVATE (NOT SETTABLE THROUGH API) FIXME: really shouldnt be in here then?? */
   int evolved;         /* if any DNA changed */
   FILE *fp;            /* file to log to */
@@ -355,7 +355,7 @@ errRISKY_t isEvolved(game_t *game, int *changed) {
   return RISKY_NIL;
 }
 
-errRISKY_t isValid(game_t *game) {
+errRISKY_t isValid(game_t *game) { // FIXME: make sure entire conf is sane
   if(!game) { return RISKY_NIL_GAME; }
   if(!game->computers) { return RISKY_NIL_COMPUTERS; }
   if(!game->dir) { return RISKY_NIL_DIR; }
@@ -503,7 +503,14 @@ void fprintSetting(FILE *fp, char *key, int val) {
   fprintf(fp, "%10i\n", val);
 }
 
-errRISKY_t logSetup(game_t *game) {
+void fprintTime(FILE *fp, int seconds) {
+  int minutes = seconds / 60;
+  int hours = minutes / 60;
+  seconds %= 60;
+  fprintf(fp, "elapsed game time\t[%ih-%im-%is]\n", hours, minutes, seconds);
+}
+
+errRISKY_t setupLog(game_t *game) {
   if(!game) { return RISKY_NIL_GAME; }
 
   struct stat st;
@@ -515,7 +522,7 @@ errRISKY_t logSetup(game_t *game) {
   strftime(fname, 80, "%Y_%B_%d_%A_%X", date); // unique to the second.
 
   char *path = calloc(80, sizeof(char));
-  sprintf(path, "%s/%s.txt", game->dir, fname); // rand() to make more unique?
+  sprintf(path, "%s/%s.txt", game->dir, fname);
 
   if(!(game->fp = fopen(path, "w"))) { 
     free(fname);
@@ -532,9 +539,9 @@ errRISKY_t logSetup(game_t *game) {
 
   fprintSubHeader(game->fp, "PLAYERS");
   fprintSetting(game->fp, "Human players", game->hps);
+  fprintSetting(game->fp, "Computer players", game->cps);
   fprintf(game->fp, "Human names: "); 
   fprintStrArr(game->fp, game->humans, game->hps);
-  fprintSetting(game->fp, "Computer players", game->cps);
   fprintf(game->fp, "Computer names: "); 
   fprintStrArr(game->fp, game->computers, game->cps);
   fprintf(game->fp, "\n");
@@ -553,12 +560,12 @@ errRISKY_t logSetup(game_t *game) {
   fprintSubHeader(game->fp, "CARDS");
   fprintSetting(game->fp, "Number of wilds", game->wilds);
   fprintSetting(game->fp, "Number of card types", game->numTypes);
+  fprintSetting(game->fp, "Number of trade ins", game->numTrades);
+  fprintSetting(game->fp, "Trade increment", game->tradeIncr);
   fprintf(game->fp, "Card types: "); 
   fprintStrArr(game->fp, game->cardTypes, game->numTypes);
-  fprintSetting(game->fp, "Number of trade ins", game->numTrades);
   fprintf(game->fp, "Trade Ins: "); 
   fprintIntArr(game->fp, game->tradeIns, game->numTrades);
-  fprintSetting(game->fp, "Trade increment", game->tradeIncr);
   fprintf(game->fp, "\n");
 
   fprintSubHeader(game->fp, "DNA");
@@ -572,15 +579,15 @@ errRISKY_t logSetup(game_t *game) {
 
   fprintSubHeader(game->fp, "MAP");
   fprintSetting(game->fp, "Number of continents", game->numConts);
+  fprintSetting(game->fp, "Number of countries", game->numCountries);
+  fprintSetting(game->fp, "Randomized countries", game->randomCountries);
+  fprintSetting(game->fp, "Adjacency dimensions", game->dimension);
   fprintf(game->fp, "Continents: "); 
   fprintStrArr(game->fp, game->continents, game->numConts);
   fprintf(game->fp, "Continent bonuses: "); 
   fprintIntArr(game->fp, game->contBonuses, game->numConts);
-  fprintSetting(game->fp, "Randomized countries", game->randomCountries);
-  fprintSetting(game->fp, "Number of countries", game->numCountries);
   fprintf(game->fp, "Countries: "); 
   fprintStrArr(game->fp, game->countries, game->numCountries);
-  fprintSetting(game->fp, "Adjacency dimensions", game->dimension);
   fprintf(game->fp, "Adjacency Matrix:\n");
   fprintIntArr2D(game->fp, game->board, game->dimension, game->dimension);
   fprintf(game->fp, "\n");
@@ -630,7 +637,7 @@ errRISKY_t readInt(int lbound, int ubound, int *pick, int prompt) {
   return RISKY_READ_ERROR;
 }
 
-errRISKY_t printBoard(game_t *game) {
+errRISKY_t printBoard(game_t *game) { // TODO 
   if(!game) { return RISKY_NIL_GAME; }
 
   return RISKY_NOT_SUPPORTED;
@@ -640,7 +647,7 @@ errRISKY_t printBoard(game_t *game) {
 
 errRISKY_t humanTurn(game_t *game, char *player) {
   if(!game) { return RISKY_NIL_GAME; }
-  //if(!player) { return RISKY_NIL_PLAYER; }
+  if(!player) { return RISKY_NIL_PLAYER; }
 
   int choice;
   int prompt = 1;
@@ -655,13 +662,17 @@ errRISKY_t humanTurn(game_t *game, char *player) {
   errRISKY_t errRISKY;
 
   while(!done) {
-    // printf("Player %s's turn\n", getName(game, player)); // TODO
+    // TODO: if winner then
+    //if(game->log) { 
+    //  fprintf(game->fp, "congratuations %s, you've achieved world domination!\n", player);
+    //}
+    fprintf(stdout, "%s's turn...\n", player);
     if((errRISKY = printChoices(mainMenu, mainChoices)) != RISKY_NIL) { return errRISKY; }
     if((errRISKY = readInt(0, mainChoices-1, &choice, prompt)) != RISKY_NIL) { return errRISKY; }
     switch(choice) {
       case 0: // TRADE
         return RISKY_NOT_SUPPORTED;
-        // get which cards
+        // get which cards getCards(player, *arr, *size);
         // place troops
         //    -- enfore trade rules, timeing(1/turn and beginning?)
         break;
@@ -737,47 +748,77 @@ void makeNextGeneration(game_t *game) { // TODO
   }
 }
 
+errRISKY_t play(game_t *game) { // TODO
+  game->playing = 1; /* make game immutable during gameplay */
+  char *player = "FOOBAR";
+  errRISKY_t errRISKY;
+  while(1) {
+  //while(getPlayers(game) > 1) { /* play the game */
+    //player = getNextPlayer(game);
+    //switch(getType(player)) { 
+    switch(1) { 
+      case 0:
+        if((errRISKY = computerTurn(game, player)) != RISKY_NIL) { return errRISKY; }
+        break;
+      case 1:
+        if((errRISKY = humanTurn(game, player)) != RISKY_NIL) { return errRISKY; }
+        return RISKY_NIL;
+        break;
+      default:
+        return RISKY_UNKNOWN_ERROR;
+    }
+  }
+  game->playing = 0;
+}
+
+// create a deck
+errRISKY_t initDeck(game_t *game) { // TODO
+  return RISKY_NIL;  
+}
+
+// claim countries
+errRISKY_t initCountries(game_t *game) { // TODO
+  return RISKY_NIL;  
+}
+
+// place beggining armies on map
+errRISKY_t initArmies(game_t *game) { // TODO
+  return RISKY_NIL;  
+}
+
 errRISKY_t risky(game_t *game) {
   if(!game) { return RISKY_NIL_GAME; }
 
   errRISKY_t errRISKY;
   if((errRISKY = isValid(game)) != RISKY_NIL) { return errRISKY; }
 
+  if(game->trains) { fprintf(stdout, "training sessions requested: %d\ntraining...\n", game->trains); }
+
   do {
-    /* setup or reset game between training sessions */
-    // if((errRISKY = initDeck(game)) != RISKY_NIL) { return errRISKY; } // generate a deck
-    // if((errRISKY = initCountries(game) != RISKY_NIL) { return errRISKY; } // who owns what
-    // if((errRISKY = initArmies(game)) != RISKY_NIL) { return errRISKY; } // how many armies are placed where
+    if((errRISKY = initDeck(game)) != RISKY_NIL) { return errRISKY; }
+    if((errRISKY = initCountries(game)) != RISKY_NIL) { return errRISKY; }
+    if((errRISKY = initArmies(game)) != RISKY_NIL) { return errRISKY; }
 
-    if(game->log && (errRISKY = logSetup(game)) != RISKY_NIL) { return errRISKY;  }
-    if(game->log) { fprintHeader(game->fp, "G A M E P L A Y"); }
-
-    if(game->trains) { fprintf(stdout, "training games left %d...\n", game->trains); }
-    game->playing = 1; /* make game immutable during gameplay */
-    /*
-    while(NumberPlayer(game) > 1) {
-      player_t player = getNextPlayer(game);
-      switch(getType(player)) {
-        case CP:
-          if((errRISKY = computerTurn(game, NULL)) != RISKY_NIL) { return errRISKY; }
-        case HP:
-          if((errRISKY = humanTurn(game, NULL)) != RISKY_NIL) { return errRISKY; }
-        default:
-          errRisky = 
-          //
-          break;
-      }
+    if(game->log) {
+      if((errRISKY = setupLog(game)) != RISKY_NIL) { return errRISKY;  }
+      fprintHeader(game->fp, "G A M E P L A Y");
     }
-    if(game->trains) { fprintf(fp, Congratuations %s, you've won!\n", --); }
-    else { rprintf(stdout, ""); }
-    printWinner(game);
-    */
-    game->playing = 0;
+    
+    time_t start = time(NULL);
+    if((errRISKY = play(game)) != RISKY_NIL) { return errRISKY; }
+    int seconds = (int)difftime(time(NULL), start);
 
-    if(game->trains) { makeNextGeneration(game); }
-    if(game->log) { fclose(game->fp); }
+    if(game->trains) { 
+      fprintTime(stdout, seconds);
+      makeNextGeneration(game);
+    }
 
-  } while(game->trains-- > 0);
+    if(game->log) {
+      fprintTime(game->fp, seconds); 
+      fclose(game->fp);
+    }
+
+  } while(--game->trains > 0);
 
   return RISKY_NIL;
 }
