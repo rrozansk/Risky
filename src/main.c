@@ -211,8 +211,8 @@ int main(int argc, char *argv[]) {
 
   /******************* PLAYERS *******************/
   if((errINI = getINI(ini, section = "Players", key = "humans", &val)) != INI_NIL) { goto FAIL_INI; }
-  if((errGLUE = parseInt(val, &n)) != GLUE_NIL) { goto FAIL_GLUE; }
-  if((errRISKY = setHumans(game, n)) != RISKY_NIL) { goto FAIL_RISKY; }
+  if((errGLUE = parseStrArr(val, &strArr1, &n)) != GLUE_NIL) { goto FAIL_GLUE; } // TODO: free array after set
+  if((errRISKY = setHumans(game, n, strArr1)) != RISKY_NIL) { goto FAIL_RISKY; }
 
   if((errINI = getINI(ini, "Players", key = "computers", &val)) != INI_NIL) { goto FAIL_INI; }
   if((errGLUE = parseStrArr(val, &strArr1, &n)) != GLUE_NIL) { goto FAIL_GLUE; } // TODO: free array after set

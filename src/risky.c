@@ -27,12 +27,14 @@
  ******************************************************************************/
 struct game {
   /* PLAYERS */
+  char **humans;       /* ptr to array of hps */
   int hps;             /* number of human players */
   char **computers;    /* ptr to array of cps i.e. isStr(arr[i]) */
   int cps;             /* size of computers */
-  /* TRAINING */
+  /* LOGGING */
   int log;             /* turn on/off logging during training exercises */
   char *dir;           /* directory to put taining logs */
+  /* TRAINING */
   int trains;          /* numer of training exercises to perform */
   /* TROOPS */
   int beginning;       /* number of troops recieved at game start */
@@ -49,8 +51,8 @@ struct game {
   /* CHROMOSOMES */
   int chromosomes;     /* number of chromosomes */
   int traits;          /* number of traits in each strand on DNA */
-  int **ais;           /* ais[numChromosomes][numTraits] */
-  char **names;        /* names[numChromosomes] */
+  int **ais;           /* all ais[numChromosomes][numTraits] */
+  char **names;        /* name of each ai names[numChromosomes] */
   /* MAP */
   char **continents;   /* ptr to array of continents */
   int *contBonuses;    /* ptr to array of contnent bonuses */
@@ -60,15 +62,25 @@ struct game {
   int randomCountries; /* to split up map randomly or not */
   int **board;         /* adjacency matrix --> board[numCountries][numCountries]; */
   int dimension;       /* numCountries */
-  /* PRIVATE (NOT SETTABLE THROUGH API) */
+  /* PRIVATE (NOT SETTABLE THROUGH API) FIXME: really shouldnt be in here then?? */
   int evolved;         /* if any DNA changed */
   FILE *fp;            /* file to log to */
-  int playing;         /* bool for starting gameplay to lock down the conf */
+  int playing;         /* bool for starting gameplay to lock down the conf since cp can call any game API */
+  // TODO: use board to track player ownage and army count + adjacency??
+  // deck information??
 };
 
-typedef struct card { } card_t;
-typedef struct deck { } deck_t;
-typedef struct player { } player_t;
+typedef struct card { 
+  char *country;
+  char *type;
+  char *owner;
+} card_t;
+
+typedef struct deck { 
+  int size;
+  int currCard;
+  card_t *cards;
+} deck_t;
 
 /******************************************************************************
  *                                                                            *
@@ -95,6 +107,7 @@ const char *strErrRISKY(errRISKY_t errRISKY) {
     case RISKY_NIL_PLAYER: return "nil player";
     case RISKY_INVALID_HPS: return "number of human players must be 0-8";
     case RISKY_INVALID_CPS: return "number of computer players must be 0-8";
+    case RISKY_INVALID_HUMANS: return "nil humans";
     case RISKY_INVALID_COMPUTERS: return "nil computers";
     case RISKY_INVALID_RAND: return "rand must be 1 or 0";
     case RISKY_INVALID_LOGGING: return "log on must be 1 or 0";
@@ -178,12 +191,14 @@ errRISKY_t freeRISKY(game_t *game) {
   return RISKY_NIL;
 }
 
-errRISKY_t setHumans(game_t *game, int hps) {
+errRISKY_t setHumans(game_t *game, int hps, char **humans) {
   if(!game) { return RISKY_NIL_GAME; }
   if(hps > 8) { return RISKY_INVALID_HPS; }
+  if(!humans) { return RISKY_INVALID_HUMANS; }
   if(game->playing) { return RISKY_GAME_PLAY_MUTATION; }
 
   game->hps = hps;
+  game->humans = humans;
 
   return RISKY_NIL;
 }
@@ -346,7 +361,8 @@ errRISKY_t isValid(game_t *game) {
   if(!game->dir) { return RISKY_NIL_DIR; }
   if(!game->cardTypes) { return RISKY_NIL_CARD_TYPES; }
   if(!game->tradeIns) { return RISKY_NIL_TRADEINS; }
-  if(!game->ais) { return RISKY_NIL_AIS; }
+  if(!game->ais) { return RISKY_NIL_AIS; } // FIXME: what if no computers??
+  //if(game->trains > 0 && !game->ais && !)
   if(!game->names) { return RISKY_NIL_NAMES; }
   if(!game->continents) { return RISKY_NIL_CONTINENTS; }
   if(!game->contBonuses) { return RISKY_NIL_COUNTRY_BONUSES; }
@@ -378,7 +394,39 @@ errRISKY_t isValid(game_t *game) {
   return RISKY_NIL;  
 }
 
-/* PRIVATE HELPERS */
+// FIXME: temp getters. should return copies of data since getters
+errRISKY_t getCps(game_t *game, char ***strArr1, int *size) {
+  if(!game) { return RISKY_NIL_GAME; }
+  if(!strArr1) { return RISKY_NIL_ELEMS; }
+  if(!size) { return RISKY_INVALID_INDEX_SIZE; }
+
+  *strArr1 = game->names;
+  *size = game->chromosomes;
+  
+  return RISKY_NIL;
+}
+
+// FIXME: temp getters. should return copies of data since getters
+errRISKY_t getChromosome(game_t *game, char *name, int **dna, int *size) {
+  if(!game) { return RISKY_NIL_GAME; }
+  if(!name) { return RISKY_NIL_NAMES; }
+  if(!dna) { return RISKY_NIL_ELEMS; }
+
+  int i;
+  for(i = 0; i < game->chromosomes; i++) {
+    if(!strcmp(name, game->names[i])) { break; }  
+  }
+  *dna = game->ais[i];
+  *size = game->traits;
+ 
+  return RISKY_NIL;
+}
+
+/******************************************************************************
+ *                                                                            *
+ *   PRIVATE HELPERS AND RISKY IMPLEMENTATION USING PUBLIC API                *
+ *                                                                            *
+ ******************************************************************************/
 void fprintIntArr(FILE *fp, int *arr, int size) {
   fprintf(fp, "{");
   int i;
@@ -410,6 +458,51 @@ void fprintStrArr(FILE *fp, char **arr, int size) {
   fprintf(fp, "}\n");
 }
 
+void fprintTitle(FILE *fp, char *title) {
+  int len = strlen(title);
+  int lpad = 39 - (len / 2);
+  len = len - (len / 2);
+  int rpad = 39 - len;
+  for(len = 80; len; len--) { fprintf(fp, "#"); }
+  fprintf(fp, "\n");
+  fprintf(fp, "#%78s#\n", ""); 
+  fprintf(fp, "#%*s%s%*s#\n", lpad, "", title, rpad, ""); 
+  fprintf(fp, "#%78s#\n", ""); 
+  for(len = 80; len; len--) { fprintf(fp, "#"); }
+  fprintf(fp, "\n\n");
+}
+
+void fprintHeader(FILE *fp, char *header) {
+  int len = strlen(header);
+  int lpad = 39 - (len / 2);
+  len = len - (len / 2);
+  int rpad = 39 - len;
+  for(len = 80; len; len--) { fprintf(fp, "*"); }
+  fprintf(fp, "\n");
+  fprintf(fp, "*%*s%s%*s*\n", lpad, "", header, rpad, ""); 
+  for(len = 80; len; len--) { fprintf(fp, "*"); }
+  fprintf(fp, "\n\n");
+}
+
+void fprintSubHeader(FILE *fp, char *header) {
+  int len = strlen(header);
+  int lpad = 40 - (len / 2);
+  len = len - (len / 2);
+  int rpad = 40 - len;
+  for(; lpad; lpad--) { fprintf(fp, "="); }
+  fprintf(fp, "%s", header); 
+  for(; rpad; rpad--) { fprintf(fp, "="); }
+  fprintf(fp, "\n\n");
+}
+
+void fprintSetting(FILE *fp, char *key, int val) {
+  int len = strlen(key);
+  int pad = 69 - len;
+  fprintf(fp, "%s:", key);
+  for(; pad; pad--) { fprintf(fp, "."); }
+  fprintf(fp, "%10i\n", val);
+}
+
 errRISKY_t logSetup(game_t *game) {
   if(!game) { return RISKY_NIL_GAME; }
 
@@ -422,66 +515,76 @@ errRISKY_t logSetup(game_t *game) {
   strftime(fname, 80, "%Y_%B_%d_%A_%X", date); // unique to the second.
 
   char *path = calloc(80, sizeof(char));
-  sprintf(path, "%s/%s.txt", game->dir, fname);
+  sprintf(path, "%s/%s.txt", game->dir, fname); // rand() to make more unique?
 
   if(!(game->fp = fopen(path, "w"))) { 
     free(fname);
     free(path);
     return RISKY_FILE_CREATION_FAILURE;
   }
-  fprintf(game->fp, "\t\t\t\t**GAME SESSION: %s**\n\n", fname);
+
+  fprintTitle(game->fp, fname);
 
   free(fname);
   free(path);
 
-  fprintf(game->fp, "***********************************SETTINGS*************************************\n");
+  fprintHeader(game->fp, "S E T T I N G S");
 
-  fprintf(game->fp, "\n\t**PLAYER**\n");
-  fprintf(game->fp, "Human players: %i\n", game->hps);
-  fprintf(game->fp, "Computer players: %i\n", game->cps);
+  fprintSubHeader(game->fp, "PLAYERS");
+  fprintSetting(game->fp, "Human players", game->hps);
+  fprintf(game->fp, "Human names: "); 
+  fprintStrArr(game->fp, game->humans, game->hps);
+  fprintSetting(game->fp, "Computer players", game->cps);
   fprintf(game->fp, "Computer names: "); 
   fprintStrArr(game->fp, game->computers, game->cps);
+  fprintf(game->fp, "\n");
 
-  fprintf(game->fp, "\n\t**TRAINING**\n");
-  fprintf(game->fp, "Training sessions: %i\n", game->trains);
+  fprintSubHeader(game->fp, "TRAINING");
+  fprintSetting(game->fp, "Training sessions", game->trains);
+  fprintf(game->fp, "\n");
 
-  fprintf(game->fp, "\n\t**TROOP**\n");
-  fprintf(game->fp, "Beginning game troop count: %i\n", game->beginning);
-  fprintf(game->fp, "Minimum troops per turn: %i\n", game->minimum);
-  fprintf(game->fp, "Extra troop bonus ratio per countries: %i\n", game->bonus);
-  fprintf(game->fp, "Randomized troops: %i\n", game->random);
+  fprintSubHeader(game->fp, "TROOPS");
+  fprintSetting(game->fp, "Beginning game troop count", game->beginning);
+  fprintSetting(game->fp, "Minimum troops per turn", game->minimum);
+  fprintSetting(game->fp, "Extra troop bonus ratio per countries", game->bonus);
+  fprintSetting(game->fp, "Randomized troops", game->random);
+  fprintf(game->fp, "\n");
 
-  fprintf(game->fp, "\n\t**CARD**\n");
-  fprintf(game->fp, "Number of wilds: %i\n", game->wilds);
-  fprintf(game->fp, "Number of card types: %i\n", game->numTypes);
+  fprintSubHeader(game->fp, "CARDS");
+  fprintSetting(game->fp, "Number of wilds", game->wilds);
+  fprintSetting(game->fp, "Number of card types", game->numTypes);
   fprintf(game->fp, "Card types: "); 
   fprintStrArr(game->fp, game->cardTypes, game->numTypes);
-  fprintf(game->fp, "Number of trade ins: %i\n", game->numTrades);
+  fprintSetting(game->fp, "Number of trade ins", game->numTrades);
   fprintf(game->fp, "Trade Ins: "); 
-  fprintf(game->fp, "Trade increment: %i\n", game->tradeIncr);
   fprintIntArr(game->fp, game->tradeIns, game->numTrades);
+  fprintSetting(game->fp, "Trade increment", game->tradeIncr);
+  fprintf(game->fp, "\n");
 
-  fprintf(game->fp, "\n\t**DNA**\n");
-  fprintf(game->fp, "Number of chromosomes: %i\n", game->chromosomes);
-  fprintf(game->fp, "Number of traits: %i\n", game->traits);
+  fprintSubHeader(game->fp, "DNA");
+  fprintSetting(game->fp, "Number of chromosomes", game->chromosomes);
+  fprintSetting(game->fp, "Number of traits", game->traits);
   fprintf(game->fp, "AI names: "); 
   fprintStrArr(game->fp, game->names, game->chromosomes);
   fprintf(game->fp, "Chromosomes:\n"); 
   fprintIntArr2D(game->fp, game->ais, game->chromosomes, game->traits);
+  fprintf(game->fp, "\n");
 
-  fprintf(game->fp, "\n\t**MAP SETTINGS**\n");
-  fprintf(game->fp, "Number of continents: %i\n", game->numConts);
+  fprintSubHeader(game->fp, "MAP");
+  fprintSetting(game->fp, "Number of continents", game->numConts);
   fprintf(game->fp, "Continents: "); 
   fprintStrArr(game->fp, game->continents, game->numConts);
   fprintf(game->fp, "Continent bonuses: "); 
   fprintIntArr(game->fp, game->contBonuses, game->numConts);
-  fprintf(game->fp, "Randomized countries: %i\n", game->randomCountries);
-  fprintf(game->fp, "Number of countries: %i\n", game->numCountries);
+  fprintSetting(game->fp, "Randomized countries", game->randomCountries);
+  fprintSetting(game->fp, "Number of countries", game->numCountries);
   fprintf(game->fp, "Countries: "); 
   fprintStrArr(game->fp, game->countries, game->numCountries);
-  fprintf(game->fp, "Adjacency dimensions: %i\n", game->dimension);
+  fprintSetting(game->fp, "Adjacency dimensions", game->dimension);
   fprintf(game->fp, "Adjacency Matrix:\n");
   fprintIntArr2D(game->fp, game->board, game->dimension, game->dimension);
+  fprintf(game->fp, "\n");
+
   fflush(game->fp);
 
   return RISKY_NIL;
@@ -535,7 +638,7 @@ errRISKY_t printBoard(game_t *game) {
   return RISKY_NIL;
 }
 
-errRISKY_t humanTurn(game_t *game, player_t *player) {
+errRISKY_t humanTurn(game_t *game, char *player) {
   if(!game) { return RISKY_NIL_GAME; }
   //if(!player) { return RISKY_NIL_PLAYER; }
 
@@ -557,17 +660,20 @@ errRISKY_t humanTurn(game_t *game, player_t *player) {
     if((errRISKY = readInt(0, mainChoices-1, &choice, prompt)) != RISKY_NIL) { return errRISKY; }
     switch(choice) {
       case 0: // TRADE
+        return RISKY_NOT_SUPPORTED;
         // get which cards
         // place troops
         //    -- enfore trade rules, timeing(1/turn and beginning?)
         break;
       case 1: // ATTACK
+        return RISKY_NOT_SUPPORTED;
         // src, dest (adjacency)
         // how many
         // ask defender how many (1 or 2)
         //  - draw card (if win), kill ememy (get card/enfore trade)
         break;
       case 2: // MANEUVER
+        return RISKY_NOT_SUPPORTED;
         // src, dest (chain reachable)
         // how many
         done = 1;
@@ -577,12 +683,16 @@ errRISKY_t humanTurn(game_t *game, player_t *player) {
         if((errRISKY = readInt(0, queryChoices-1, &choice, prompt)) != RISKY_NIL) { return errRISKY; }
         switch(choice) {
           case 0: // PLAYERS
+            return RISKY_NOT_SUPPORTED;
             break;
           case 1: // COUNTRIES
+            return RISKY_NOT_SUPPORTED;
             break;
           case 2: // CONTINENTS
+            return RISKY_NOT_SUPPORTED;
             break;
           case 3: // CARDS
+            return RISKY_NOT_SUPPORTED;
             break;
           case 4: // MAIN MENU
             break;
@@ -604,7 +714,7 @@ errRISKY_t humanTurn(game_t *game, player_t *player) {
   return RISKY_NIL;
 }
 
-errRISKY_t computerTurn(game_t *game, player_t *player) { // TODO
+errRISKY_t computerTurn(game_t *game, char *player) { // TODO
   if(!game) { return RISKY_NIL_GAME; }
   if(!player) { return RISKY_NIL_PLAYER; }
 
@@ -613,6 +723,19 @@ errRISKY_t computerTurn(game_t *game, player_t *player) { // TODO
   return RISKY_NIL;
 }
 
+void makeNextGeneration(game_t *game) { // TODO
+  game->evolved = 1;
+
+  // selection of parents through fitness function evaluation
+  // breed new children through crossover/mutate functions
+  // elitism to keep best cps around so generations never degrade
+  // update new chromosomes in game conf
+
+  if(game->log) {
+    fprintHeader(game->fp, "N E W   G E N E R A T I O N");
+    fprintIntArr2D(game->fp, game->ais, game->chromosomes, game->traits);
+  }
+}
 
 errRISKY_t risky(game_t *game) {
   if(!game) { return RISKY_NIL_GAME; }
@@ -620,66 +743,41 @@ errRISKY_t risky(game_t *game) {
   errRISKY_t errRISKY;
   if((errRISKY = isValid(game)) != RISKY_NIL) { return errRISKY; }
 
-  if(game->log && (errRISKY = logSetup(game)) != RISKY_NIL) { return errRISKY;  }
+  do {
+    /* setup or reset game between training sessions */
+    // if((errRISKY = initDeck(game)) != RISKY_NIL) { return errRISKY; } // generate a deck
+    // if((errRISKY = initCountries(game) != RISKY_NIL) { return errRISKY; } // who owns what
+    // if((errRISKY = initArmies(game)) != RISKY_NIL) { return errRISKY; } // how many armies are placed where
 
-  // FIXME: game mode (hvh, hvc, cvc, train) train is just cvc in a loop
+    if(game->log && (errRISKY = logSetup(game)) != RISKY_NIL) { return errRISKY;  }
+    if(game->log) { fprintHeader(game->fp, "G A M E P L A Y"); }
 
-  game->playing = 1; // so people can not mutate the game conf with set---();
-
-  int i,j;
-  for(i = 0; i < game->chromosomes; i++) { // testing output of new chromosome
-    for(j = 0; j < game->traits; j++) {
-      game->ais[i][j] = 5;  
+    if(game->trains) { fprintf(stdout, "training games left %d...\n", game->trains); }
+    game->playing = 1; /* make game immutable during gameplay */
+    /*
+    while(NumberPlayer(game) > 1) {
+      player_t player = getNextPlayer(game);
+      switch(getType(player)) {
+        case CP:
+          if((errRISKY = computerTurn(game, NULL)) != RISKY_NIL) { return errRISKY; }
+        case HP:
+          if((errRISKY = humanTurn(game, NULL)) != RISKY_NIL) { return errRISKY; }
+        default:
+          errRisky = 
+          //
+          break;
+      }
     }
-  }
-  game->evolved = 1; // to test output of new chromosomes
+    if(game->trains) { fprintf(fp, Congratuations %s, you've won!\n", --); }
+    else { rprintf(stdout, ""); }
+    printWinner(game);
+    */
+    game->playing = 0;
 
-  // if((errRISKY = printRules(game)) != RISKY_NIL) { return errRISKY; }; // TODO print headers for each
-  // if((errRISKY = initDeck(game)) != RISKY_NIL) { return errRISKY; }
-  // if((errRISKY = initPlayers(game)) != RISKY_NIL) { return errRISKY; }
-  // if((errRISKY = initCountries(game) != RISKY_NIL) { return errRISKY; }
-  // if((errRISKY = initArmies(game)) != RISKY_NIL) { return errRISKY; }
+    if(game->trains) { makeNextGeneration(game); }
+    if(game->log) { fclose(game->fp); }
 
-  if(game->log) {
-    fprintf(game->fp, "\n\n*************************************GAMEPLAY***********************************\n\n");
-  }
-  // while(NumberPlayer(game) > 1) {
-  //   player_t player = getNextPlayer(game);
-  //  dispatch on type
-  //if((errRISKY = computerTurn(game, NULL)) != RISKY_NIL) { return errRISKY; }
-  if((errRISKY = humanTurn(game, NULL)) != RISKY_NIL) { return errRISKY; }
-  // }
-  // printWinner(game);
+  } while(game->trains-- > 0);
 
-  if(game->log) { fclose(game->fp); }
-
-  return RISKY_NIL;
-}
-
-// FIXME: temp getters. should return copies of data since getters
-errRISKY_t getCps(game_t *game, char ***strArr1, int *size) {
-  if(!game) { return RISKY_NIL_GAME; }
-  if(!strArr1) { return RISKY_NIL_ELEMS; }
-  if(!size) { return RISKY_INVALID_INDEX_SIZE; }
-
-  *strArr1 = game->names;
-  *size = game->chromosomes;
-  
-  return RISKY_NIL;
-}
-
-// FIXME: temp getters. should return copies of data since getters
-errRISKY_t getChromosome(game_t *game, char *name, int **dna, int *size) {
-  if(!game) { return RISKY_NIL_GAME; }
-  if(!name) { return RISKY_NIL_NAMES; }
-  if(!dna) { return RISKY_NIL_ELEMS; }
-
-  int i;
-  for(i = 0; i < game->chromosomes; i++) {
-    if(!strcmp(name, game->names[i])) { break; }  
-  }
-  *dna = game->ais[i];
-  *size = game->traits;
- 
   return RISKY_NIL;
 }
