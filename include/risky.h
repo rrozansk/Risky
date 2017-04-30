@@ -34,7 +34,7 @@ typedef enum errRISKY { /* All the possible errors returned from the library. */
   RISKY_INVALID_INDEX_SIZE, RISKY_NIL_ELEMS, RISKY_READ_ERROR, RISKY_NIL_AIS,
   RISKY_INVALID_RANGE, RISKY_NIL_PLAYER, RISKY_UNKNOWN_ERROR, RISKY_NIL_NAMES,
   RISKY_CPS_NOT_SUPPORTED, RISKY_NIL_CONTINENTS, RISKY_INVALID_RAND,
-  RISKY_GAME_PLAY_MUTATION, RISKY_NOT_SUPPORTED,
+  RISKY_GAME_PLAY_MUTATION, RISKY_NOT_SUPPORTED, RISKY_INVALID_HUMANS,
 } errRISKY_t;
 
 /******************************************************************************
@@ -90,13 +90,14 @@ errRISKY_t freeRISKY(game_t *game);
  * ARGUMENT DESCRIPTION                                                       *
  * -------- -----------                                                       *
  * game     the game instance which to set                                    *
- * players  the number of human players for this game instance                *
+ * players  the number of humans players                                      *
+ * name     a pointer to an array of names                                    *
  *                                                                            *
  * RETURNS: RISKY_NIL_GAME, RISKY_INVALID_HPS, RISKY_GAME_PLAY_MUTATION,      *
- *          or RISKY_NIL if no error.                                         *
+ *          RISKY_INVALID_HUMANS, or RISKY_NIL if no error.                   *
  *                                                                            *
  ******************************************************************************/
-errRISKY_t setHumans(game_t *game, int players);
+errRISKY_t setHumans(game_t *game, int players, char **names);
 
 /******************************************************************************
  *                                                                            *
@@ -316,7 +317,7 @@ errRISKY_t setAdjacencies(game_t *game, int **board, int n);
  ******************************************************************************/
 errRISKY_t isEvolved(game_t *game, int *changed);
 
-/******************************************************************************
+/****************************************************************************** // FIXME: not a public function!?
  *                                                                            *
  * PURPOSE: Print an enumerated list of choices starting from 0.              *
  *                                                                            *
@@ -331,7 +332,7 @@ errRISKY_t isEvolved(game_t *game, int *changed);
  ******************************************************************************/
 errRISKY_t printChoices(char **elems, int size);
 
-/******************************************************************************
+/****************************************************************************** // FIXME: not a public function!?
  *                                                                            *
  * PURPOSE: Read in an integer, only accepting input between the bounds.      *
  *           Optionally prompt user 'are you sure'. Handles all errors        *
@@ -377,7 +378,7 @@ errRISKY_t readInt(int lbound, int ubound, int *pick, int prompt);
  ******************************************************************************/
 errRISKY_t risky(game_t *game);
 
-/******************************************************************************
+/****************************************************************************** // FIXME: not a public function!?
  *                                                                            *
  * PURPOSE: Print out the game board.                                         *
  *                                                                            *
@@ -397,14 +398,12 @@ errRISKY_t getChromosome(game_t *game, char *name, int **dna, int *size);
 
 
 
-// TODO: implement the rest of the API and change/comment it accordingly
 /***********************************PLAYERS************************************/
-typedef struct card card_t; // A representation of a card    // FIXME: are these needed??
-typedef struct player player_t; // A representation of a player
+typedef struct card card_t; // A representation of a card    // FIXME: needed??
 
 errRISKY_t getPlayers(game_t *game, int *players); // names
-errRISKY_t troops(game_t *game, player_t);
-errRISKY_t owned(game_t *game, player_t); // list of countries owned by player as array
+errRISKY_t troops(game_t *game, char *);
+errRISKY_t owned(game_t *game, char *); // list of countries owned by player as array
 
 /**********************************COUNTRIES***********************************/
 errRISKY_t countriesSize(game_t *game, int *size);     // return the size of countries()
@@ -433,7 +432,7 @@ errRISKY_t trade(game_t *game, card_t *trade[]);        // number of troops reci
 errRISKY_t attack(game_t *game, char *src, char *dest, int men);   // attack a given continent
 errRISKY_t defend(game_t *game, int soilders);                             // defend against attackers
 errRISKY_t maneuver(game_t *game, char *src, char *dest, int men); // move troops from any src continent to any reachable dest continent
-errRISKY_t claimRegions(game_t *game, char *country, player_t player);           //
+errRISKY_t claimRegions(game_t *game, char *country, char *player);           //
 errRISKY_t setDefenses(game_t *game);                                                //
 
 #endif
