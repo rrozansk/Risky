@@ -2,8 +2,9 @@
  * FILE:    risk.h                                                            *
  * AUTHOR:  Ryan Rozanski                                                     *
  * CREATED: 4/4/17                                                            *
- * EDITED:  5/2/17                                                            *
- * INFO:    A game library to easily implement Risk like games.               *
+ * EDITED:  5/4/17                                                            *
+ * INFO:    A game library to easily implement Risk like games, by making     *
+ *          and manipulation of the game state easy.                          *  
  *                                                                            *
  ******************************************************************************/
 
@@ -15,7 +16,7 @@
  *   T Y P E S                                                                *
  *                                                                            *
  ******************************************************************************/
-typedef struct game game_t; /* A representation of the game */
+typedef struct risk risk_t; /* A representation of the game */
 
 typedef enum errRISK { /* All the possible errors returned from the library. */
   RISK_NIL_COUNTRY, RISK_NIL_TROOPS, RISK_NIL_GAME, RISK_NIL_CARD_TYPES,
@@ -59,7 +60,7 @@ const char *strErrRISK(errRISK_t errRISK);
  * RETURNS: RISK_NIL_GAME, RISK_OUT_OF_MEMORY, or RISK_NIL if no error.       *
  *                                                                            *
  ******************************************************************************/
-errRISK_t makeRISK(game_t **game);
+errRISK_t makeRISK(risk_t **game);
 
 /******************************************************************************
  *                                                                            *
@@ -72,7 +73,7 @@ errRISK_t makeRISK(game_t **game);
  * RETURNS: RISK_NIL_GAME or RISK_NIL if no error.                            *
  *                                                                            *
  ******************************************************************************/
-errRISK_t freeRISK(game_t *game);
+errRISK_t freeRISK(risk_t *game);
 
 /******************************************************************************
  *                                                                            *
@@ -88,7 +89,7 @@ errRISK_t freeRISK(game_t *game);
  *          RISK_INVALID_HUMANS, or RISK_NIL if no error.                     *
  *                                                                            *
  ******************************************************************************/
-errRISK_t setPlayers(game_t *game, int players, char **names);
+errRISK_t setPlayers(risk_t *game, int players, char **names);
 
 /******************************************************************************
  *                                                                            *
@@ -110,7 +111,7 @@ errRISK_t setPlayers(game_t *game, int players, char **names);
  *          or RISK_NIL if no error.                                          *
  *                                                                            *
  ******************************************************************************/
-errRISK_t setTroops(game_t *game, int start, int min, int bonus, int random);
+errRISK_t setTroops(risk_t *game, int start, int min, int bonus, int random);
 
 /******************************************************************************
  *                                                                            *
@@ -129,7 +130,7 @@ errRISK_t setTroops(game_t *game, int start, int min, int bonus, int random);
  *          error.                                                            *
  *                                                                            *
  ******************************************************************************/
-errRISK_t setDeck(game_t *game, int wilds, char **types, int n);
+errRISK_t setDeck(risk_t *game, int wilds, char **types, int n);
 
 /******************************************************************************
  *                                                                            *
@@ -149,7 +150,7 @@ errRISK_t setDeck(game_t *game, int wilds, char **types, int n);
  *          if no error.                                                      *
  *                                                                            *
  ******************************************************************************/
-errRISK_t setTrades(game_t *game, int *trades, int n, int incr);
+errRISK_t setTrades(risk_t *game, int *trades, int n, int incr);
 
 /******************************************************************************
  *                                                                            *
@@ -166,7 +167,7 @@ errRISK_t setTrades(game_t *game, int *trades, int n, int incr);
  *          RISK_GAME_PLAY_MUTATION, or RISK_NIL if no error.                 *
  *                                                                            *
  ******************************************************************************/
-errRISK_t setContinents(game_t *game, char **continents, int n);
+errRISK_t setContinents(risk_t *game, char **continents, int n);
 
 /******************************************************************************
  *                                                                            *
@@ -184,7 +185,10 @@ errRISK_t setContinents(game_t *game, char **continents, int n);
  *          RISK_GAME_PLAY_MUTATION, or RISK_NIL if no error.                 *
  *                                                                            *
  ******************************************************************************/
-errRISK_t setContinentBonuses(game_t *game, int *bonuses, int n);
+errRISK_t setContinentBonuses(risk_t *game, int *bonuses, int n);
+
+// FIXME --> NO COMMENT BLOCK HERE
+errRISK_t setAdjacencies(risk_t *game, int **board, int n);
 
 /******************************************************************************
  *                                                                            *
@@ -204,7 +208,7 @@ errRISK_t setContinentBonuses(game_t *game, int *bonuses, int n);
  *          RISK_NIL if no error.                                             *
  *                                                                            *
  ******************************************************************************/
-errRISK_t setCountries(game_t *game, char **countries, int n, int random);
+errRISK_t setCountries(risk_t *game, char **countries, int n, int random);
 
 /******************************************************************************
  *                                                                            *
@@ -221,7 +225,7 @@ errRISK_t setCountries(game_t *game, char **countries, int n, int random);
  *          RISK_GAME_PLAY_MUTATION, or RISK_NIL if no error.                 *
  *                                                                            *
  ******************************************************************************/
-errRISK_t setAdjacencies(game_t *game, int **board, int n);
+errRISK_t setAdjacencies(risk_t *game, int **board, int n);
 
 /******************************************************************************
  *                                                                            *
@@ -241,46 +245,38 @@ errRISK_t setAdjacencies(game_t *game, int **board, int n);
  *          RISK_INVALID_COUNTRY_CONTINENT, or RISK_NIL if no error           *
  *                                                                            *
  ******************************************************************************/
-errRISK_t isValid(game_t *game);
+errRISK_t isValid(risk_t *game);
 
-
-
-
-typedef struct card card_t; // A representation of a card
-
-/***********************************PLAYERS************************************/
-errRISK_t getPlayers(game_t *game, int *players); // names
-errRISK_t troops(game_t *game, char *);           //
-errRISK_t owned(game_t *game, char *);            // list of countries owned by player as array
-
-/**********************************COUNTRIES***********************************/
-errRISK_t countriesSize(game_t *game, int *size);         // return the size of countries()
-errRISK_t countries(game_t *game, char **all);            // get all countries as an array with countrySize()
-errRISK_t boardersSize(game_t *game, char *country);      // return the size of boarders()
-errRISK_t boarders(game_t *game, char *country);          // return all boarding countries as an array with boardersSize()
-errRISK_t name(game_t *game, char *country);              // get the name of the country
-errRISK_t owner(game_t *game, char *country);             // player who owns country
-errRISK_t armies(game_t *game, char *country);            // # armies on country
-errRISK_t place(game_t *game, int troops, char *country); // place armies on a country
-errRISK_t randomizeBoard(game_t *game, int rand);         // randomly assign countries to players
-errRISK_t randomizeArmies(game_t *game, int rand);        // randomly assign armies to players countries
-
-/**********************************CONTINENTS**********************************/
-errRISK_t continents(game_t *game, int foo);    // return ptr to array of all continents
-errRISK_t bonus(game_t *game, char *continent); // troop bonus for the given continent
-
-/************************************CARDS*************************************/
-errRISK_t cards(game_t *game, int foo);         // get all cards as array
-errRISK_t getcards(game_t *game, int foo );     // get number of cards
-errRISK_t draw(game_t *game, char *card);       // the next card to draw, takes care to shuffle cards and track cards still out
-errRISK_t next(game_t *game, int foo );         // number of troops recieved for next trade
-errRISK_t trade(game_t *game, card_t *trade[]); // number of troops recieved for trade
-
-/***********************************GAMEPLAY***********************************/
-errRISK_t attack(game_t *game, char *src, char *dest, int men);    // attack a given continent TODO result
-errRISK_t setDefence(game_t *game, char *country, int soilders);   // defend against attackers
-errRISK_t maneuver(game_t *game, char *src, char *dest, int men);  // move troops from any src continent to any reachable dest continent
-errRISK_t claimRegions(game_t *game, char *country, char *player); //
-errRISK_t setDefenses(game_t *game);                               //
+/* brief API overview - commented out funcs are already implemented */
+typedef struct card card_t;
+//const char *strErrRISK(errRISK_t errRISK);
+//errRISK_t makeRISK(risk_t **game);
+//errRISK_t freeRISK(risk_t *game);
+//errRISK_t setPlayers(risk_t *game, int players, char **names);
+errRISK_t getPlayers(risk_t *game, char **names, int *players);
+//errRISK_t setTroops(risk_t *game, int start, int min, int bonus, int random);
+errRISK_t getTroops(risk_t *game, int *start, int *min, int *bonus);
+//errRISK_t setDeck(risk_t *game, int wilds, char **types, int n);
+errRISK_t getDeck(risk_t *game, int *wilds, card_t **cards, int *size);
+//errRISK_t setTrades(risk_t *game, int *trades, int n, int incr);
+//errRISK_t setContinents(risk_t *game, char **continents, int n);
+errRISK_t getContinents(risk_t *game, char ***continents, int *size);
+//errRISK_t setContinentBonuses(risk_t *game, int *bonuses, int n);
+errRISK_t getContinentBonus(risk_t *game, char *continent, int *bonus);
+//errRISK_t setCountries(risk_t *game, char **countries, int n, int random);
+errRISK_t getCountries(risk_t *game, char **countries, int *size);
+//errRISK_t setAdjacencies(risk_t *game, int **board, int n);
+errRISK_t getNeighbors(risk_t *game, char *country, char ***neighbors, int *size);
+errRISK_t setOwner(risk_t *game, char *country, char *player);
+errRISK_t getOwner(risk_t *game, char *country, char **player);
+errRISK_t setArmies(risk_t *game, char *country, int troops);
+errRISK_t getArmies(risk_t *game, char *country, int *troops);
+//errRISK_t isValid(risk_t *game);
+errRISK_t setRandomCountries(risk_t *game, int rand);
+errRISK_t setRandomArmies(risk_t *game, int rand);
+errRISK_t getNextTradeValue(risk_t *game, int *troops);
+errRISK_t drawCard(risk_t *game, char **card);
+errRISK_t tradeCards(risk_t *game, card_t *trade[], int *troops);
+errRISK_t attack(risk_t *game, char *src, int attack, char *dest, int defence, int *result); // result is +/- #
 
 #endif

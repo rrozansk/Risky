@@ -2,7 +2,7 @@
  * FILE:    risk.c                                                            *
  * AUTHOR:  Ryan Rozanski                                                     *
  * CREATED: 4/4/17                                                            *
- * EDITED:  5/3/17                                                            *
+ * EDITED:  5/4/17                                                            *
  * INFO:    Implementation of the interface located in risk.h.                *
  *                                                                            *
  ******************************************************************************/
@@ -21,7 +21,7 @@
  *   T Y P E S                                                                *
  *                                                                            *
  ******************************************************************************/
-struct game {
+struct risk {
   /* PLAYERS */
   char **names;        /* array of player names */
   int size;            /* # human */
@@ -100,10 +100,10 @@ const char *strErrRISK(errRISK_t errRISK) {
   }
 }
 
-errRISK_t makeRISK(game_t **game) {
+errRISK_t makeRISK(risk_t **game) {
   if(!game) { return RISK_NIL_GAME; }
 
-  if(!(*game = calloc(1, sizeof(game_t)))) { return RISK_OUT_OF_MEMORY; }
+  if(!(*game = calloc(1, sizeof(risk_t)))) { return RISK_OUT_OF_MEMORY; }
 
   return RISK_NIL;
 }
@@ -126,7 +126,7 @@ void copyBlockOfBlocks(char ***dest, char **src, int blocks) { // TODO
     
 }
 
-errRISK_t freeRISK(game_t *game) { // TODO: redo with free API above
+errRISK_t freeRISK(risk_t *game) { // TODO: redo with free API above
   if(!game) { return RISK_NIL_GAME; }
 
   if(game->names) { 
@@ -153,12 +153,12 @@ errRISK_t freeRISK(game_t *game) { // TODO: redo with free API above
     free(game->board);
   }
   free(game);
-  //*game = NULL; // TODO make it game_t **game??
+  //*game = NULL; // TODO make it risk_t **game??
 
   return RISK_NIL;
 }
 
-errRISK_t setPlayers(game_t *game, int n, char **names) {
+errRISK_t setPlayers(risk_t *game, int n, char **names) {
   if(!game) { return RISK_NIL_GAME; }
   if(n > 8 || n < 2) { return RISK_INVALID_PLAYERS; }
   if(!names) { return RISK_NIL_NAMES; }
@@ -171,7 +171,7 @@ errRISK_t setPlayers(game_t *game, int n, char **names) {
   return RISK_NIL;
 }
 
-errRISK_t setTroops(game_t *game, int beginning, int min, int bonus, int rand) {
+errRISK_t setTroops(risk_t *game, int beginning, int min, int bonus, int rand) {
   if(!game) { return RISK_NIL_GAME; }
   if(beginning < 0 || beginning > 256) { return RISK_INVALID_BEGINNING; }
   if(min < 0 || min > 256) { return RISK_INVALID_MINIMUM; }
@@ -187,7 +187,7 @@ errRISK_t setTroops(game_t *game, int beginning, int min, int bonus, int rand) {
   return RISK_NIL;
 }
 
-errRISK_t setDeck(game_t *game, int wilds, char **types, int n) {
+errRISK_t setDeck(risk_t *game, int wilds, char **types, int n) {
   if(!game) { return RISK_NIL_GAME; }
   if(!types) { return RISK_NIL_CARD_TYPES; }
   if(wilds < 0 || wilds > 256) { return RISK_INVALID_WILDS; }
@@ -202,7 +202,7 @@ errRISK_t setDeck(game_t *game, int wilds, char **types, int n) {
   return RISK_NIL;
 }
 
-errRISK_t setTrades(game_t *game, int *trades, int n, int incr) {
+errRISK_t setTrades(risk_t *game, int *trades, int n, int incr) {
   if(!game) { return RISK_NIL_GAME; }
   if(!trades) { return RISK_NIL_TRADEINS; }
   if(incr < 0 || incr > 256) { return RISK_INVALID_INCR; }
@@ -217,7 +217,7 @@ errRISK_t setTrades(game_t *game, int *trades, int n, int incr) {
   return RISK_NIL;
 }
 
-errRISK_t setContinents(game_t *game, char **continents, int n) {
+errRISK_t setContinents(risk_t *game, char **continents, int n) {
   if(!game) { return RISK_NIL_GAME; }
   if(!continents) { return RISK_NIL_CONTINENTS; }
   if(n < 0 || n > 256) { return RISK_INVALID_CONTINENTS_SIZE; }
@@ -231,7 +231,7 @@ errRISK_t setContinents(game_t *game, char **continents, int n) {
   return RISK_NIL;
 }
 
-errRISK_t setContinentBonuses(game_t *game, int *bonuses, int n) {
+errRISK_t setContinentBonuses(risk_t *game, int *bonuses, int n) {
   if(!game) { return RISK_NIL_GAME; }
   if(!bonuses) { return RISK_NIL_COUNTRY_BONUSES; }
   if(n < 0 || n > 256) { return RISK_INVALID_CONTINENTS_SIZE; }
@@ -245,7 +245,7 @@ errRISK_t setContinentBonuses(game_t *game, int *bonuses, int n) {
   return RISK_NIL;
 }
 
-errRISK_t setCountries(game_t *game, char **countries, int n, int rand) {
+errRISK_t setCountries(risk_t *game, char **countries, int n, int rand) {
   if(!game) { return RISK_NIL_GAME; }
   if(!countries) { return RISK_NIL_COUNTRIES; }
   if(!(rand == 1 || rand == 0)) { return RISK_INVALID_RAND; }
@@ -261,7 +261,7 @@ errRISK_t setCountries(game_t *game, char **countries, int n, int rand) {
   return RISK_NIL;
 }
 
-errRISK_t setAdjacencies(game_t *game, int **board, int n) {
+errRISK_t setAdjacencies(risk_t *game, int **board, int n) {
   if(!game) { return RISK_NIL_GAME; }
   if(!board) { return RISK_NIL_BOARD; }
   if(n < 0 || n > 256) { return RISK_INVALID_BOARD_SIZE; }
@@ -275,7 +275,7 @@ errRISK_t setAdjacencies(game_t *game, int **board, int n) {
   return RISK_NIL;
 }
 
-errRISK_t isValid(game_t *game) { // FIXME: make sure entire conf is sane
+errRISK_t isValid(risk_t *game) { // FIXME: make sure entire conf is sane
   if(!game) { return RISK_NIL_GAME; }
   if(!game->cardTypes) { return RISK_NIL_CARD_TYPES; }
   if(!game->tradeIns) { return RISK_NIL_TRADEINS; }
