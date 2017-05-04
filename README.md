@@ -13,10 +13,11 @@ be used as an opponent in mode two or three. During training (and all other mode
 games can be logged and there output placed under a training directory so they 
 can be reviewed or inspected later if so desired.
 
-Risky is actually composed of 3 libraries:
+Risky is actually composed of 4 libraries:
   - log: a simple library for file logging
   - ini: a simple library for ini like configuration files supporting CRUD operations
-  - risky: exposes a Risk game like API to easily implement Risk like games quickly. 
+  - dna: a simple library to make working with genetic algorithms easier
+  - risk: exposes a Risk game like API to easily implement Risk like games quickly. 
 
 All of this is composed together to create an easily custom configurable risk
 game with AI (using genetic algorithms) layer on top to make things fun and
