@@ -4,9 +4,6 @@
  * CREATED: 4/4/17                                                            *
  * EDITED:  5/2/17                                                            *
  * INFO:    A game library to easily implement Risk like games.               *
-
-    FIXME:  makes creating (C), (R) reading, and (U) updating of game state easy
-
  *                                                                            *
  ******************************************************************************/
 
@@ -225,6 +222,26 @@ errRISK_t setCountries(game_t *game, char **countries, int n, int random);
  *                                                                            *
  ******************************************************************************/
 errRISK_t setAdjacencies(game_t *game, int **board, int n);
+
+/******************************************************************************
+ *                                                                            *
+ * PURPOSE: To test whether or not a give game configuration is valid.        *
+ *                                                                            *
+ * ARGUMENT DESCRIPTION                                                       *
+ * -------- -----------                                                       *
+ * game     the game instance which to test                                   *
+ *                                                                            *
+ * RETURNS: RISK_NIL_GAME, RISK_NIL_CARD_TYPES, RISK_NIL_TRADEINS,            *
+ *          RISK_NIL_NAMES, RISK_NIL_CONTINENTS, RISK_NIL_COUNTRY_BONUSES,    *
+ *          RISK_NIL_COUNTRIES, RISK_NIL_BOARD, RISK_INVALID_PLAYERS,         *
+ *          RISK_INVALID_RAND, RISK_INVALID_RAND, RISK_INVALID_INCR,          *
+ *          RISK_INVALID_BEGINNING, RISK_INVALID_MINIMUM, RISK_INVALID_BONUS, *
+ *          RISK_INVALID_WILDS, RISK_INVALID_DECK, RISK_INVALID_TRADES_SET,   *
+ *          RISK_INVALID_CONTINENTS_SIZE, RISK_INVALID_COUNTRIES_SIZE,        *
+ *          RISK_INVALID_COUNTRY_CONTINENT, or RISK_NIL if no error           *
+ *                                                                            *
+ ******************************************************************************/
+errRISK_t isValid(game_t *game);
 
 
 
