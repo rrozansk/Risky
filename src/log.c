@@ -225,10 +225,12 @@ errLOG_t logSetting(log_t *log, char *key, int val) {
 
   return LOG_NIL;
 }
-  
+
 //if(log->level) { fprint(log->fp, "LEVEL"); }
 //fprint("fmtstring", args...); // wrap if longer than column width??
 errLOG_t logEvent(log_t *log, int timestamp, char *event) {
+  if(!log) { return LOG_NIL_LOG; }
+  //if(!event) { return LOG_NIL_EVENT; }
   if(!(timestamp == 0 || timestamp == 1)) { return LOG_INVALID_TIMESTAMP; }
   
   if(timestamp) {
