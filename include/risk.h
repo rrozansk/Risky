@@ -187,9 +187,6 @@ errRISK_t setContinents(risk_t *game, char **continents, int n);
  ******************************************************************************/
 errRISK_t setContinentBonuses(risk_t *game, int *bonuses, int n);
 
-// FIXME --> NO COMMENT BLOCK HERE
-errRISK_t setAdjacencies(risk_t *game, int **board, int n);
-
 /******************************************************************************
  *                                                                            *
  * PURPOSE: Configure the contries (0-2^8) which make up the map, and whether *
