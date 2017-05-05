@@ -30,7 +30,7 @@ typedef struct dna {
   int ubound;        /* upper bound on trait value */
   double rate;       /* mutation rate */
   int elitism;       /* have or not during ne wgeneration creation */
-  // TODO: add func ptr for fitness func here??
+  int (*fitness)(char *who, int *chromosome, int traits);
 } dna_t;
 
 /******************************************************************************
@@ -50,12 +50,7 @@ errDNA_t makeDNA(dna_t **dna) {
   return DNA_NIL;
 }
 
-errDNA_t freeDNA(dna_t **dna) {
-  return DNA_NIL;
-}
-
-// can i make this a generic implementation?? have function ptr in struct and put implementation to the user??
-errDNA_t fitness(dna_t *dna, char *who, int *fitness) {
+errDNA_t freeDNA(dna_t *dna) {
   return DNA_NIL;
 }
 

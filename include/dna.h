@@ -3,7 +3,7 @@
  * AUTHOR:  Ryan Rozanski                                                     *
  * CREATED: 5/4/17                                                            *
  * EDITED:  5/4/17                                                            *
- * INFO:    FIXME
+ * INFO:    A library to make working with genetic algorithms easy.           *
  *                                                                            *
  ******************************************************************************/
 
@@ -39,7 +39,7 @@ typedef enum errDNA { /* All possible errors produced by this library. */
  ******************************************************************************/
 errDNA_t makeDNA(dna_t **dna);
 
-errDNA_t freeDNA(dna_t **dna);
+errDNA_t freeDNA(dna_t *dna);
 
 errDNA_t fitness(dna_t *dna, char *who, int *fitness);
 
