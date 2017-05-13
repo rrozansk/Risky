@@ -2,7 +2,7 @@
  * FILE:    logger.h                                                          *
  * AUTHOR:  Ryan Rozanski                                                     *
  * CREATED: 4/30/17                                                           *
- * EDITED:  5/3/17                                                            *
+ * EDITED:  5/13/17                                                           *
  * INFO:    A library to implement simple logging.                            *
  *                                                                            *
  ******************************************************************************/
@@ -22,7 +22,7 @@ typedef enum errLOG {
   LOG_NIL_NAME, LOG_NIL_DIR, LOG_OUT_OF_MEMORY, LOG_INVALID_SECONDS, 
   LOG_NIL_KEY, LOG_NIL_HEADER, LOG_NIL_TITLE, LOG_NIL_STR_ARR, 
   LOG_INVALID_ARR_SIZE, LOG_INVALID_SET, LOG_NIL_SECTION, LOG_DIR_CREATION_FAIL,
-  LOG_INVALID_TIMESTAMP,
+  LOG_INVALID_TIMESTAMP, LOG_INVALID_DIR,
 } errLOG_t;
 
 /******************************************************************************
@@ -178,7 +178,33 @@ errLOG_t logSection(log_t *log, char *section);
  * RETURNS: LOG_NIL_KEY, or LOG_NIL if no error.                              *
  *                                                                            *
  ******************************************************************************/
-errLOG_t logSetting(log_t *log, char *key, int val);
+errLOG_t logIntSetting(log_t *log, char *key, int val);
+
+/******************************************************************************
+ *                                                                            *
+ * PURPOSE: To log the key followed by '...' and the the val.                 *
+ *                                                                            *
+ * ARGUMENT DESCRIPTION                                                       *
+ * -------- -----------                                                       *
+ * log      the log to print to                                               *
+ *                                                                            *
+ * RETURNS: LOG_NIL_KEY, or LOG_NIL if no error.                              *
+ *                                                                            *
+ ******************************************************************************/
+errLOG_t logStrSetting(log_t *log, char *key, char *val);
+
+/******************************************************************************
+ *                                                                            *
+ * PURPOSE: To log the key followed by '...' and the the val.                 *
+ *                                                                            *
+ * ARGUMENT DESCRIPTION                                                       *
+ * -------- -----------                                                       *
+ * log      the log to print to                                               *
+ *                                                                            *
+ * RETURNS: LOG_NIL_KEY, or LOG_NIL if no error.                              *
+ *                                                                            *
+ ******************************************************************************/
+errLOG_t logFloatSetting(log_t *log, char *key, double val);
 
 /******************************************************************************
  *                                                                            *

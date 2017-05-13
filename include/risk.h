@@ -2,7 +2,7 @@
  * FILE:    risk.h                                                            *
  * AUTHOR:  Ryan Rozanski                                                     *
  * CREATED: 4/4/17                                                            *
- * EDITED:  5/4/17                                                            *
+ * EDITED:  5/13/17                                                           *
  * INFO:    A game library to easily implement Risk like games, by making     *
  *          and manipulation of the game state easy.                          *  
  *                                                                            *
@@ -91,6 +91,8 @@ errRISK_t freeRISK(risk_t *game);
  ******************************************************************************/
 errRISK_t setPlayers(risk_t *game, int players, char **names);
 
+errRISK_t getPlayers(risk_t *game, char ***names, int *players);
+
 /******************************************************************************
  *                                                                            *
  * PURPOSE: Configure how troops are setup. How much you receive at the game  *
@@ -113,6 +115,8 @@ errRISK_t setPlayers(risk_t *game, int players, char **names);
  ******************************************************************************/
 errRISK_t setTroops(risk_t *game, int start, int min, int bonus, int random);
 
+errRISK_t setTroops(risk_t *game, int start, int min, int bonus, int random);
+
 /******************************************************************************
  *                                                                            *
  * PURPOSE: Configure the deck/cards used for trading. The number of wild     *
@@ -131,6 +135,7 @@ errRISK_t setTroops(risk_t *game, int start, int min, int bonus, int random);
  *                                                                            *
  ******************************************************************************/
 errRISK_t setDeck(risk_t *game, int wilds, char **types, int n);
+errRISK_t getDeck(risk_t *game, int *wilds, char ***types, int *size);
 
 /******************************************************************************
  *                                                                            *
@@ -151,6 +156,7 @@ errRISK_t setDeck(risk_t *game, int wilds, char **types, int n);
  *                                                                            *
  ******************************************************************************/
 errRISK_t setTrades(risk_t *game, int *trades, int n, int incr);
+errRISK_t getTrades(risk_t *game, int **trades, int *n, int *incr);
 
 /******************************************************************************
  *                                                                            *
@@ -168,6 +174,7 @@ errRISK_t setTrades(risk_t *game, int *trades, int n, int incr);
  *                                                                            *
  ******************************************************************************/
 errRISK_t setContinents(risk_t *game, char **continents, int n);
+errRISK_t getContinents(risk_t *game, char ***continents, int *size);
 
 /******************************************************************************
  *                                                                            *
@@ -186,6 +193,8 @@ errRISK_t setContinents(risk_t *game, char **continents, int n);
  *                                                                            *
  ******************************************************************************/
 errRISK_t setContinentBonuses(risk_t *game, int *bonuses, int n);
+errRISK_t getContinentBonus(risk_t *game, char *continent, int *bonus);
+errRISK_t getContinentBonuses(risk_t *game, int **bonuses, int *size);
 
 /******************************************************************************
  *                                                                            *
@@ -206,11 +215,14 @@ errRISK_t setContinentBonuses(risk_t *game, int *bonuses, int n);
  *                                                                            *
  ******************************************************************************/
 errRISK_t setCountries(risk_t *game, char **countries, int n, int random);
+errRISK_t getCountries(risk_t *game, char ***countries, int *size);
 
 /******************************************************************************
  *                                                                            *
  * PURPOSE: Configure reachability between countries using 2D array of 1's    *
  *          and 0's.                                                          *
+
+ FIXME: update this shit
  *                                                                            *
  * ARGUMENT DESCRIPTION                                                       *
  * -------- -----------                                                       *
@@ -222,7 +234,7 @@ errRISK_t setCountries(risk_t *game, char **countries, int n, int random);
  *          RISK_GAME_PLAY_MUTATION, or RISK_NIL if no error.                 *
  *                                                                            *
  ******************************************************************************/
-errRISK_t setAdjacencies(risk_t *game, int **board, int n);
+errRISK_t setAdjacencies(risk_t *game, char *country, char **countries, int conflicts);
 
 /******************************************************************************
  *                                                                            *
@@ -244,36 +256,172 @@ errRISK_t setAdjacencies(risk_t *game, int **board, int n);
  ******************************************************************************/
 errRISK_t isValid(risk_t *game);
 
-/* brief API overview - commented out funcs are already implemented */
-typedef struct card card_t;
-//const char *strErrRISK(errRISK_t errRISK);
-//errRISK_t makeRISK(risk_t **game);
-//errRISK_t freeRISK(risk_t *game);
-//errRISK_t setPlayers(risk_t *game, int players, char **names);
-errRISK_t getPlayers(risk_t *game, char **names, int *players);
-//errRISK_t setTroops(risk_t *game, int start, int min, int bonus, int random);
-errRISK_t getTroops(risk_t *game, int *start, int *min, int *bonus);
-//errRISK_t setDeck(risk_t *game, int wilds, char **types, int n);
-errRISK_t getDeck(risk_t *game, int *wilds, card_t **cards, int *size);
-//errRISK_t setTrades(risk_t *game, int *trades, int n, int incr);
-//errRISK_t setContinents(risk_t *game, char **continents, int n);
-errRISK_t getContinents(risk_t *game, char ***continents, int *size);
-//errRISK_t setContinentBonuses(risk_t *game, int *bonuses, int n);
-errRISK_t getContinentBonus(risk_t *game, char *continent, int *bonus);
-//errRISK_t setCountries(risk_t *game, char **countries, int n, int random);
-errRISK_t getCountries(risk_t *game, char **countries, int *size);
-//errRISK_t setAdjacencies(risk_t *game, int **board, int n);
+/******************************************************************************
+ *                                                                            *
+ * PURPOSE: 
+ *                                                                            *
+ * ARGUMENT DESCRIPTION                                                       *
+ * -------- -----------                                                       *
+ *                                                                            *
+ * RETURNS: 
+ *                                                                            *
+ ******************************************************************************/
 errRISK_t getNeighbors(risk_t *game, char *country, char ***neighbors, int *size);
+
+/******************************************************************************
+ *                                                                            *
+ * PURPOSE: 
+ *                                                                            *
+ * ARGUMENT DESCRIPTION                                                       *
+ * -------- -----------                                                       *
+ *                                                                            *
+ * RETURNS: 
+ *                                                                            *
+ ******************************************************************************/
 errRISK_t setOwner(risk_t *game, char *country, char *player);
+
+/******************************************************************************
+ *                                                                            *
+ * PURPOSE: 
+ *                                                                            *
+ * ARGUMENT DESCRIPTION                                                       *
+ * -------- -----------                                                       *
+ *                                                                            *
+ * RETURNS: 
+ *                                                                            *
+ ******************************************************************************/
 errRISK_t getOwner(risk_t *game, char *country, char **player);
+
+/******************************************************************************
+ *                                                                            *
+ * PURPOSE: 
+ *                                                                            *
+ * ARGUMENT DESCRIPTION                                                       *
+ * -------- -----------                                                       *
+ *                                                                            *
+ * RETURNS: 
+ *                                                                            *
+ ******************************************************************************/
 errRISK_t setArmies(risk_t *game, char *country, int troops);
+
+/******************************************************************************
+ *                                                                            *
+ * PURPOSE: 
+ *                                                                            *
+ * ARGUMENT DESCRIPTION                                                       *
+ * -------- -----------                                                       *
+ *                                                                            *
+ * RETURNS: 
+ *                                                                            *
+ ******************************************************************************/
 errRISK_t getArmies(risk_t *game, char *country, int *troops);
-//errRISK_t isValid(risk_t *game);
-errRISK_t setRandomCountries(risk_t *game, int rand);
+
+/******************************************************************************
+ *                                                                            *
+ * PURPOSE: 
+ *                                                                            *
+ * ARGUMENT DESCRIPTION                                                       *
+ * -------- -----------                                                       *
+ *                                                                            *
+ * RETURNS: 
+ *                                                                            *
+ ******************************************************************************/
+errRISK_t setRandomCountries(risk_t *game, int rand); // need I/O so this should be tracked else where??
+
+/******************************************************************************
+ *                                                                            *
+ * PURPOSE: 
+ *                                                                            *
+ * ARGUMENT DESCRIPTION                                                       *
+ * -------- -----------                                                       *
+ *                                                                            *
+ * RETURNS: 
+ *                                                                            *
+ ******************************************************************************/
 errRISK_t setRandomArmies(risk_t *game, int rand);
+
+/******************************************************************************
+ *                                                                            *
+ * PURPOSE: 
+ *                                                                            *
+ * ARGUMENT DESCRIPTION                                                       *
+ * -------- -----------                                                       *
+ *                                                                            *
+ * RETURNS: 
+ *                                                                            *
+ ******************************************************************************/
 errRISK_t getNextTradeValue(risk_t *game, int *troops);
+
+/******************************************************************************
+ *                                                                            *
+ * PURPOSE: 
+ *                                                                            *
+ * ARGUMENT DESCRIPTION                                                       *
+ * -------- -----------                                                       *
+ *                                                                            *
+ * RETURNS: 
+ *                                                                            *
+ ******************************************************************************/
 errRISK_t drawCard(risk_t *game, char **card);
-errRISK_t tradeCards(risk_t *game, card_t *trade[], int *troops);
-errRISK_t attack(risk_t *game, char *src, int attack, char *dest, int defence, int *result); // result is +/- #
+
+/******************************************************************************
+ *                                                                            *
+ * PURPOSE: 
+ *                                                                            *
+ * ARGUMENT DESCRIPTION                                                       *
+ * -------- -----------                                                       *
+ *                                                                            *
+ * RETURNS: 
+ *                                                                            *
+ ******************************************************************************/
+errRISK_t tradeCards(risk_t *game, char **cards, int *troops);
+
+/******************************************************************************
+ *                                                                            *
+ * PURPOSE: 
+ *                                                                            *
+ * ARGUMENT DESCRIPTION                                                       *
+ * -------- -----------                                                       *
+ *                                                                            *
+ * RETURNS: 
+ *                                                                            *
+ ******************************************************************************/
+errRISK_t attack(risk_t *game, char *src, int attack, char *dest, int defence, int *result); // result is +/- # ??
+
+/******************************************************************************
+ *                                                                            *
+ * PURPOSE: 
+ *                                                                            *
+ * ARGUMENT DESCRIPTION                                                       *
+ * -------- -----------                                                       *
+ *                                                                            *
+ * RETURNS: 
+ *                                                                            *
+ ******************************************************************************/
+errRISK_t initDeck(risk_t *game);
+
+/******************************************************************************
+ *                                                                            *
+ * PURPOSE: 
+ *                                                                            *
+ * ARGUMENT DESCRIPTION                                                       *
+ * -------- -----------                                                       *
+ *                                                                            *
+ * RETURNS: 
+ *                                                                            *
+ ******************************************************************************/
+errRISK_t initCountries(risk_t *game);
+
+/******************************************************************************
+ *                                                                            *
+ * PURPOSE: 
+ *                                                                            *
+ * ARGUMENT DESCRIPTION                                                       *
+ * -------- -----------                                                       *
+ *                                                                            *
+ * RETURNS: 
+ *                                                                            *
+ ******************************************************************************/
+errRISK_t initArmies(risk_t *game);
 
 #endif

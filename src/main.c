@@ -2,9 +2,9 @@
  * FILE:    main.c                                                            *
  * AUTHOR:  Ryan Rozanski                                                     *
  * CREATED: 4/4/17                                                            *
- * EDITED:  5/7/17                                                            *
+ * EDITED:  5/13/17                                                           *
  * INFO:    main.c is the glue which holds together the ini, log, dna, and    *
- *          risky libraries.                                                  *
+ *          risk libraries.                                                   *
  *                                                                            *
  ******************************************************************************/
 
@@ -32,19 +32,36 @@ log_t *logger = NULL;
 dna_t *dna = NULL;
 risk_t *game = NULL;
 
+errRISK_t errRISK;
+errINI_t errINI;
+errDNA_t errDNA;
+errLOG_t errLOG;
+
 /******************************************************************************
  *                                                                            *
  *   F U N C T I O N S                                                        *
  *                                                                            *
  ******************************************************************************/
+void freeStrArr(char **arr, int i) {
+  for(; i; i--) { free(arr[i-1]); }
+  free(arr);
+}
 
 // Read in an integer, only accepting input between the bounds. Optionally prompt
 // user 'are you sure'. Handles all errors appropriately.
 void readInt(int lbound, int ubound, int *pick, int prompt) {
-  // FIXME: internal errors!
-  //if(lbound >= ubound) { return GLUE_INVALID_RANGE; }
-  //if(!pick) { return GLUE_NIL_CHOICE; }
-  //if(!(prompt == 0 || prompt == 1)) { return GLUE_INVALID_PROMPT; }
+  if(lbound >= ubound) {
+    fprintf(stderr, "internal error!\ninvalid range in readInt()\nexiting...\n");
+    exit(EXIT_FAILURE);
+  }
+  if(!pick) {
+    fprintf(stderr, "internal error!\nnil pick in readInt()\nexiting...\n");
+    exit(EXIT_FAILURE);
+  }
+  if(!(prompt == 0 || prompt == 1)) {
+    fprintf(stderr, "internal error!\npromt must be 0 or 1 in readInt()\nexiting...\n");
+    exit(EXIT_FAILURE);
+  }
 
   char c;
   char buffer[80];
@@ -52,7 +69,6 @@ void readInt(int lbound, int ubound, int *pick, int prompt) {
   while(fgets(buffer, 80, stdin)) {
     if(!sscanf(buffer, "%d\n", pick) || *pick < lbound || *pick > ubound) {
       fprintf(stdout, "invalid, input must be a single integer between %i-%i\n", lbound, ubound);
-      fprintf(stdout, "Enter pick (%i-%i): ", lbound, ubound);
     } else if(prompt) {
       fprintf(stdout, "Entered choice: %i, are you sure (y/n)? ", *pick);
       while(fgets(buffer, 80, stdin)) {
@@ -62,267 +78,419 @@ void readInt(int lbound, int ubound, int *pick, int prompt) {
         else if(c == 'y') { return; }
         else { break; } // c == 'n'
       }
-      //if(c != 'n') { return GLUE_READ_ERROR; }
-      fprintf(stdout, "Enter pick (%i-%i): ", lbound, ubound);
     } else { return; }
+    fprintf(stdout, "Enter pick (%i-%i): ", lbound, ubound);
   }
-
-  //return GLUE_READ_ERROR;
 }
 
 // print an array as an enumerated list
 void printChoices(char **elems, int size) {
-  //if(!elems) { return GLUE_INVALID_INDEX_SIZE; }
-  //if(!size || size < 0) { return GLUE_NIL_ELEMS; }
+  if(!elems) { 
+    fprintf(stderr, "internal error!\nnil elems in printChoices()\nexiting...\n");
+    exit(EXIT_FAILURE);
+  }
+  if(size < 1) {
+    fprintf(stderr, "internal error!\ninvalid size in printChoices()\nexiting...\n");
+    exit(EXIT_FAILURE);
+  }
 
   int i;
   for(i = 0; i < size; i++) { fprintf(stdout, "\t%i) %s\n", i, elems[i]);  }
   fprintf(stdout, "\n");
 }
 
+// TODO: implement. for now just promote higher traits.
+int fitness(char *who, int *chromosome, int traits) {
+  if(!who || !chromosome || !traits) { return -1; }
 
-// Attempt to create a matrix.
-void mallocMatrix(int ***matrix, int r, int c) {
-  if(!(*matrix = malloc(sizeof(int *) * r))) {
-    fprintf(stderr, "error! out of memory\nexiting...\n");
+  int fitness = 0;
+  for(; traits; traits--) {
+    switch(traits) {
+      case 0: //offense:     [world domination speed]
+        fitness += chromosome[0];
+        break;
+      case 1: //defence:     [building up troops]
+        fitness += chromosome[1];
+        break;
+      case 2: //armies:      [higher number of troops]
+        fitness += chromosome[2];
+        break;
+      case 3: //continents:  [continent bonuses]
+        fitness += chromosome[3];
+        break;
+      case 4: //card_b:      [card bonus]
+        fitness += chromosome[4];
+        break;
+      case 5: //troop_b:     [troop bonus]
+        fitness += chromosome[5];
+        break;
+      case 6: //claim:       [country placement at game start]
+        fitness += chromosome[6];
+        break;
+      case 7: //troops:      [troop placement at game start]
+        fitness += chromosome[7];
+        break;
+      case 8: //takeover:    [overtaking opponents for cards]
+        fitness += chromosome[8];
+        break;
+      case 9: //borders:     [fority borders]
+        fitness += chromosome[9];
+        break;
+      default:
+        fprintf(stderr, "error! unrecognized trait\nexiting...\n");
+        exit(EXIT_FAILURE);
+      
+    }
+  }
+  return fitness;
+}
+
+// attempt to set up the logger from the INI conf file.
+void setupLOGfromINI(ini_t *ini, log_t **logger) {
+  int log;
+  if((errINI = getBoolINI(ini, "Logging", "log", &log)) != INI_NIL) {
+    fprintf(stderr, "error! failure to get log option\nirritant: %s\nexiting...\n", strErrINI(errINI));
     exit(EXIT_FAILURE);
   }
 
-  int i;
-  for(i = 0; i < r; i++) { 
-    if(!((*matrix)[i] = calloc(c, sizeof(int)))) {
-      for(; i; i--) { free((*matrix)[i-1]); }
-      free(*matrix);
-      fprintf(stderr, "error! out of memory\nexiting...\n");
-      exit(EXIT_FAILURE);
-    }
-  }
-}
-
-void updateChromosomes(ini_t *ini, dna_t *dna, log_t *logger) {
-  char chromosome[80];
-  int j = 0;
-  int size, pos, *intArr;
-  int chars;
-  char **strArr1, buff[10];
-  for(; j; j--) { 
-    int pos = 0;
-    buff[pos++] = '{';
-
-    int chars;
-    for(j = 0; j < size; j++) {
-      //chars = sprintf(&buff[pos], "%d", arr[j]);
-      if(chars < 0) {}
-      pos += chars;
-      if(j < size-1) {
-        chars = sprintf(&buff[pos], ",");
-        if(chars < 0) {}
-        pos += chars;
-      }
-    }
-
-    buff[pos++] = '}';
-    buff[pos] = '\0';
-    //if((errINI = setINI(ini, "Chromosomes", strArr1[i-1], chromosome)) != INI_NIL) {}
-  }
-}
-
-// if cannot set up then print error message, but continue playing
-void setupLOGfromINI(ini_t *ini, log_t **logger) {
-  int log;
-  errINI_t errINI;
-  if((errINI = getIntINI(ini, "Logging", "log", &log)) != INI_NIL) {
-    fprintf(stderr, "failure to set up log...");
+  if(!log) {
     *logger = NULL;
+    return;
   }
-  if(!log) { return; }
-   
+
+  if((errINI = getIntINI(ini, "Logging", "columns", &log)) != INI_NIL) {
+    fprintf(stderr, "error! failure to get log columns\nirritant: %s\nexiting...\n", strErrINI(errINI));
+    exit(EXIT_FAILURE);
+  }
+
+  char *dir;
+  if((errINI = getStrINI(ini, "Logging", "dir", &dir)) != INI_NIL) {
+    fprintf(stderr, "error! failure to get log dir\nirritant: %s\nexiting...\n", strErrINI(errINI));
+    exit(EXIT_FAILURE);
+  }
+
   time_t t = time(NULL);
   struct tm *date = localtime(&t);
   char name[80];
   strftime(name, 80, "%Y_%B_%d_%A_%X.txt", date); // yr_mo_day_weekday_time
 
-  int columns;
-  char *val;
-  if((errINI = getIntINI(ini, "Logging", "columns", &columns)) != INI_NIL) {}
-  if((errINI = getStrINI(ini, "Logging", "dir", &val)) != INI_NIL) {}
-
-  errLOG_t errLOG;
-  if((errLOG = makeLOG(logger, columns, val, name)) != LOG_NIL) {
-    fprintf(stderr, "failure to set up log...");
-    *logger = NULL;
-  }
-
-  if((errLOG = logTitle(*logger, name)) != LOG_NIL) {}
-}
-
-void logRISK(risk_t *game, log_t *logger) {
-/*
-  if((errLOG = logHeader(log, "S E T T I N G S")) != LOG_NIL) { return errLOG; }
-  if((errLOG = logSection(log, "PLAYERS")) != LOG_NIL) { return errLOG; }
-  if((errLOG = logSetting(log, "Humans", game->hps)) != LOG_NIL) { return errLOG; }
-  if((errLOG = logSetting(log, "Computers", game->cps)) != LOG_NIL) { return errLOG; }
-  if((errLOG = logEvent(log, "Human names: ")) != LOG_NIL) { return errLOG; }
-  if((errLOG = logStrArr(log, game->humans, game->hps)) != LOG_NIL) { return errLOG; }
-  if((errLOG = logEvent(log, "Computer names: ")) != LOG_NIL) { return errLOG; }
-  if((errLOG = logStrArr(log, game->computers, game->cps)) != LOG_NIL) { return errLOG; }
-  if((errLOG = logEvent(log, "\n")) != LOG_NIL) { return errLOG; }
-  if((errLOG = logSection(log, "TROOPS")) != LOG_NIL) { return errLOG; }
-  if((errLOG = logSetting(log, "Beginning count", game->beginning)) != LOG_NIL) { return errLOG; }
-  if((errLOG = logSetting(log, "Minimum/turn", game->minimum)) != LOG_NIL) { return errLOG; }
-  if((errLOG = logSetting(log, "Extra troop/#countries", game->bonus)) != LOG_NIL) { return errLOG; }
-  if((errLOG = logSetting(log, "Randomized", game->random)) != LOG_NIL) { return errLOG; }
-  if((errLOG = logEvent(log, "\n")) != LOG_NIL) { return errLOG; }
-  if((errLOG = logSection(log, "CARDS")) != LOG_NIL) { return errLOG; }
-  if((errLOG = logSetting(log, "Wilds", game->wilds)) != LOG_NIL) { return errLOG; }
-  if((errLOG = logSetting(log, "Number types", game->numTypes)) != LOG_NIL) { return errLOG; }
-  if((errLOG = logSetting(log, "Number trade ins", game->numTrades)) != LOG_NIL) { return errLOG; }
-  if((errLOG = logSetting(log, "Trade increment", game->tradeIncr)) != LOG_NIL) { return errLOG; }
-  if((errLOG = logEvent(log, "Types: ")) != LOG_NIL) { return errLOG; }
-  if((errLOG = logStrArr(log, game->cardTypes, game->numTypes)) != LOG_NIL) { return errLOG; }
-  if((errLOG = logEvent(log, "Trade Ins: ")) != LOG_NIL) { return errLOG; }
-  if((errLOG = logIntArr(log, game->tradeIns, game->numTrades)) != LOG_NIL) { return errLOG; }
-  if((errLOG = logEvent(log, "\n")) != LOG_NIL) { return errLOG; }
-  if((errLOG = logSection(log, "MAP")) != LOG_NIL) { return errLOG; }
-  if((errLOG = logSetting(log, "Number continents", game->numConts)) != LOG_NIL) { return errLOG; }
-  if((errLOG = logSetting(log, "Number countries", game->numCountries)) != LOG_NIL) { return errLOG; }
-  if((errLOG = logSetting(log, "Randomized countries", game->randomCountries)) != LOG_NIL) { return errLOG; }
-  if((errLOG = logEvent(log, "Continents: ")) != LOG_NIL) { return errLOG; }
-  if((errLOG = logStrArr(log, game->continents, game->numConts)) != LOG_NIL) { return errLOG; }
-  if((errLOG = logEvent(log, "Continent bonuses: ")) != LOG_NIL) { return errLOG; }
-  if((errLOG = logIntArr(log, game->contBonuses, game->numConts)) != LOG_NIL) { return errLOG; }
-  if((errLOG = logEvent(log, "Countries: ")) != LOG_NIL) { return errLOG; }
-  if((errLOG = logStrArr(log, game->countries, game->numCountries)) != LOG_NIL) { return errLOG; }
-  if((errLOG = logEvent(log, "Adjacency Matrix:\n")) != LOG_NIL) { return errLOG; }
-  if((errLOG = logIntArr2D(log, game->board, game->numCountries, game->numCountries)) != LOG_NIL) { return errLOG; }
-  if((errLOG = logEvent(log, "\n")) != LOG_NIL) { return errLOG; }
-*/ 
-}
-
-void logDNA(dna_t *dna, log_t *logger) {
-/*
-  logSection(log, "DNA");
-  logSetting(log, "Chromosomes", getChromosomes(dna));
-  logSetting(log, "Traits", game->traits);
-  logSetting(log, "Mutation Rate", game->mutationRate);
-  logSetting(log, "Elitism", game->elitism);
-  logEvent(log, "AI names: ");
-  logStrArr(log, game->names, game->chromosomes);
-  logEvent(log, "Strands:\n");
-  logIntArr2D(log, game->strands, game->chromosomes, game->traits);
-  logEvent(log, "\n");
-  logSection(log, "TRAINING");
-  logSetting(log, "Sessions", game->trains);
-  logEvent(log, "\n");
-*/
-}
-
-void setupRISKfromINI(ini_t *ini, risk_t **game) { /*
-  if((errRISK = makeRISK(game)) != RISK_NIL) {
-    fprintf(stderr, "");
+  if((errLOG = makeLOG(logger, log, dir, name)) != LOG_NIL) {
+    fprintf(stderr, "error! failure to make log\nirritant: %s\nexiting...\n", strErrLOG(errLOG));
+    free(dir);
     exit(EXIT_FAILURE);
   }
 
-  char **sarr1, **sarr2;
+  free(dir);
+  if((errLOG = logTitle(*logger, name)) != LOG_NIL) {
+    fprintf(stderr, "error! failure to log title\nirritant: %s\nexiting...\n", strErrLOG(errLOG));
+    exit(EXIT_FAILURE);
+  }
+}
+
+// attempt to set up all the AI/chromosomes from the INI conf file
+void setupDNAfromINI(ini_t *ini, dna_t **dna) {
+  int cps, traits, elitism;
+  int lbound, ubound, *chromosome;
+  char **names;
+  double rate, percentile;
+
+  if((errINI = getIntINI(ini, "Chromosomes", "traits", &traits)) != INI_NIL) {
+    fprintf(stderr, "error! failure to get chromosome traits\nirritant: %s\nexiting...\n", strErrINI(errINI));
+    exit(EXIT_FAILURE);
+  }
+
+  if((errINI = getBoolINI(ini, "Chromosomes", "elitism", &elitism)) != INI_NIL) {
+    fprintf(stderr, "error! failure to get chromosome elitism\nirritant: %s\nexiting...\n", strErrINI(errINI));
+    exit(EXIT_FAILURE);
+  }
+
+  if((errINI = getFloatINI(ini, "Chromosomes", "percentile", &percentile)) != INI_NIL) {
+    fprintf(stderr, "error! failure to get chromosome percentile\nirritant: %s\nexiting...\n", strErrINI(errINI));
+    exit(EXIT_FAILURE);
+  }
+
+  if((errINI = getFloatINI(ini, "Chromosomes", "mutation", &rate)) != INI_NIL) {
+    fprintf(stderr, "error! failure to get chromosome mutation\nirritant: %s\nexiting...\n", strErrINI(errINI));
+    exit(EXIT_FAILURE);
+  }
+
+  if((errINI = getIntINI(ini, "Chromosomes", "ubound", &ubound)) != INI_NIL) {
+    fprintf(stderr, "error! failure to get chromosome ubound\nirritant: %s\nexiting...\n", strErrINI(errINI));
+    exit(EXIT_FAILURE);
+  }
+
+  if((errINI = getIntINI(ini, "Chromosomes", "lbound", &lbound)) != INI_NIL) {
+    fprintf(stderr, "error! failure to get chromosome lbound\nirritant: %s\nexiting...\n", strErrINI(errINI));
+    exit(EXIT_FAILURE);
+  }
+
+  if((errINI = getStrArrINI(ini, "Chromosomes", "cps", &names, &cps)) != INI_NIL) {
+    fprintf(stderr, "error! failure to get chromosome cps\nirritant: %s\nexiting...\n", strErrINI(errINI));
+    exit(EXIT_FAILURE);
+  }
+
+  if((errDNA = makeDNA(dna, cps, traits)) != DNA_NIL) {
+    fprintf(stderr, "error! failure to make dna\nirritant: %s\nexiting...\n", strErrDNA(errDNA));
+    freeStrArr(names, cps);
+    exit(EXIT_FAILURE);
+  }
+
+  if((errDNA = setFitness(*dna, fitness)) != DNA_NIL) {
+    fprintf(stderr, "error! failure to get chromosome\nirritant: %s\nexiting...\n", strErrDNA(errDNA));
+    freeStrArr(names, cps);
+    exit(EXIT_FAILURE);
+  }
+
+  if((errDNA = setMutation(*dna, lbound, ubound, rate)) != DNA_NIL) {
+    fprintf(stderr, "error! failure to get chromosome\nirritant: %s\nexiting...\n", strErrDNA(errDNA));
+    freeStrArr(names, cps);
+    exit(EXIT_FAILURE);
+  }
+
+  if((errDNA = setElitism(*dna, elitism, percentile)) != DNA_NIL) {
+    fprintf(stderr, "error! failure to get chromosome\nirritant: %s\nexiting...\n", strErrDNA(errDNA));
+    freeStrArr(names, cps);
+    exit(EXIT_FAILURE);
+  }
+
+  for(; cps; cps--, free(chromosome)) {
+    if((errINI = getIntArrINI(ini, "Chromosomes", names[cps-1], &chromosome, &traits)) != INI_NIL) {
+      fprintf(stderr, "error! failure to get chromosome %s\nirritant: %s\nexiting...\n", names[cps-1], strErrINI(errINI));
+      freeStrArr(names, cps);
+      exit(EXIT_FAILURE);
+    }
+    if((errDNA = setStrand(*dna, names[cps-1], chromosome, traits)) != DNA_NIL) {
+      fprintf(stderr, "error! failure to set chromosome %s\nirritant: %s\nexiting...\n", names[cps-1], strErrDNA(errDNA));
+      freeStrArr(names, cps);
+      free(chromosome);
+      exit(EXIT_FAILURE);
+    }
+  }
+  freeStrArr(names, cps);
+}
+
+// attempt to set up the risk game from the INI conf file.
+void setupRISKfromINI(ini_t *ini, risk_t **game) {
   int i, j, k, n;
-  if((errINI = getStrArrINI(ini, "Players", "humans", &sarr1, &i))!= INI_NIL) {
-    fprintf(stderr, "");
+  int *iarr;
+  char **sarr1, **sarr2, **sarr3;
+
+  if((errRISK = makeRISK(game)) != RISK_NIL) {
+    fprintf(stderr, "error! failure to make game\nirritant: %s\nexiting...\n", strErrRISK(errRISK));
     exit(EXIT_FAILURE);
   }
-
-  
-  if((errINI = getINI(ini, "Players", "computers", &j)) != INI_NIL) {
-    fprintf(stderr, "");
-    free(sarr1);
-    exit(EXIT_FAILURE);
-  }
-
-  // concat sarr1, sarr2 and setPlayers(game, newArr, size);
 
   if((errINI = getIntINI(ini, "Troops", "beginning", &i)) != INI_NIL) {
-    fprintf(stderr, "");
+    fprintf(stderr, "error! failure to get troops beginning\nirritant: %s\nexiting...\n", strErrINI(errINI));
     exit(EXIT_FAILURE);
   }
 
   if((errINI = getIntINI(ini, "Troops", "minimum", &j)) != INI_NIL) {
-    fprintf(stderr, "");
+    fprintf(stderr, "error! failure to get troops minimumnirritant: %s\nexiting...\n", strErrINI(errINI));
     exit(EXIT_FAILURE);
   }
 
   if((errINI = getIntINI(ini, "Troops", "bonus", &k)) != INI_NIL) {
-    fprintf(stderr, "");
+    fprintf(stderr, "error! failure to get troops bonus\nirritant: %s\nexiting...\n", strErrINI(errINI));
     exit(EXIT_FAILURE);
   }
 
-  if((errINI = getIntINI(ini, "Troops", "random", &n)) != INI_NIL) {
-    fprintf(stderr, "");
+  if((errINI = getBoolINI(ini, "Troops", "random", &n)) != INI_NIL) {
+    fprintf(stderr, "error! failure to get troops random\nirritant: %s\nexiting...\n", strErrINI(errINI));
     exit(EXIT_FAILURE);
   }
 
-  if((errRISK = setTroops(game, i, j, k, n)) != RISK_NIL) {
-    fprintf(stderr, "");
+  if((errRISK = setTroops(*game, i, j, k, n)) != RISK_NIL) {
+    fprintf(stderr, "error! failure to set troops\nirritant: %s\nexiting...\n", strErrRISK(errRISK));
     exit(EXIT_FAILURE);
   }
 
-  if((errINI = getINI(ini, "Cards", "types", &val)) != INI_NIL) { goto FAIL_INI; } // String arr
+  if((errINI = getStrArrINI(ini, "Players", "humans", &sarr1, &i))!= INI_NIL) {
+    fprintf(stderr, "error! failure to get players humans\nnirritant: %s\nexiting...\n", strErrINI(errINI));
+    exit(EXIT_FAILURE);
+  }
 
-  if((errINI = getINI(ini, "Cards", "wilds", &val)) != INI_NIL) { goto FAIL_INI; } // int
-  if((errRISK = setDeck(game, i, strArr1, n)) != RISK_NIL) { goto FAIL_RISK; }
+  if((errINI = getStrArrINI(ini, "Players", "computers", &sarr2, &j)) != INI_NIL) {
+    fprintf(stderr, "error! failure to get players computers\nirritant: %s\nexiting...\n", strErrINI(errINI));
+    freeStrArr(sarr1, i);
+    exit(EXIT_FAILURE);
+  }
 
-  if((errINI = getINI(ini, "Cards", "trades", &val)) != INI_NIL) { goto FAIL_INI; } // TODO: free array after set
+  if(!(sarr3 = malloc(sizeof(char *) * i+j))) {
+    freeStrArr(sarr1, i);
+    freeStrArr(sarr2, j);
+    fprintf(stderr, "error! out of memory setting up RISK from INI\nexiting...\n");
+    exit(EXIT_FAILURE);
+  }
 
-  if((errINI = getINI(ini, "Cards", "incr", &val)) != INI_NIL) { goto FAIL_INI; }
-  if((errRISK = setTrades(game, intArr, n, i)) != RISK_NIL) { goto FAIL_RISK; }
+  k = 0;
+  for(; i; i--) { sarr3[k++] = sarr1[i-1]; }
+  for(; j; j--) { sarr3[k++] = sarr2[j-1]; }
+  free(sarr1);
+  free(sarr2);
+  if((errRISK = setPlayers(*game, k, sarr3)) != RISK_NIL) {
+    fprintf(stderr, "error! failure to set up players\nirritant: %s\nexiting...\n", strErrRISK(errRISK));
+    freeStrArr(sarr3, k);
+    exit(EXIT_FAILURE);
+  }
+  freeStrArr(sarr3, k);
 
-  if((errINI = getINI(ini, "Map", "continents", &val)) != INI_NIL) { goto FAIL_INI; }
-  if((errRISK = setContinents(game, strArr1, n)) != RISK_NIL) { goto FAIL_RISK; }
+  if((errINI = getStrArrINI(ini, "Cards", "types", &sarr2, &i)) != INI_NIL) {
+    fprintf(stderr, "error! failure to get cards types\nirritant: %s\nexiting...\n", strErrINI(errINI));
+    exit(EXIT_FAILURE);
+  }
 
-  if((errINI = getINI(ini, "Map", "continents_bonus", &val)) != INI_NIL) { goto FAIL_INI; }
-  if((errRISK = setContinentBonuses(game, intArr, i)) != RISK_NIL) { goto FAIL_RISK; }
+  if((errINI = getIntINI(ini, "Cards", "wilds", &j)) != INI_NIL) {
+    fprintf(stderr, "error! failure to get cards wilds\nirritant: %s\nexiting...\n", strErrINI(errINI));
+    freeStrArr(sarr2, i);
+    exit(EXIT_FAILURE);
+  }
 
-  if((errINI = getINI(ini, "Map", "random", &val)) != INI_NIL) { goto FAIL_INI; }
+  if((errRISK = setDeck(*game, i, sarr2, j)) != RISK_NIL) {
+    fprintf(stderr, "error! failure to set up deck\nirritant: %s\nexiting...\n", strErrRISK(errRISK));
+    freeStrArr(sarr2, i);
+    exit(EXIT_FAILURE);
+  }
+  freeStrArr(sarr2, i);
 
-  if((errINI = getINI(ini, "Map", "countries", &val)) != INI_NIL) { goto FAIL_INI; }
-  if((errRISK = setCountries(game, strArr1, n, i)) != RISK_NIL) { goto FAIL_RISK; }
+  if((errINI = getIntArrINI(ini, "Cards", "trades", &iarr, &k)) != INI_NIL) {
+    fprintf(stderr, "error! failure to get cards trades\nirritant: %s\nexiting...\n", strErrINI(errINI));
+    exit(EXIT_FAILURE);
+  }
 
-  if((errGLUE = mallocMatrix(&matrix, n, n)) != GLUE_NIL) { goto FAIL_GLUE; } // TODO: free array after set
-  if((errRISK = setAdjacencies(game, matrix, n)) != RISK_NIL) { goto FAIL_RISK; }
+  if((errINI = getIntINI(ini, "Cards", "incr", &n)) != INI_NIL) {
+    fprintf(stderr, "error! failure to get cards incr\nirritant: %s\nexiting...\n", strErrINI(errINI));
+    free(iarr);
+    exit(EXIT_FAILURE);
+  }
 
-  for(i = 0; i < n; i++) {
-    if((errINI = getINI(ini, "Map", strArr1[i], &val)) != INI_NIL) { goto FAIL_INI; } 
+  if((errRISK = setTrades(*game, iarr, k, n)) != RISK_NIL) {
+    fprintf(stderr, "error! failure to set up trades\nirritant: %s\nexiting...\n", strErrRISK(errRISK));
+    free(iarr);
+    exit(EXIT_FAILURE);
+  }
+  free(iarr);
 
-    for(; j; j--) {
-      for(k = n; k; k--) {
-        if(!strcmp(strArr1[k-1], strArr2[j-1])) {
-          matrix[i][k-1] = 1;
-          break;
-        }
-      }
+  if((errINI = getStrArrINI(ini, "Map", "continents", &sarr2, &k)) != INI_NIL) {
+    fprintf(stderr, "error! failure to get map continents\nirritant: %s\nexiting...\n", strErrINI(errINI));
+    exit(EXIT_FAILURE);
+  }
+  if((errRISK = setContinents(*game, sarr2, k)) != RISK_NIL) {
+    fprintf(stderr, "error! failure to set continents\nirritant: %s\nexiting...\n", strErrRISK(errRISK));
+    freeStrArr(sarr2, k);
+    exit(EXIT_FAILURE);
+  }
+  freeStrArr(sarr2, k);
+
+  if((errINI = getIntArrINI(ini, "Map", "continents_bonus", &iarr, &n)) != INI_NIL) {
+    fprintf(stderr, "error! failure to get map continents_bonus\nirritant: %s\nexiting...\n", strErrINI(errINI));
+    exit(EXIT_FAILURE);
+  }
+  if((errRISK = setContinentBonuses(*game, iarr, n)) != RISK_NIL) {
+    fprintf(stderr, "error! ...\nirritant: %s\nexiting...\n", strErrRISK(errRISK));
+    free(iarr);
+    exit(EXIT_FAILURE);
+  }
+  free(iarr);
+
+  if((errINI = getBoolINI(ini, "Map", "random", &n)) != INI_NIL) {
+    fprintf(stderr, "error! failure to get map random\nirritant: %s\nexiting...\n", strErrINI(errINI));
+    exit(EXIT_FAILURE);
+  }
+
+  if((errINI = getStrArrINI(ini, "Map", "countries", &sarr1, &k)) != INI_NIL) {
+    fprintf(stderr, "error! failure to get map countries\nirritant: %s\nexiting...\n", strErrINI(errINI));
+    exit(EXIT_FAILURE);
+  }
+  if((errRISK = setCountries(*game, sarr1, k, n)) != RISK_NIL) {
+    fprintf(stderr, "error! failure to set countries\nirritant: %s\nexiting...\n", strErrRISK(errRISK));
+    freeStrArr(sarr1, k);
+    exit(EXIT_FAILURE);
+  } 
+  for(i = 0; i < k; i++) {
+    if((errINI = getStrArrINI(ini, "Map", sarr1[i], &sarr2, &j)) != INI_NIL) {
+      fprintf(stderr, "error! failure to get map adjacencies for %s\nirritant: %s\nexiting...\n", sarr1[i], strErrINI(errINI));
+      freeStrArr(sarr1, k);
+      exit(EXIT_FAILURE);
     }
-    free(strArr2);
-  }
-*/ }
-
-// Chromosome conf sections
-// if cannot setup print error msg and call exit()
-void setupDNAfromINI(ini_t *ini, dna_t **dna) { /*
-  if((errINI = getINI(ini, section = "Chromosomes", key = "cps", &val)) != INI_NIL) { goto FAIL_INI; } // TODO: free array after set
-
-  if((errINI = getINI(ini, "Chromosomes", key = "traits", &val)) != INI_NIL) { goto FAIL_INI; }
-
-  if((errGLUE = mallocMatrix(&matrix, n, j)) != GLUE_NIL) { goto FAIL_GLUE; } // TODO: free array after set
-  //if((errRISK = setCps(game, matrix, strArr1, n, j)) != RISK_NIL) { goto FAIL_RISK; }
-
-  //mutationRate=0.01                 ; type: float, range: 0.00-1.00
-  //elitism=1                         ; type: bool, range: 0/1
-    for(i = 0; i < n; i++) {
-    if((errINI = getINI(ini, "Chromosomes", key = strArr1[i], &val)) != INI_NIL) { goto FAIL_INI; }
-    if(j != k) {
-      errGLUE = GLUE_INVALID_CHROMOSOME;
-      goto FAIL_GLUE;
+    if((errRISK = setAdjacencies(*game, sarr1[i], sarr2, j)) != RISK_NIL) {
+      fprintf(stderr, "error! failure to set map adjacencies for %s\nirritant: %s\nexiting...\n", sarr1[i], strErrRISK(errRISK));
+      freeStrArr(sarr2, j);
+      freeStrArr(sarr1, k);
+      exit(EXIT_FAILURE);
     }
+    freeStrArr(sarr2, j);
   }
-*/ }
+  freeStrArr(sarr1, k);
+}
+
+// log the game setup
+void logRISK(risk_t *game, log_t *logger) { // TODO: err handling, free, adj mat
+  int i, j, k, n;
+  double r;
+  char **names;
+  int *trades;
+
+  logHeader(logger, "S E T T I N G S");
+  logSection(logger, "PLAYERS");
+  getPlayers(game, &names, &i);
+  logStrArr(logger, names, i);
+
+  logSection(logger, "TROOPS");
+  getTroops(game, &i, &j, &k);
+  logIntSetting(logger, "Beginning count", i);
+  logIntSetting(logger, "Minimum/turn", j);
+  logIntSetting(logger, "Extra troop/#countries", k);
+
+  logSection(logger, "CARDS");
+  getDeck(game, &i, &names, &j);
+  logIntSetting(logger, "Wilds", i);
+  logStrArr(logger, names, i);
+  getTrades(game, &trades, &i, &j);
+  logIntArr(logger, trades, i);
+  logIntSetting(logger, "Trade increment", j);
+
+
+  logSection(logger, "MAP");
+  getContinents(game, &names, &i);
+  logStrArr(logger, names, i);
+  getCountries(game, &names, &i);
+  logStrArr(logger, names, i);
+  getContinentBonuses(game, &trades, &i);
+  logIntArr(logger, trades, i);
+
+  //logEvent(logger, "Adjacency Matrix:\n");
+  //getNeighbors(game, char *country, char ***neighbors, int *size);
+  //logIntArr2D(logger, game->board, game->numCountries, game->numCountries);
+}
+
+// log dna
+void logDNA(dna_t *dna, log_t *logger) { // TODO: err handling, free
+  int i, j;
+  double r;
+  int *strand;
+  char **names;
+
+  logSection(logger, "DNA");
+
+  getMutation(dna, &i, &j, &r);
+  logFloatSetting(logger, "Mutation Rate", r);
+  logIntSetting(logger, "Lower Bound", i);
+  logIntSetting(logger, "Upper Bound", j);
+
+  getElitism(dna, &i, &r);
+  logIntSetting(logger, "Elitism", i);
+  logFloatSetting(logger, "Percentile", r);
+
+  getNames(dna, &names, &i);
+  logHeader(logger, "Chromosomes");
+  for(; i; i--) {
+    getFitness(dna, names[i-1], &j);
+    logIntSetting(logger, names[i-1], j);
+    getStrand(dna, names[i-1], &strand, &j);
+    logIntArr(logger, strand, j);
+  }
+}
 
 void logGameTime(log_t *logger, int seconds) {
   int minutes = seconds / 60;
@@ -333,14 +501,20 @@ void logGameTime(log_t *logger, int seconds) {
   sprintf(val, "[%ih-%im-%is]", hours, minutes, seconds);
 
   logHeader(logger, "T I M E");
-  //logSetting(logger, "Exapsed game time", val);
+  logStrSetting(logger, "Elapsed game time", val);
 }
 
-void printBoard(risk_t *game) { // TODO 
-  //if(!game) { return GLUE_NIL_GAME; }
+void printBoard(risk_t *game) { // TODO tabulation board??
+  if(!game) {
+    fprintf(stderr, "error! nil game in printBoard()\nexiting...\n");
+    exit(EXIT_FAILURE);
+  }
+
+  fprintf(stderr, "error! NOT IMPLEMENTED\nexiting...\n");
+  exit(EXIT_FAILURE);
 }
 
-void humanTurn(risk_t *game, char *player, log_t *logger) {
+void humanTurn(risk_t *game, char *player, log_t *logger) { // TODO
   int choice;
   int prompt = 1;
 
@@ -351,8 +525,6 @@ void humanTurn(risk_t *game, char *player, log_t *logger) {
   char *queryMenu[] = {"Players", "Countries", "Continents", "Cards", "Main Menu"};
 
   int done = 0;
-  errRISK_t errRISK;
-
   while(!done) { // TODO: if winner then
     //if(game->log) { fprintf(game->fp, "congratuations %s, you've achieved world domination!\n", player); }
     fprintf(stdout, "%s's turn...\n", player);
@@ -360,17 +532,20 @@ void humanTurn(risk_t *game, char *player, log_t *logger) {
     readInt(0, mainChoices-1, &choice, prompt);
     switch(choice) {
       case 0: // TRADE
+        fprintf(stderr, "error! NOT IMPLEMENTED\nexiting...\n");
         // get which cards getCards(player, *arr, *size);
         // place troops
         //    -- enfore trade rules, timeing(1/turn and beginning?)
         break;
       case 1: // ATTACK
+        fprintf(stderr, "error! NOT IMPLEMENTED\nexiting...\n");
         // src, dest (adjacency)
         // how many
         // ask defender how many (1 or 2)
         //  - draw card (if win), kill ememy (get card/enfore trade)
         break;
       case 2: // MANEUVER
+        fprintf(stderr, "error! NOT IMPLEMENTED\nexiting...\n");
         // src, dest (chain reachable)
         // how many
         done = 1;
@@ -380,12 +555,16 @@ void humanTurn(risk_t *game, char *player, log_t *logger) {
         readInt(0, queryChoices-1, &choice, prompt);
         switch(choice) {
           case 0: // PLAYERS
+            fprintf(stderr, "error! NOT IMPLEMENTED\nexiting...\n");
             break;
           case 1: // COUNTRIES
+            fprintf(stderr, "error! NOT IMPLEMENTED\nexiting...\n");
             break;
           case 2: // CONTINENTS
+            fprintf(stderr, "error! NOT IMPLEMENTED\nexiting...\n");
             break;
           case 3: // CARDS
+            fprintf(stderr, "error! NOT IMPLEMENTED\nexiting...\n");
             break;
           case 4: // MAIN MENU
             break;
@@ -405,17 +584,51 @@ void humanTurn(risk_t *game, char *player, log_t *logger) {
   }
 }
 
-void computerTurn(risk_t *game, dna_t *dna, char *player, log_t *logger) {}
-
-int getType(risk_t *game, dna_t *dna, char *player) { return 1; }
-
-// play the game, taking care to reset between games if training
-void risky(risk_t *game, dna_t *dna, int trainingSessions) {
-  if(trainingSessions > 0) {
-    fprintf(stdout, "training sessions requested: %d\ntraining...\n", trainingSessions);
+void computerTurn(risk_t *game, dna_t *dna, char *player, log_t *logger) { // TODO
+  if(!game) {
+    fprintf(stderr, "error! nil game in computerTurn()\nexiting...\n");
+    exit(EXIT_FAILURE);
   }
 
-  errRISK_t errRISK;
+  if(!dna) {
+    fprintf(stderr, "error! nil dna in computerTurn()\nexiting...\n");
+    exit(EXIT_FAILURE);
+  }
+
+  if(!player) {
+    fprintf(stderr, "error! nil player in computerTurn()\nexiting...\n");
+    exit(EXIT_FAILURE);
+  }
+  
+  fprintf(stderr, "error! NOT IMPLEMENTED\nexiting...\n"); // just skip turn instead??
+  exit(EXIT_FAILURE);
+}
+
+int getType(risk_t *game, dna_t *dna, char *player) { // TODO
+  if(!game) {
+    fprintf(stderr, "error! nil game in computerTurn()\nexiting...\n");
+    exit(EXIT_FAILURE);
+  }
+
+  if(!dna) {
+    fprintf(stderr, "error! nil dna in computerTurn()\nexiting...\n");
+    exit(EXIT_FAILURE);
+  }
+
+  if(!player) {
+    fprintf(stderr, "error! nil player in computerTurn()\nexiting...\n");
+    exit(EXIT_FAILURE);
+  }
+
+  fprintf(stderr, "error! NOT IMPLEMENTED\nexiting...\n");
+  exit(EXIT_FAILURE);
+}
+
+// play the game, taking care to reset between games if training
+void risky(risk_t *game, dna_t *dna, int games) {
+  if(games > 0) {
+    fprintf(stdout, "training sessions requested: %d\ntraining...\n", games);
+  }
 
   do {
     setupLOGfromINI(ini, &logger);
@@ -424,48 +637,77 @@ void risky(risk_t *game, dna_t *dna, int trainingSessions) {
       logDNA(dna, logger);
     }
 
-    if(trainingSessions > 0) { fprintf(stdout, "sessions left: %i\n", trainingSessions); }
+    if(games > 0) { fprintf(stdout, "sessions left: %i\n", games); }
 
     // [re]set game
-    //if((errRISK = initDeck(game)) != RISK_NIL) {
-    //  fprintf(stderr, "error! failure to ini deck\nirritant: %s\nexiting...", strErrRISK(errRISK));
-    //  exit(EXIT_FAILURE);
-    //}
-    //if((errRISK = initCountries(game)) != RISK_NIL) {
-    //  fprintf(stderr, "error! failure to ini deck\ncountries: %s\nexiting...", strErrRISK(errRISK));
-    //  exit(EXIT_FAILURE);
-    //}
-    //if((errRISK = initArmies(game)) != RISK_NIL) {
-    //  fprintf(stderr, "error! failure to ini deck\narmies: %s\nexiting...", strErrRISK(errRISK));
-    //  exit(EXIT_FAILURE);
-    //}
-
-    char *player = NULL;
-    logHeader(logger, "G A M E P L A Y");
-    time_t start = time(NULL);
-    while(1) { // getPlayers(game) > 1) {
-      //player = getNextPlayer(game);
-      if(logger) { logEvent(logger, 1, "%s's turn...\n\n"); }
-      fprintf(stdout, "%s's turn...\n\n", player);
-      if(!getType(game, dna, player)) { computerTurn(game, dna, player, logger); }
-      else { humanTurn(game, player, logger); }
+    if((errRISK = initDeck(game)) != RISK_NIL) {
+      fprintf(stderr, "error! failure to ini deck\nirritant: %s\nexiting...", strErrRISK(errRISK));
+      exit(EXIT_FAILURE);
     }
+    if((errRISK = initCountries(game)) != RISK_NIL) {
+      fprintf(stderr, "error! failure to ini deck\ncountries: %s\nexiting...", strErrRISK(errRISK));
+      exit(EXIT_FAILURE);
+    }
+    if((errRISK = initArmies(game)) != RISK_NIL) {
+      fprintf(stderr, "error! failure to ini deck\narmies: %s\nexiting...", strErrRISK(errRISK));
+      exit(EXIT_FAILURE);
+    }
+
+    //char *player = NULL;
+    if(logger) { logHeader(logger, "G A M E P L A Y"); }
+    time_t start = time(NULL);
+
+    // sleep(1) hack
+    double diff;
+    while(difftime(time(NULL), start) < 1.0);
+    //while(1) { // getPlayers(game) > 1) { // TODO: implementeing human/cp turns
+      //player = getNextPlayer(game);
+      //if(logger) { logEvent(logger, 1, "%s's turn...\n\n"); }
+      //fprintf(stdout, "%s's turn...\n\n", player);
+      //if(!getType(game, dna, player)) { computerTurn(game, dna, player, logger); }
+      //else { humanTurn(game, player, logger); }
+    //}
     int seconds = (int)difftime(time(NULL), start);
 
-    if(trainingSessions) { 
-      //makeNextGeneration(dna); // dna lib
+    if(games) { 
+      nextGeneration(dna);
       logHeader(logger, "N E W   G E N E R A T I O N");
-      //logIntArr2D(logger, game->strands, game->chromosomes, game->traits);
+
+      char **ids;
+      int *strand;
+      int i, j, traits;
+
+      if((errDNA = getNames(dna, &ids, &i)) != DNA_NIL) {
+        fprintf(stderr, "error! failure to get dna identifiers\nirritant: %s\nexiting...\n", strErrDNA(errDNA));
+        exit(EXIT_FAILURE);
+      }
+
+      for(j = 0; j < i; j++) {
+        if((errDNA = getStrand(dna, ids[j], &strand, &traits)) != DNA_NIL) {
+          fprintf(stderr, "error! failure to get dna strand %s\nirritant: %s\nexiting...\n", ids[j], strErrDNA(errDNA));
+          freeStrArr(ids, i);
+          exit(EXIT_FAILURE);
+        }
+        if((errLOG = logIntArr(logger, strand, traits)) != LOG_NIL) {
+          fprintf(stderr, "error! failure to log strand %s\nirritant: %s\nexiting...\n", ids[j], strErrLOG(errLOG));
+          freeStrArr(ids, i);
+          free(strand);
+          exit(EXIT_FAILURE);
+        }
+        free(strand);
+      }
+      freeStrArr(ids, i);
     }
 
     if(logger) { 
       logGameTime(logger, seconds);
       freeLOG(logger);
     }
-  } while(--trainingSessions > 0);
+  } while(--games > 0);
 }
 
-// free all memory we alloc'd, if any, ignoring any errors
+// free all memory we alloc'd, if any, ignoring any errors. This is the reason
+// we have four globals tracking these data structures
 void cleanup() {
   freeINI(ini);
   freeLOG(logger);
@@ -483,7 +725,6 @@ int main(int argc, char *argv[]) {
 
   atexit(cleanup); // register cleanup() to be called upon exit()
 
-  errINI_t errINI = INI_NIL;
   if((errINI = readINI(&ini, argv[1])) != INI_NIL) {
     fprintf(stderr, "error! failure to read conf\nirritant: %s\nexiting...\n", strErrINI(errINI));
     exit(EXIT_FAILURE);
@@ -497,16 +738,40 @@ int main(int argc, char *argv[]) {
   setupDNAfromINI(ini, &dna);
   setupRISKfromINI(ini, &game);
 
-  errRISK_t errRISK;
   if((errRISK = isValid(game)) != RISK_NIL) {
     fprintf(stderr, "error! invalid game specified by conf\nirritant: %s\nexiting...\n", strErrRISK(errRISK));
     exit(EXIT_FAILURE);
   }
 
+  srand(time(NULL)); // set random for risk and dna libs
   risky(game, dna, argc);
 
-  if(argc) {
-    updateChromosomes(ini, dna, logger);
+  if(argc > 1) {
+    char **ids;
+    int *strand;
+    int i, j, traits;
+
+    if((errDNA = getNames(dna, &ids, &i)) != DNA_NIL) {
+      fprintf(stderr, "error! failure to get dna identifiers\nirritant: %s\nexiting...\n", strErrDNA(errDNA));
+      exit(EXIT_FAILURE);
+    }
+
+    for(j = 0; j < i; j++) {
+      if((errDNA = getStrand(dna, ids[j], &strand, &traits)) != DNA_NIL) {
+        fprintf(stderr, "error! failure to get dna strand %s\nirritant: %s\nexiting...\n", ids[j], strErrDNA(errDNA));
+        freeStrArr(ids, i);
+        exit(EXIT_FAILURE);
+      }
+      if((errINI = setIntArrINI(ini, "Chromosomes", ids[j], strand, traits)) != INI_NIL) {
+        fprintf(stderr, "error! failure to get dna strand %s\nirritant: %s\nexiting...\n", ids[j], strErrDNA(errDNA));
+        freeStrArr(ids, i);
+        free(strand);
+        exit(EXIT_FAILURE);
+      }
+      free(strand);
+    }
+    freeStrArr(ids, i);
+
     if((errINI = writeINI(ini, argv[1])) != INI_NIL) {
       fprintf(stderr, "error! failure to write conf\nirritant: %s\nexiting...\n", strErrINI(errINI));
       exit(EXIT_FAILURE);

@@ -2,7 +2,7 @@
  * FILE:    ini.h                                                             *
  * AUTHOR:  Ryan Rozanski                                                     *
  * CREATED: 3/27/17                                                           *
- * EDITED:  4/29/17                                                           *
+ * EDITED:  5/13/17                                                           *
  * INFO:    A ini configuration file library. Allows the static reading from  *
  *          and output to a file, as well as dynamic CRUD operations. The     *
  *          library API is designed to return errors, which should be checked *
@@ -14,9 +14,21 @@
  *         <ini>     ::= <section>*                                           *
  *         <section> ::= <header><setting>+                                   *
  *         <header>  ::= [<term>]                                             *
- *         <setting> ::= <term><dividor><term><space>+                        *
+ *         <setting> ::= <term><dividor><value><space>+                       *
  *         <term>    ::= <char>+                                              *
- *         <char>    ::= <lower> | <upper> | <digit> | <special>              *
+ *         <value>   ::= <int> | <float> | <char> | <bool> | <array>          *
+ *         <array>   ::= <iArr> | <sArr> | <cArr>                             *
+ *         <iArr>    ::= {<int><ints>*}                                       *
+ *         <sArr>    ::= {<string><strings>*}                                 *
+ *         <cArr>    ::= {<char><chars>*}                                     *
+ *         <int>     ::= <int>+                                               *
+ *         <float>   ::= <int>*.<int>+                                        *
+ *         <ints>    ::= ,<int>                                               *
+ *         <string>  ::= "<char>*"                                            *
+ *         <strings> ::= ,<string>                                            *
+ *         <chars>   ::= ,<char>                                              *
+ *         <char>    ::= '<lower>' | '<upper>' | '<digit>' | '<special>'      *
+ *         <bool>    ::= true | false                                         *
  *         <dividor> ::= : | =                                                *
  *         <space>   ::= \t | \v | \f | \n | \r | ' '                         *
  *         <lower>   ::= a | b | c | d | e | f | g | h | i | j | k | l | m |  *
@@ -25,8 +37,7 @@
  *                       N | O | P | Q | R | S | T | U | V | W | X | Y | Z    *
  *         <digit>   ::= 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9                *
  *         <special> ::= ! | " | $ | % | & | ' | ( | ) | * | + | , | - | . |  *
- *                       / | < | > | ? | @ | [ | \ | ] | ^ | _ | ` | { | | |  *
- *                       } | ~                                                *
+ *                       / | < | > | ? | @ | [ | \ | ] | ^ | _ | ` | ~ | | |  *
  *         <comment> ::= #<any> | ;<any>                                      *
  *         <any>     ::= any characters, except \n, up to \n                  *
  *                                                                            *
@@ -133,15 +144,123 @@ errINI_t freeINI(ini_t *ini);
  * ARGUMENT DESCRIPTION                                                       *
  * -------- -----------                                                       *
  * ini      the ini conf to use                                               *
- * section  the section to look under                                         *
+ * sec      the section to look under                                         *
  * key      the key of the setting to get                                     *
- * val      a pointer which to set with the val of the setting found, if any  *
+ * v        a pointer which to set with the val of the setting found, if any  *
  *                                                                            *
  * RETURNS: INI_NULL_INI, INI_NULL_SECTION, INI_NULL_KEY, INI_NULL_VAL,       *
  *          INI_INVALID_SECTION, INI_INVALID_KEY, or INI_NIL if no error.     *
  *                                                                            *
  ******************************************************************************/
-errINI_t getINI(ini_t *ini, char *section, char *key, char **val);
+errINI_t getIntINI(ini_t *ini, char *section, char *key, int *val);
+
+/******************************************************************************
+ *                                                                            *
+ * PURPOSE: 
+ *                                                                            *
+ * ARGUMENT DESCRIPTION                                                       *
+ * -------- -----------                                                       *
+ *                                                                            *
+ * RETURNS: 
+ *                                                                            *
+ ******************************************************************************/
+errINI_t getFloatINI(ini_t *ini, char *section, char *key, double *val);
+
+/******************************************************************************
+ *                                                                            *
+ * PURPOSE: 
+ *                                                                            *
+ * ARGUMENT DESCRIPTION                                                       *
+ * -------- -----------                                                       *
+ *                                                                            *
+ * RETURNS: 
+ *                                                                            *
+ ******************************************************************************/
+errINI_t getBoolINI(ini_t *ini, char *section, char *key, int *val);
+
+/******************************************************************************
+ *                                                                            *
+ * PURPOSE: 
+ *                                                                            *
+ * ARGUMENT DESCRIPTION                                                       *
+ * -------- -----------                                                       *
+ *                                                                            *
+ * RETURNS: 
+ *                                                                            *
+ ******************************************************************************/
+errINI_t getCharINI(ini_t *ini, char *section, char *key, char *val);
+
+/******************************************************************************
+ *                                                                            *
+ * PURPOSE: 
+ *                                                                            *
+ * ARGUMENT DESCRIPTION                                                       *
+ * -------- -----------                                                       *
+ *                                                                            *
+ * RETURNS: 
+ *                                                                            *
+ ******************************************************************************/
+errINI_t getStrINI(ini_t *ini, char *section, char *key, char **val);
+
+/******************************************************************************
+ *                                                                            *
+ * PURPOSE: 
+ *                                                                            *
+ * ARGUMENT DESCRIPTION                                                       *
+ * -------- -----------                                                       *
+ *                                                                            *
+ * RETURNS: 
+ *                                                                            *
+ ******************************************************************************/
+errINI_t getIntArrINI(ini_t *ini, char *section, char *key, int **val, int *n);
+
+/******************************************************************************
+ *                                                                            *
+ * PURPOSE: 
+ *                                                                            *
+ * ARGUMENT DESCRIPTION                                                       *
+ * -------- -----------                                                       *
+ *                                                                            *
+ * RETURNS: 
+ *                                                                            *
+ ******************************************************************************/
+errINI_t getFloatArrINI(ini_t *ini, char *section, char *key, double **val, int *n);
+
+/******************************************************************************
+ *                                                                            *
+ * PURPOSE: 
+ *                                                                            *
+ * ARGUMENT DESCRIPTION                                                       *
+ * -------- -----------                                                       *
+ *                                                                            *
+ * RETURNS: 
+ *                                                                            *
+ ******************************************************************************/
+errINI_t getCharArrINI(ini_t *ini, char *section, char *key, char **val, int *n);
+
+/******************************************************************************
+ *                                                                            *
+ * PURPOSE: 
+ *                                                                            *
+ * ARGUMENT DESCRIPTION                                                       *
+ * -------- -----------                                                       *
+ *                                                                            *
+ * RETURNS: 
+ *                                                                            *
+ ******************************************************************************/
+errINI_t getStrArrINI(ini_t *ini, char *section, char *key, char ***val, int *n);
+
+/******************************************************************************
+ *                                                                            *
+ * PURPOSE: 
+ *                                                                            *
+ * ARGUMENT DESCRIPTION                                                       *
+ * -------- -----------                                                       *
+ *                                                                            *
+ * RETURNS: 
+ *                                                                            *
+ ******************************************************************************/
+errINI_t getBoolArrINI(ini_t *ini, char *section, char *key, int **val, int *n);
 
 /******************************************************************************
  *                                                                            *
@@ -153,13 +272,122 @@ errINI_t getINI(ini_t *ini, char *section, char *key, char **val);
  * section  the section to make a new setting under                           *
  * key      the key of the new setting                                        *
  * val      the val of the new setting                                        *
+ * n        the size of the array of the var val                              *
  *                                                                            *
  * RETURNS: INI_NULL_INI, INI_NULL_SECTION, INI_NULL_KEY, INI_NULL_VAL,       * 
  *          INI_INVALID_SECTION, INI_INVALID_KEY, INI_INVALID_VAL,            *
  *          INI_NULL_VAL, or INI_NIL if no error.                             *
  *                                                                            *
  ******************************************************************************/
-errINI_t setINI(ini_t *ini, char *section, char *key, char *val);
+errINI_t setIntINI(ini_t *ini, char *section, char *key, int val);
+
+/******************************************************************************
+ *                                                                            *
+ * PURPOSE: 
+ *                                                                            *
+ * ARGUMENT DESCRIPTION                                                       *
+ * -------- -----------                                                       *
+ *                                                                            *
+ * RETURNS: 
+ *                                                                            *
+ ******************************************************************************/
+errINI_t setFloatINI(ini_t *ini, char *section, char *key, double val);
+
+/******************************************************************************
+ *                                                                            *
+ * PURPOSE: 
+ *                                                                            *
+ * ARGUMENT DESCRIPTION                                                       *
+ * -------- -----------                                                       *
+ *                                                                            *
+ * RETURNS: 
+ *                                                                            *
+ ******************************************************************************/
+errINI_t setBoolINI(ini_t *ini, char *section, char *key, int val);
+
+/******************************************************************************
+ *                                                                            *
+ * PURPOSE: 
+ *                                                                            *
+ * ARGUMENT DESCRIPTION                                                       *
+ * -------- -----------                                                       *
+ *                                                                            *
+ * RETURNS: 
+ *                                                                            *
+ ******************************************************************************/
+errINI_t setCharINI(ini_t *ini, char *section, char *key, char val);
+
+/******************************************************************************
+ *                                                                            *
+ * PURPOSE: 
+ *                                                                            *
+ * ARGUMENT DESCRIPTION                                                       *
+ * -------- -----------                                                       *
+ *                                                                            *
+ * RETURNS: 
+ *                                                                            *
+ ******************************************************************************/
+errINI_t setStrINI(ini_t *ini, char *section, char *key, char *val);
+
+/******************************************************************************
+ *                                                                            *
+ * PURPOSE: 
+ *                                                                            *
+ * ARGUMENT DESCRIPTION                                                       *
+ * -------- -----------                                                       *
+ *                                                                            *
+ * RETURNS: 
+ *                                                                            *
+ ******************************************************************************/
+errINI_t setIntArrINI(ini_t *ini, char *section, char *key, int *val, int n);
+
+/******************************************************************************
+ *                                                                            *
+ * PURPOSE: 
+ *                                                                            *
+ * ARGUMENT DESCRIPTION                                                       *
+ * -------- -----------                                                       *
+ *                                                                            *
+ * RETURNS: 
+ *                                                                            *
+ ******************************************************************************/
+errINI_t setFloatArrINI(ini_t *ini, char *section, char *key, double *val, int n);
+
+/******************************************************************************
+ *                                                                            *
+ * PURPOSE: 
+ *                                                                            *
+ * ARGUMENT DESCRIPTION                                                       *
+ * -------- -----------                                                       *
+ *                                                                            *
+ * RETURNS: 
+ *                                                                            *
+ ******************************************************************************/
+errINI_t setCharArrINI(ini_t *ini, char *section, char *key, char *val, int n);
+
+/******************************************************************************
+ *                                                                            *
+ * PURPOSE: 
+ *                                                                            *
+ * ARGUMENT DESCRIPTION                                                       *
+ * -------- -----------                                                       *
+ *                                                                            *
+ * RETURNS: 
+ *                                                                            *
+ ******************************************************************************/
+errINI_t setStrArrINI(ini_t *ini, char *section, char *key, char **val, int n);
+
+/******************************************************************************
+ *                                                                            *
+ * PURPOSE: 
+ *                                                                            *
+ * ARGUMENT DESCRIPTION                                                       *
+ * -------- -----------                                                       *
+ *                                                                            *
+ * RETURNS: 
+ *                                                                            *
+ ******************************************************************************/
+errINI_t setBoolArrINI(ini_t *ini, char *section, char *key, int *val, int n);
 
 /******************************************************************************
  *                                                                            *
