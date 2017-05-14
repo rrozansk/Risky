@@ -21,7 +21,7 @@ typedef enum errLOG {
   LOG_NIL, LOG_OPEN_FAIL, LOG_CLOSE_FAIL, LOG_NIL_LOG, LOG_INVALID_WIDTH,
   LOG_NIL_NAME, LOG_NIL_DIR, LOG_OUT_OF_MEMORY, LOG_INVALID_SECONDS, 
   LOG_NIL_KEY, LOG_NIL_HEADER, LOG_NIL_TITLE, LOG_NIL_STR_ARR, 
-  LOG_INVALID_ARR_SIZE, LOG_INVALID_SET, LOG_NIL_SECTION, LOG_DIR_CREATION_FAIL,
+  LOG_INVALID_ARR_SIZE, LOG_NIL_SECTION, LOG_DIR_CREATION_FAIL,
   LOG_INVALID_TIMESTAMP, LOG_INVALID_DIR,
 } errLOG_t;
 
@@ -174,6 +174,8 @@ errLOG_t logSection(log_t *log, char *section);
  * ARGUMENT DESCRIPTION                                                       *
  * -------- -----------                                                       *
  * log      the log to print to                                               *
+ * key
+ * val
  *                                                                            *
  * RETURNS: LOG_NIL_KEY, or LOG_NIL if no error.                              *
  *                                                                            *
@@ -187,6 +189,8 @@ errLOG_t logIntSetting(log_t *log, char *key, int val);
  * ARGUMENT DESCRIPTION                                                       *
  * -------- -----------                                                       *
  * log      the log to print to                                               *
+ * key
+ * val
  *                                                                            *
  * RETURNS: LOG_NIL_KEY, or LOG_NIL if no error.                              *
  *                                                                            *
@@ -200,6 +204,8 @@ errLOG_t logStrSetting(log_t *log, char *key, char *val);
  * ARGUMENT DESCRIPTION                                                       *
  * -------- -----------                                                       *
  * log      the log to print to                                               *
+ * key
+ * val
  *                                                                            *
  * RETURNS: LOG_NIL_KEY, or LOG_NIL if no error.                              *
  *                                                                            *

@@ -2,7 +2,7 @@
  * FILE:    log.c                                                             *
  * AUTHOR:  Ryan Rozanski                                                     *
  * CREATED: 4/30/17                                                           *
- * EDITED:  5/3/17                                                            *
+ * EDITED:  5/13/17                                                           *
  * INFO:    Implementation of the interface located in log.h.                 *
  *                                                                            *
  ******************************************************************************/
@@ -38,6 +38,14 @@ typedef struct log {
  ******************************************************************************/
 const char *strErrLOG(errLOG_t errLOG) {
   switch(errLOG) {
+    case LOG_OUT_OF_MEMORY: return "out of memory";
+    case LOG_OPEN_FAIL: return "failed to open log";
+    case LOG_CLOSE_FAIL: return "failed to close log";
+    case LOG_DIR_CREATION_FAIL: return "failed to create log directory";
+    case LOG_INVALID_ARR_SIZE: return "arrays size must be > 0";
+    case LOG_INVALID_WIDTH: return "column width must be 80-400";
+    case LOG_INVALID_TIMESTAMP: return "timestamp must be 1 or 0";
+    case LOG_INVALID_DIR: return "dir must be less than 255 chars long";
     case LOG_NIL_LOG: return "nil log";
     case LOG_NIL_NAME: return "nil file name";
     case LOG_NIL_DIR: return "nil directory";
@@ -45,16 +53,7 @@ const char *strErrLOG(errLOG_t errLOG) {
     case LOG_NIL_HEADER: return "nil header";
     case LOG_NIL_SECTION: return "nil section";
     case LOG_NIL_KEY: return "nil key";
-    case LOG_INVALID_SECONDS: return "seconds must be >= 0";
-    case LOG_OUT_OF_MEMORY: return "out of memory";
     case LOG_NIL_STR_ARR: return "nil string array";
-    case LOG_INVALID_ARR_SIZE: return "arrays size must be > 0";
-    case LOG_INVALID_SET: return "";
-    case LOG_OPEN_FAIL: return "failed to open log";
-    case LOG_CLOSE_FAIL: return "failed to close log";
-    case LOG_INVALID_WIDTH: return "column width must be >= 80";
-    case LOG_DIR_CREATION_FAIL: return "failed to create log directory";
-    case LOG_INVALID_TIMESTAMP: return "timestamp must be 1 or 0";
     case LOG_NIL: return "";
     default: return "unkown errLOG_t error code";  
   }
@@ -64,7 +63,8 @@ errLOG_t makeLOG(log_t **log, int columns, char *dir, char *name) {
   if(!log) { return LOG_NIL_LOG; }
   if(!dir) { return LOG_NIL_DIR; }
   if(!name) { return LOG_NIL_NAME; }
-  if(columns < 80) { return LOG_INVALID_WIDTH; }
+  if(columns < 80 || columns > 400) { return LOG_INVALID_WIDTH; }
+  if((strlen(dir) + strlen(name)) > 255) { return LOG_INVALID_DIR; }
 
   if(!(*log = calloc(1, sizeof(log_t)))) { return LOG_OUT_OF_MEMORY; }
 
@@ -86,7 +86,7 @@ errLOG_t makeLOG(log_t **log, int columns, char *dir, char *name) {
   char *path = calloc(strlen(dir)+strlen(name)+6, sizeof(char));
   if(!path) { return LOG_OUT_OF_MEMORY; }
   sprintf(path, "%s/%s.txt", dir, name);
-  (*log)->fp = fopen(path, "w"); // TODO: take open mode as arg
+  (*log)->fp = fopen(path, "w");
   free(path);
 
   return (!(*log)->fp) ? LOG_OPEN_FAIL : LOG_NIL;
@@ -210,7 +210,7 @@ errLOG_t logSection(log_t *log, char *section) {
   return LOG_NIL;
 }
 
-errLOG_t logSetting(log_t *log, char *key, int val) {
+errLOG_t logIntSetting(log_t *log, char *key, int val) {
   if(!log) { return LOG_NIL_LOG; }
   if(!key) { return LOG_NIL_KEY; }
 
@@ -223,6 +223,20 @@ errLOG_t logSetting(log_t *log, char *key, int val) {
   fprintf(log->fp, "%s\n", buffer);
   fflush(log->fp);
 
+  return LOG_NIL;
+}
+
+errLOG_t logStrSetting(log_t *log, char *key, char *val) {
+  if(!log) { return LOG_NIL_LOG; }
+  if(!key) { return LOG_NIL_KEY; }
+  
+  return LOG_NIL;
+}
+
+errLOG_t logFloatSetting(log_t *log, char *key, double val) {
+  if(!log) { return LOG_NIL_LOG; }
+  if(!key) { return LOG_NIL_KEY; }
+  
   return LOG_NIL;
 }
 

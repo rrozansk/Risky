@@ -2,7 +2,7 @@
  * FILE:    ini.c                                                             *
  * AUTHOR:  Ryan Rozanski                                                     *
  * CREATED: 3/27/17                                                           *
- * EDITED:  4/24/17                                                           *
+ * EDITED:  5/13/17                                                           *
  * INFO:    Implementation of the interface located in ini.h.                 *
  *                                                                            *
  ******************************************************************************/
@@ -23,19 +23,34 @@
  *   S T R U C T S                                                            *
  *                                                                            *
  ******************************************************************************/
-typedef struct setting { char *key, *val; } setting_t; /* [key . val] */
+typedef enum typeINI { INT, FLOAT, CHAR, STR, BOOL, INT_ARR, FLOAT_ARR, STR_ARR, BOOL_ARR } typeINI_t;
+typedef struct setting {     // setting ::= [key, val, type]
+  char *key;
+  typeINI_t typeINI;
+  union {
+    char c;      // char
+    int i;       // int
+    int b;       // bool
+    double d;    // float
+    char *str;   // string
+    int *iarr;   // int array
+    char *carr;  // char array
+    int *barr;   // bool array
+    char **sarr; // string array
+  } val;
+} setting_t;
 
-typedef struct settings { /* ([key . val] ...) */
+typedef struct settings {    // settings ::= setting*
  setting_t *setting;
  struct settings *rest;
 } settings_t;
 
-typedef struct section { /* { [section header] . ([key . val] ...) } */
+typedef struct section {     // section ::= [header, settings*]
   char *header;
   settings_t *settings;
 } section_t;
   
-typedef struct ini { /* ( { [section header] . ([key . val] ...) } ... ) */
+typedef struct ini {         // ini ::= section*
   section_t *section;
   struct ini *rest;
 } ini_t;
@@ -45,6 +60,40 @@ typedef struct ini { /* ( { [section header] . ([key . val] ...) } ... ) */
  *   P R I V A T E   F U N C T I O N S                                        *
  *                                                                            *
  ******************************************************************************/
+errINI_t parseFloat(char *literal, double *dest); // TODO
+errINI_t parseBool(char *literal, int *dest); // TODO
+errINI_t parseChar(char *literal, char *dest); // TODO
+errINI_t parseString(char *literal, char **dest); // TODO
+errINI_t parseInt(char *literal, int *dest) {
+  //if(!literal) { return INI_NIL_LITERAL; }
+  char *end;
+  *dest = (int)strtol(literal, &end, 10);
+  //if(literal == end) { return INI_INVALID_INT_LITERAL; }
+  //if(literal+strlen(literal) != end) { return INI_INVALID_INT_LITERAL; }
+
+  return INI_NIL;
+}
+
+errINI_t parseArr(char *literal, void **arr, int *size) { // TODO
+  //check first char is '{'
+  //parse first element and get type
+  //if no elem then err
+  //set type
+  //parse elems and push of stk
+  //increase size for each elem
+  //if error for elem type mismatch or no , then err
+  //  free stk elems
+  //check last char is '}'
+  //malloc arr
+  //pop stk until empty
+  //and arr[i] = stk pop
+
+  //*size = size;
+  //*arr = arr;
+
+  return INI_NIL;
+}
+
 setting_t *make_setting(char *key, char *val) {
   setting_t *new_setting = malloc(sizeof(setting_t));
   if(!new_setting) { return NULL; }
@@ -54,13 +103,13 @@ setting_t *make_setting(char *key, char *val) {
     return NULL;
   }
   strcpy(new_setting->key, key);
-  new_setting->val = calloc(strlen(val)+1, sizeof(char));
-  if(!new_setting->val) {
+  //new_setting->val = calloc(strlen(val)+1, sizeof(char));
+  //if(!new_setting->val) {
     free(new_setting->key);
     free(new_setting);
     return NULL;
-  }
-  strcpy(new_setting->val, val);
+  //}
+  //strcpy(new_setting->val, val);
   return new_setting;
 }
 
@@ -106,7 +155,85 @@ int isValidTerm(char *term) {
 
 int isValidKey(char *key) { return isValidTerm(key); }
 int isValidHeader(char *section) { return isValidTerm(section); }
-int isValidVal(char *val) { return isValidTerm(val); }
+
+errINI_t getINI(ini_t *ini, char *section, char *key, void *value, typeINI_t typeINI) {
+  if(!ini) { return INI_NIL_INI; }
+  if(!section) { return INI_NIL_SECTION; }
+  if(!key) { return INI_NIL_KEY; }
+  if(!value) { return INI_NIL_VAL; }
+
+  return INI_NIL;
+}
+
+errINI_t setINI(ini_t *ini, char *section, char *key, void *value, typeINI_t typeINI) {
+  if(!ini) { return INI_NIL_INI; }
+  if(!section) { return INI_NIL_SECTION; }
+  if(!key) { return INI_NIL_KEY; }
+  if(!value) { return INI_NIL_VAL; }
+  if(!isValidHeader(section)) { return INI_INVALID_SECTION; }
+  if(!isValidKey(key)) { return INI_INVALID_KEY; }
+
+  return INI_NIL;
+}
+
+/*
+errINI_t getINI(ini_t *ini, char *section, char *key, void **val, ) {
+  if(!ini) { return INI_NIL_INI; }
+  if(!section) { return INI_NIL_SECTION; }
+  if(!key) { return INI_NIL_KEY; }
+  if(!val) { return INI_NIL_VAL; }
+  if(!isValidHeader(section)) { return INI_INVALID_SECTION; }
+  if(!isValidKey(key)) { return INI_INVALID_KEY; }
+
+  settings_t *settings;
+  for(; ini; ini = ini->rest) {
+    if(ini->section && !strcmp(ini->section->header, section)) {
+      for(settings = ini->section->settings; settings; settings = settings->rest) { 
+        if(!strcmp(settings->setting->key, key)) {
+          //*val = settings->setting->val;  
+          return INI_NIL;
+        }
+      }
+    }
+  }
+
+  *val = NULL;
+  return INI_NIL;
+}
+
+errINI_t setINI(ini_t *ini, char *section, char *key, char *val) {
+  if(!ini) { return INI_NIL_INI; }
+  if(!section) { return INI_NIL_SECTION; }
+  if(!key) { return INI_NIL_KEY; }
+  if(!val) { return INI_NIL_VAL; }
+  if(!isValidHeader(section)) { return INI_INVALID_SECTION; }
+  if(!isValidKey(key)) { return INI_INVALID_KEY; }
+  if(!isValidVal(val)) { return INI_INVALID_VAL; }
+
+  settings_t *settings;
+  ini_t *tmp_ini = ini;
+  for(; ini; ini = ini->rest) {
+    if(ini->section) {
+      if(!strcmp(ini->section->header, section)) { // found section to place pr in
+        for(settings = ini->section->settings; settings; settings = settings->rest) { 
+          if(!strcmp(settings->setting->key ,key)) { // overwrite existing value for pr if found
+            free(settings->setting->val);
+            settings->setting->val = calloc(strlen(val)+1, sizeof(char));
+            if(!settings->setting->val) { return INI_NIL_VAL; }
+            strcpy(settings->setting->val, val);
+            return INI_NIL;  
+          }
+        } // add new pr to the settings for this section if key not found
+        ini->section->settings = make_settings(make_setting(key, val), ini->section->settings);
+        return INI_NIL;  
+      }
+    }
+  } // if never found section, add new section and key/val pr
+  tmp_ini->rest = make_ini(make_section(section, make_settings(make_setting(key, val), NULL)), tmp_ini->rest);
+
+  return INI_NIL;  
+}
+*/
 
 /******************************************************************************
  *                                                                            *
@@ -117,24 +244,53 @@ const char *strErrINI(errINI_t errINI) {
   switch(errINI) {
     case INI_OPEN_FAILURE: return "failure to open conf file";
     case INI_CLOSE_FAILURE: return "failure to close conf file";
-    case INI_NULL_FNAME: return "nil conf file name";
+    case INI_OUT_OF_MEMORY: return "out of memory";
     case INI_INVALID_CONF: return "invalid conf file";
     case INI_INVALID_KEY: return "key does not adhere to library grammar";
     case INI_INVALID_VAL: return "value does not adhere to library grammar";
     case INI_INVALID_SECTION: return "header does not adhere to library grammar";
-    case INI_NULL_INI: return "nil ini";
-    case INI_NULL_KEY: return "nil key";
-    case INI_NULL_VAL: return "nil value";
-    case INI_NULL_SECTION: return "nil section";
-    case INI_OUT_OF_MEMORY: return "out of memory";
+    case INI_NIL_FNAME: return "nil conf file name";
+    case INI_NIL_INI: return "nil ini";
+    case INI_NIL_KEY: return "nil key";
+    case INI_NIL_VAL: return "nil value";
+    case INI_NIL_SECTION: return "nil section";
     case INI_NIL: return "";
     default: return "unrecognized INI error code";
   }
 }
 
+errINI_t makeINI(ini_t **ini) {
+  if(!ini) { return INI_NIL_INI; }
+
+  *ini = make_ini(NULL, NULL);
+
+  return *ini ? INI_NIL : INI_OUT_OF_MEMORY;
+}
+
+errINI_t freeINI(ini_t *ini) {
+  if(!ini) { return INI_NIL_INI; }
+
+  settings_t *sets;
+  settings_t *tmp_set;
+  ini_t *tmp_ini;
+  for(; ini; tmp_ini = ini->rest, free(ini), ini = tmp_ini) {
+    if(ini->section) {
+      free(ini->section->header);
+      for(sets = ini->section->settings; sets; tmp_set = sets->rest, free(sets), sets = tmp_set) {
+        //free(sets->setting->val);
+        free(sets->setting->key);
+        free(sets->setting);
+      }
+      free(ini->section);
+    }
+  }
+
+  return INI_NIL;
+}
+
 errINI_t readINI(ini_t **ini, char *fname) {
-  if(!ini) { return INI_NULL_INI; }
-  if(!fname) { return INI_NULL_FNAME; }
+  if(!ini) { return INI_NIL_INI; }
+  if(!fname) { return INI_NIL_FNAME; }
 
   FILE *fp = fopen(fname, "r");
   if(!fp) { return INI_OPEN_FAILURE; }
@@ -198,7 +354,7 @@ errINI_t readINI(ini_t **ini, char *fname) {
         val[i++] = '\0';
         val = realloc(val, sizeof(char)*i);
         //printf("%s\n", val); fflush(stdout);
-        if((errINI = setINI(*ini, section, key, val)) != INI_NIL) { goto err; }
+        //if((errINI = setINI(*ini, section, key, val)) != INI_NIL) { goto err; }
         free(key);
         key = NULL;
         free(val);
@@ -230,8 +386,8 @@ errINI_t readINI(ini_t **ini, char *fname) {
 }
 
 errINI_t writeINI(ini_t *ini, char *fname) {
-  if(!ini) { return INI_NULL_INI; }
-  if(!fname) { return INI_NULL_FNAME; }
+  if(!ini) { return INI_NIL_INI; }
+  if(!fname) { return INI_NIL_FNAME; }
 
   FILE *fp = fopen(fname, "w+");
   if(!fp) { return INI_OPEN_FAILURE; }
@@ -241,7 +397,7 @@ errINI_t writeINI(ini_t *ini, char *fname) {
     if(ini->section) {
       fprintf(fp, "[%s]\n", ini->section->header);
       for(settings = ini->section->settings; settings; settings = settings->rest) {
-        fprintf(fp, "%s=%s\n", settings->setting->key, settings->setting->val);
+        //fprintf(fp, "%s=%s\n", settings->setting->key, settings->setting->val);
       }
       fprintf(fp, "\n");
     }
@@ -252,99 +408,73 @@ errINI_t writeINI(ini_t *ini, char *fname) {
   return INI_NIL;
 }
 
-errINI_t makeINI(ini_t **ini) {
-  if(!ini) { return INI_NULL_INI; }
-
-  *ini = make_ini(NULL, NULL);
-
-  return *ini ? INI_NIL : INI_OUT_OF_MEMORY;
+errINI_t setIntINI(ini_t *ini, char *section, char *key, int val) {
 }
 
-errINI_t freeINI(ini_t *ini) {
-  if(!ini) { return INI_NULL_INI; }
-
-  settings_t *sets;
-  settings_t *tmp_set;
-  ini_t *tmp_ini;
-  for(; ini; tmp_ini = ini->rest, free(ini), ini = tmp_ini) {
-    if(ini->section) {
-      free(ini->section->header);
-      for(sets = ini->section->settings; sets; tmp_set = sets->rest, free(sets), sets = tmp_set) {
-        free(sets->setting->val);
-        free(sets->setting->key);
-        free(sets->setting);
-      }
-      free(ini->section);
-    }
-  }
-
-  return INI_NIL;
+errINI_t getIntINI(ini_t *ini, char *section, char *key, int *value) {
 }
 
-errINI_t getINI(ini_t *ini, char *section, char *key, char **val) {
-  if(!ini) { return INI_NULL_INI; }
-  if(!section) { return INI_NULL_SECTION; }
-  if(!key) { return INI_NULL_KEY; }
-  if(!val) { return INI_NULL_VAL; }
-  if(!isValidHeader(section)) { return INI_INVALID_SECTION; }
-  if(!isValidKey(key)) { return INI_INVALID_KEY; }
-
-  settings_t *settings;
-  for(; ini; ini = ini->rest) {
-    if(ini->section && !strcmp(ini->section->header, section)) {
-      for(settings = ini->section->settings; settings; settings = settings->rest) { 
-        if(!strcmp(settings->setting->key, key)) {
-          *val = settings->setting->val;  
-          return INI_NIL;
-        }
-      }
-    }
-  }
-
-  *val = NULL;
-  return INI_NIL;
+errINI_t setFloatINI(ini_t *ini, char *section, char *key, double val) {
 }
 
-errINI_t setINI(ini_t *ini, char *section, char *key, char *val) {
-  if(!ini) { return INI_NULL_INI; }
-  if(!section) { return INI_NULL_SECTION; }
-  if(!key) { return INI_NULL_KEY; }
-  if(!val) { return INI_NULL_VAL; }
-  if(!isValidHeader(section)) { return INI_INVALID_SECTION; }
-  if(!isValidKey(key)) { return INI_INVALID_KEY; }
-  if(!isValidVal(val)) { return INI_INVALID_VAL; }
+errINI_t getFloatINI(ini_t *ini, char *section, char *key, double *value) {
+}
 
-  settings_t *settings;
-  ini_t *tmp_ini = ini;
-  for(; ini; ini = ini->rest) {
-    if(ini->section) {
-      if(!strcmp(ini->section->header, section)) { // found section to place pr in
-        for(settings = ini->section->settings; settings; settings = settings->rest) { 
-          if(!strcmp(settings->setting->key ,key)) { // overwrite existing value for pr if found
-            free(settings->setting->val);
-            settings->setting->val = calloc(strlen(val)+1, sizeof(char));
-            if(!settings->setting->val) { return INI_NULL_VAL; }
-            strcpy(settings->setting->val, val);
-            return INI_NIL;  
-          }
-        } // add new pr to the settings for this section if key not found
-        ini->section->settings = make_settings(make_setting(key, val), ini->section->settings);
-        return INI_NIL;  
-      }
-    }
-  } // if never found section, add new section and key/val pr
-  tmp_ini->rest = make_ini(make_section(section, make_settings(make_setting(key, val), NULL)), tmp_ini->rest);
+errINI_t setBoolINI(ini_t *ini, char *section, char *key, int val) {
+}
 
-  return INI_NIL;  
+errINI_t getBoolINI(ini_t *ini, char *section, char *key, int *value) {
+}
+
+errINI_t setCharINI(ini_t *ini, char *section, char *key, char val) {
+}
+
+errINI_t getCharINI(ini_t *ini, char *section, char *key, char *value) {
+}
+
+errINI_t setStrINI(ini_t *ini, char *section, char *key, char *val) {
+}
+
+errINI_t getStrINI(ini_t *ini, char *section, char *key, char **value) {
+}
+
+errINI_t setIntArrINI(ini_t *ini, char *section, char *key, int *val, int n) {
+}
+
+errINI_t getIntArrINI(ini_t *ini, char *section, char *key, int **value, int *n) {
+}
+
+errINI_t setFloatArrINI(ini_t *ini, char *section, char *key, double *val, int n) {
+}
+
+errINI_t getFloatArrINI(ini_t *ini, char *section, char *key, double **value, int *n) {
+}
+
+errINI_t setBoolArrINI(ini_t *ini, char *section, char *key, int *val, int n) {
+}
+
+errINI_t getBoolArrINI(ini_t *ini, char *section, char *key, int **value, int *n) {
+}
+
+errINI_t setCharArrINI(ini_t *ini, char *section, char *key, char *val, int n) {
+}
+
+errINI_t getCharArrINI(ini_t *ini, char *section, char *key, char **value, int *n) {
+}
+
+errINI_t setStrArrINI(ini_t *ini, char *section, char *key, char **val, int n) {
+}
+
+errINI_t getStrArrINI(ini_t *ini, char *section, char *key, char ***value, int *n) {
 }
 
 errINI_t deleteINI(ini_t *ini, char *section, char *key) {
-  if(!ini) { return INI_NULL_INI; }
-  if(!section) { return INI_NULL_SECTION; }
-  if(!key) { return INI_NULL_KEY; }
+  if(!ini) { return INI_NIL_INI; }
+  if(!section) { return INI_NIL_SECTION; }
+  if(!key) { return INI_NIL_KEY; }
   if(!isValidHeader(section)) { return INI_INVALID_SECTION; }
   if(!isValidKey(key)) { return INI_INVALID_KEY; }
-
+/*
   settings_t *settings, *prevSetting = NULL;
   ini_t *prevINI = NULL;
   int keys;
@@ -371,6 +501,6 @@ errINI_t deleteINI(ini_t *ini, char *section, char *key) {
       }
     }
   }
-
+*/
   return INI_NIL;  
 }
