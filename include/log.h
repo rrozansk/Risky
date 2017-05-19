@@ -30,7 +30,7 @@ typedef enum errLOG {
   LOG_INVALID_ARR_SIZE, LOG_NIL_SECTION, LOG_INVALID_TIMESTAMP, LOG_INVALID_DIR,
   LOG_NIL, LOG_OPEN_FAIL, LOG_CLOSE_FAIL, LOG_DIR_CREATION_FAIL, LOG_NIL_HEADER,
   LOG_NIL_TITLE, LOG_NIL_DIR, LOG_OUT_OF_MEMORY, LOG_NIL_KEY, LOG_INVALID_WIDTH,
-  LOG_INVALID_ROW_SIZE, LOG_INVALID_COL_SIZE, LOG_NIL_STR_MATRIX, LOG_NIL_LOG, 
+  LOG_INVALID_ROW_SIZE, LOG_INVALID_COL_SIZE, LOG_NIL_STR_MATRIX, LOG_NIL_LOG,
   LOG_NIL_FLOAT_ARR, LOG_NIL_BOOL_ARR, LOG_NIL_CHAR_ARR, LOG_NIL_INT_MATRIX,
   LOG_NIL_FLOAT_MATRIX, LOG_NIL_BOOL_MATRIX, LOG_NIL_CHAR_MATRIX, LOG_NIL_NAME,
   LOG_NIL_STR_ARR, LOG_INVALID_SECONDS, LOG_NIL_INT_ARR, LOG_INVALID_KEY,
@@ -74,7 +74,7 @@ const char *strErrLOG(errLOG_t errLOG);
  *          LOG_NIL_NAME if name is NULL                                      *
  *          LOG_INVALID_WIDTH if columns is < 80                              *
  *          LOG_INVALID_DIR if length of name and dir is > 255 chars          *
- *          LOG_DIR_CREATION_FAIL if the creation of the directory failed     * 
+ *          LOG_DIR_CREATION_FAIL if the creation of the directory failed     *
  *          LOG_OUT_OF_MEMORY if allocation of the new log failed             *
  *          LOG_OPEN_FAIL if opening the log file fails                       *
  *          LOG_NIL if no error                                               *

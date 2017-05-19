@@ -71,7 +71,7 @@ const char *strErrLOG(errLOG_t errLOG) {
     case LOG_NIL_STR_MATRIX: return "nil string matrix";
     // no error and unknown error return
     case LOG_NIL: return "";
-    default: return "unkown errLOG_t error code";  
+    default: return "unkown errLOG_t error code";
   }
 }
 
@@ -97,7 +97,7 @@ errLOG_t makeLOG(log_t **log, int columns, char *dir, char *name) {
 
   sprintf((*log)->directory, "%s", dir);
   sprintf((*log)->name, "%s", name);
-  (*log)->columns = columns;   
+  (*log)->columns = columns;
 
   char path[255];
   sprintf(path, "%s/%s.txt", dir, name);
@@ -118,7 +118,7 @@ errLOG_t freeLOG(log_t *log) {
 
   errLOG_t errLOG = LOG_NIL;
   if(log->fp && !fclose(log->fp)) { errLOG = LOG_CLOSE_FAIL; }
-  
+
   free(log);
 
   return errLOG;
@@ -138,7 +138,7 @@ errLOG_t logIntArr(log_t *log, int *arr, int size) {
       fprintf(log->fp, "\n ");
       col = 0;
     }
-    fprintf(log->fp, "%s", buffer);  
+    fprintf(log->fp, "%s", buffer);
   }
   fprintf(log->fp, "}\n");
   fflush(log->fp);
@@ -188,7 +188,7 @@ errLOG_t logFloatArr(log_t *log, double *arr, int size) {
       fprintf(log->fp, "\n ");
       col = 0;
     }
-    fprintf(log->fp, "%s", buffer);  
+    fprintf(log->fp, "%s", buffer);
   }
   fprintf(log->fp, "}\n");
   fflush(log->fp);
@@ -239,7 +239,7 @@ errLOG_t logBoolArr(log_t *log, int *arr, int size) {
       fprintf(log->fp, "\n ");
       col = 0;
     }
-    fprintf(log->fp, "%s", buffer);  
+    fprintf(log->fp, "%s", buffer);
   }
   fprintf(log->fp, "}\n");
   fflush(log->fp);
@@ -290,7 +290,7 @@ errLOG_t logCharArr(log_t *log, char *arr, int size) {
       fprintf(log->fp, "\n ");
       col = 0;
     }
-    fprintf(log->fp, "%s", buffer);  
+    fprintf(log->fp, "%s", buffer);
   }
   fprintf(log->fp, "}\n");
   fflush(log->fp);
@@ -323,7 +323,7 @@ errLOG_t logCharMatrix(log_t *log, char **matrix, int r, int c) {
   }
   fprintf(log->fp, "}\n");
   fflush(log->fp);
-  
+
   return LOG_NIL;
 }
 
@@ -341,7 +341,7 @@ errLOG_t logStrArr(log_t *log, char **arr, int size) {
       fprintf(log->fp, "\n ");
       col = 0;
     }
-    fprintf(log->fp, "%s", buffer);  
+    fprintf(log->fp, "%s", buffer);
   }
   fprintf(log->fp, "}\n");
   fflush(log->fp);
@@ -373,7 +373,7 @@ errLOG_t logStrMatrix(log_t *log, char ***matrix, int r, int c) {
   }
   fprintf(log->fp, "}\n");
   fflush(log->fp);
-  
+
   return LOG_NIL;
 }
 
@@ -386,9 +386,9 @@ errLOG_t logTitle(log_t *log, char *title) {
   int rpad = (log->columns - (log->columns / 2)) - 1 - (len - (len / 2));
   for(len = log->columns; len; len--) { fprintf(log->fp, "#"); }
   fprintf(log->fp, "\n");
-  fprintf(log->fp, "#%*s#\n", log->columns - 2, ""); 
+  fprintf(log->fp, "#%*s#\n", log->columns - 2, "");
   fprintf(log->fp, "#%*s%s%*s#\n", lpad, "", title, rpad, "");
-  fprintf(log->fp, "#%*s#\n", log->columns - 2, ""); 
+  fprintf(log->fp, "#%*s#\n", log->columns - 2, "");
   for(len = log->columns; len; len--) { fprintf(log->fp, "#"); }
   fprintf(log->fp, "\n\n");
   fflush(log->fp);
@@ -405,7 +405,7 @@ errLOG_t logHeader(log_t *log, char *header) {
   int rpad = (log->columns - (log->columns / 2)) - 1 - (len - (len / 2));
   for(len = log->columns; len; len--) { fprintf(log->fp, "*"); }
   fprintf(log->fp, "\n");
-  fprintf(log->fp, "*%*s%s%*s*\n", lpad, "", header, rpad, ""); 
+  fprintf(log->fp, "*%*s%s%*s*\n", lpad, "", header, rpad, "");
   for(len = log->columns; len; len--) { fprintf(log->fp, "*"); }
   fprintf(log->fp, "\n\n");
   fflush(log->fp);
@@ -421,7 +421,7 @@ errLOG_t logSection(log_t *log, char *section) {
   int lpad = (log->columns / 2) - (len / 2);
   int rpad = (log->columns - (log->columns / 2))  - (len - (len / 2));
   for(; lpad; lpad--) { fprintf(log->fp, "="); }
-  fprintf(log->fp, "%s", section); 
+  fprintf(log->fp, "%s", section);
   for(; rpad; rpad--) { fprintf(log->fp, "="); }
   fprintf(log->fp, "\n\n");
   fflush(log->fp);
@@ -455,7 +455,7 @@ errLOG_t logFloatSetting(log_t *log, char *key, double val) {
   for(val = log->columns - klen + vlen; val; val--) { fprintf(log->fp, "."); }
   fprintf(log->fp, "%s\n", buffer);
   fflush(log->fp);
- 
+
   return LOG_NIL;
 }
 
@@ -463,7 +463,7 @@ errLOG_t logBoolSetting(log_t *log, char *key, int val) {
   if(!log) { return LOG_NIL_LOG; }
   if(!key) { return LOG_NIL_KEY; }
   if((strlen(key) + 10) > log->columns) { return LOG_INVALID_KEY; }
- 
+
   int klen = fprintf(log->fp, "%s", key);
   for(val = log->columns - klen + (val ? 4 : 5); val; val--) { fprintf(log->fp, "."); }
   fprintf(log->fp, val ? "true" : "false");
@@ -481,9 +481,9 @@ errLOG_t logCharSetting(log_t *log, char *key, char val) {
   for(val = log->columns - klen + 3; val; val--) { fprintf(log->fp, "."); }
   fprintf(log->fp, "'%c'\n", val);
   fflush(log->fp);
-  
+
   return LOG_NIL;
-  
+
 }
 
 errLOG_t logStrSetting(log_t *log, char *key, char *val) {
@@ -495,14 +495,14 @@ errLOG_t logStrSetting(log_t *log, char *key, char *val) {
   for(klen = log->columns - klen + strlen(val) + 2; klen; klen--) { fprintf(log->fp, "."); }
   fprintf(log->fp, "\"%s\"\n", val);
   fflush(log->fp);
-  
+
   return LOG_NIL;
 }
 
 errLOG_t logEvent(log_t *log, int timestamp, char *event) {
   if(!log) { return LOG_NIL_LOG; }
   if(!(timestamp == 0 || timestamp == 1)) { return LOG_INVALID_TIMESTAMP; }
- 
+
   int col = 0;
   if(timestamp) {
     time_t t = time(NULL);

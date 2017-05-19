@@ -85,7 +85,7 @@ void readInt(int lbound, int ubound, int *pick, int prompt) {
 
 // print an array as an enumerated list
 void printChoices(char **elems, int size) {
-  if(!elems) { 
+  if(!elems) {
     fprintf(stderr, "internal error!\nnil elems in printChoices()\nexiting...\n");
     exit(EXIT_FAILURE);
   }
@@ -139,7 +139,7 @@ int fitness(char *who, int *chromosome, int traits) {
       default:
         fprintf(stderr, "error! unrecognized trait\nexiting...\n");
         exit(EXIT_FAILURE);
-      
+
     }
   }
   return fitness;
@@ -406,7 +406,7 @@ void setupRISKfromINI(ini_t *ini, risk_t **game) {
     fprintf(stderr, "error! failure to set countries\nirritant: %s\nexiting...\n", strErrRISK(errRISK));
     freeStrArr(sarr1, k);
     exit(EXIT_FAILURE);
-  } 
+  }
   for(i = 0; i < k; i++) {
     if((errINI = getStrArrINI(ini, "Map", sarr1[i], &sarr2, &j)) != INI_NIL) {
       fprintf(stderr, "error! failure to get map adjacencies for %s\nirritant: %s\nexiting...\n", sarr1[i], strErrINI(errINI));
@@ -598,7 +598,7 @@ void computerTurn(risk_t *game, dna_t *dna, char *player, log_t *logger) { // TO
     fprintf(stderr, "error! nil player in computerTurn()\nexiting...\n");
     exit(EXIT_FAILURE);
   }
-  
+
   fprintf(stderr, "error! NOT IMPLEMENTED\nexiting...\n"); // just skip turn instead??
   exit(EXIT_FAILURE);
 }
@@ -667,7 +667,7 @@ void risky(risk_t *game, dna_t *dna, int games) {
     //}
     int seconds = (int)difftime(time(NULL), start);
 
-    if(games) { 
+    if(games) {
       nextGeneration(dna);
       logHeader(logger, "N E W   G E N E R A T I O N");
 
@@ -697,7 +697,7 @@ void risky(risk_t *game, dna_t *dna, int games) {
       freeStrArr(ids, i);
     }
 
-    if(logger) { 
+    if(logger) {
       logGameTime(logger, seconds);
       freeLOG(logger);
     }
