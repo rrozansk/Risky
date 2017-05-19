@@ -426,8 +426,7 @@ void setupRISKfromINI(ini_t *ini, risk_t **game) {
 
 // log the game setup
 void logRISK(risk_t *game, log_t *logger) { // TODO: err handling, free, adj mat
-  int i, j, k, n;
-  double r;
+  int i, j, k;
   char **names;
   int *trades;
 
@@ -658,7 +657,6 @@ void risky(risk_t *game, dna_t *dna, int games) {
     time_t start = time(NULL);
 
     // sleep(1) hack
-    double diff;
     while(difftime(time(NULL), start) < 1.0);
     //while(1) { // getPlayers(game) > 1) { // TODO: implementeing human/cp turns
       //player = getNextPlayer(game);
