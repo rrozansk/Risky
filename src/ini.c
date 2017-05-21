@@ -49,7 +49,7 @@ typedef struct section {     // section ::= [header, settings*]
   char *header;
   settings_t *settings;
 } section_t;
-  
+
 typedef struct ini {         // ini ::= section*
   section_t *section;
   struct ini *rest;
@@ -188,9 +188,9 @@ errINI_t getINI(ini_t *ini, char *section, char *key, void **val, ) {
   settings_t *settings;
   for(; ini; ini = ini->rest) {
     if(ini->section && !strcmp(ini->section->header, section)) {
-      for(settings = ini->section->settings; settings; settings = settings->rest) { 
+      for(settings = ini->section->settings; settings; settings = settings->rest) {
         if(!strcmp(settings->setting->key, key)) {
-          //*val = settings->setting->val;  
+          // *val = settings->setting->val;
           return INI_NIL;
         }
       }
@@ -215,23 +215,23 @@ errINI_t setINI(ini_t *ini, char *section, char *key, char *val) {
   for(; ini; ini = ini->rest) {
     if(ini->section) {
       if(!strcmp(ini->section->header, section)) { // found section to place pr in
-        for(settings = ini->section->settings; settings; settings = settings->rest) { 
+        for(settings = ini->section->settings; settings; settings = settings->rest) {
           if(!strcmp(settings->setting->key ,key)) { // overwrite existing value for pr if found
             free(settings->setting->val);
             settings->setting->val = calloc(strlen(val)+1, sizeof(char));
             if(!settings->setting->val) { return INI_NIL_VAL; }
             strcpy(settings->setting->val, val);
-            return INI_NIL;  
+            return INI_NIL;
           }
         } // add new pr to the settings for this section if key not found
         ini->section->settings = make_settings(make_setting(key, val), ini->section->settings);
-        return INI_NIL;  
+        return INI_NIL;
       }
     }
   } // if never found section, add new section and key/val pr
   tmp_ini->rest = make_ini(make_section(section, make_settings(make_setting(key, val), NULL)), tmp_ini->rest);
 
-  return INI_NIL;  
+  return INI_NIL;
 }
 */
 
@@ -409,63 +409,203 @@ errINI_t writeINI(ini_t *ini, char *fname) {
 }
 
 errINI_t setIntINI(ini_t *ini, char *section, char *key, int val) {
+  if(!ini) { return INI_NIL_INI; }
+  if(!section) { return INI_NIL_SECTION; }
+  if(!key) { return INI_NIL_KEY; }
+  if(!isValidKey(key)) { return INI_INVALID_KEY; }
+  if(!isValidHeader(section)) { return INI_INVALID_SECTION; }
+
+  return INI_NIL;
 }
 
 errINI_t getIntINI(ini_t *ini, char *section, char *key, int *value) {
+  if(!ini) { return INI_NIL_INI; }
+  if(!section) { return INI_NIL_SECTION; }
+  if(!key) { return INI_NIL_KEY; }
+  if(!isValidKey(key)) { return INI_INVALID_KEY; }
+  if(!isValidHeader(section)) { return INI_INVALID_SECTION; }
+
+  return INI_NIL;
 }
 
 errINI_t setFloatINI(ini_t *ini, char *section, char *key, double val) {
+  if(!ini) { return INI_NIL_INI; }
+  if(!section) { return INI_NIL_SECTION; }
+  if(!key) { return INI_NIL_KEY; }
+  if(!isValidKey(key)) { return INI_INVALID_KEY; }
+  if(!isValidHeader(section)) { return INI_INVALID_SECTION; }
+
+  return INI_NIL;
 }
 
 errINI_t getFloatINI(ini_t *ini, char *section, char *key, double *value) {
+  if(!ini) { return INI_NIL_INI; }
+  if(!section) { return INI_NIL_SECTION; }
+  if(!key) { return INI_NIL_KEY; }
+  if(!isValidKey(key)) { return INI_INVALID_KEY; }
+  if(!isValidHeader(section)) { return INI_INVALID_SECTION; }
+
+  return INI_NIL;
 }
 
 errINI_t setBoolINI(ini_t *ini, char *section, char *key, int val) {
+  if(!ini) { return INI_NIL_INI; }
+  if(!section) { return INI_NIL_SECTION; }
+  if(!key) { return INI_NIL_KEY; }
+  if(!isValidKey(key)) { return INI_INVALID_KEY; }
+  if(!isValidHeader(section)) { return INI_INVALID_SECTION; }
+
+  return INI_NIL;
 }
 
 errINI_t getBoolINI(ini_t *ini, char *section, char *key, int *value) {
+  if(!ini) { return INI_NIL_INI; }
+  if(!section) { return INI_NIL_SECTION; }
+  if(!key) { return INI_NIL_KEY; }
+  if(!isValidKey(key)) { return INI_INVALID_KEY; }
+  if(!isValidHeader(section)) { return INI_INVALID_SECTION; }
+
+  return INI_NIL;
 }
 
 errINI_t setCharINI(ini_t *ini, char *section, char *key, char val) {
+  if(!ini) { return INI_NIL_INI; }
+  if(!section) { return INI_NIL_SECTION; }
+  if(!key) { return INI_NIL_KEY; }
+  if(!isValidKey(key)) { return INI_INVALID_KEY; }
+  if(!isValidHeader(section)) { return INI_INVALID_SECTION; }
+
+  return INI_NIL;
 }
 
 errINI_t getCharINI(ini_t *ini, char *section, char *key, char *value) {
+  if(!ini) { return INI_NIL_INI; }
+  if(!section) { return INI_NIL_SECTION; }
+  if(!key) { return INI_NIL_KEY; }
+  if(!isValidKey(key)) { return INI_INVALID_KEY; }
+  if(!isValidHeader(section)) { return INI_INVALID_SECTION; }
+
+  return INI_NIL;
 }
 
 errINI_t setStrINI(ini_t *ini, char *section, char *key, char *val) {
+  if(!ini) { return INI_NIL_INI; }
+  if(!section) { return INI_NIL_SECTION; }
+  if(!key) { return INI_NIL_KEY; }
+  if(!isValidKey(key)) { return INI_INVALID_KEY; }
+  if(!isValidHeader(section)) { return INI_INVALID_SECTION; }
+
+  return INI_NIL;
 }
 
 errINI_t getStrINI(ini_t *ini, char *section, char *key, char **value) {
+  if(!ini) { return INI_NIL_INI; }
+  if(!section) { return INI_NIL_SECTION; }
+  if(!key) { return INI_NIL_KEY; }
+  if(!isValidKey(key)) { return INI_INVALID_KEY; }
+  if(!isValidHeader(section)) { return INI_INVALID_SECTION; }
+
+  return INI_NIL;
 }
 
 errINI_t setIntArrINI(ini_t *ini, char *section, char *key, int *val, int n) {
+  if(!ini) { return INI_NIL_INI; }
+  if(!section) { return INI_NIL_SECTION; }
+  if(!key) { return INI_NIL_KEY; }
+  if(!isValidKey(key)) { return INI_INVALID_KEY; }
+  if(!isValidHeader(section)) { return INI_INVALID_SECTION; }
+
+  return INI_NIL;
 }
 
 errINI_t getIntArrINI(ini_t *ini, char *section, char *key, int **value, int *n) {
+  if(!ini) { return INI_NIL_INI; }
+  if(!section) { return INI_NIL_SECTION; }
+  if(!key) { return INI_NIL_KEY; }
+  if(!isValidKey(key)) { return INI_INVALID_KEY; }
+  if(!isValidHeader(section)) { return INI_INVALID_SECTION; }
+
+  return INI_NIL;
 }
 
 errINI_t setFloatArrINI(ini_t *ini, char *section, char *key, double *val, int n) {
+  if(!ini) { return INI_NIL_INI; }
+  if(!section) { return INI_NIL_SECTION; }
+  if(!key) { return INI_NIL_KEY; }
+  if(!isValidKey(key)) { return INI_INVALID_KEY; }
+  if(!isValidHeader(section)) { return INI_INVALID_SECTION; }
+
+  return INI_NIL;
 }
 
 errINI_t getFloatArrINI(ini_t *ini, char *section, char *key, double **value, int *n) {
+  if(!ini) { return INI_NIL_INI; }
+  if(!section) { return INI_NIL_SECTION; }
+  if(!key) { return INI_NIL_KEY; }
+  if(!isValidKey(key)) { return INI_INVALID_KEY; }
+  if(!isValidHeader(section)) { return INI_INVALID_SECTION; }
+
+  return INI_NIL;
 }
 
 errINI_t setBoolArrINI(ini_t *ini, char *section, char *key, int *val, int n) {
+  if(!ini) { return INI_NIL_INI; }
+  if(!section) { return INI_NIL_SECTION; }
+  if(!key) { return INI_NIL_KEY; }
+  if(!isValidKey(key)) { return INI_INVALID_KEY; }
+  if(!isValidHeader(section)) { return INI_INVALID_SECTION; }
+
+  return INI_NIL;
 }
 
 errINI_t getBoolArrINI(ini_t *ini, char *section, char *key, int **value, int *n) {
+  if(!ini) { return INI_NIL_INI; }
+  if(!section) { return INI_NIL_SECTION; }
+  if(!key) { return INI_NIL_KEY; }
+  if(!isValidKey(key)) { return INI_INVALID_KEY; }
+  if(!isValidHeader(section)) { return INI_INVALID_SECTION; }
+
+  return INI_NIL;
 }
 
 errINI_t setCharArrINI(ini_t *ini, char *section, char *key, char *val, int n) {
+  if(!ini) { return INI_NIL_INI; }
+  if(!section) { return INI_NIL_SECTION; }
+  if(!key) { return INI_NIL_KEY; }
+  if(!isValidKey(key)) { return INI_INVALID_KEY; }
+  if(!isValidHeader(section)) { return INI_INVALID_SECTION; }
+
+  return INI_NIL;
 }
 
 errINI_t getCharArrINI(ini_t *ini, char *section, char *key, char **value, int *n) {
+  if(!ini) { return INI_NIL_INI; }
+  if(!section) { return INI_NIL_SECTION; }
+  if(!key) { return INI_NIL_KEY; }
+  if(!isValidKey(key)) { return INI_INVALID_KEY; }
+  if(!isValidHeader(section)) { return INI_INVALID_SECTION; }
+
+  return INI_NIL;
 }
 
 errINI_t setStrArrINI(ini_t *ini, char *section, char *key, char **val, int n) {
+  if(!ini) { return INI_NIL_INI; }
+  if(!section) { return INI_NIL_SECTION; }
+  if(!key) { return INI_NIL_KEY; }
+  if(!isValidKey(key)) { return INI_INVALID_KEY; }
+  if(!isValidHeader(section)) { return INI_INVALID_SECTION; }
+
+  return INI_NIL;
 }
 
 errINI_t getStrArrINI(ini_t *ini, char *section, char *key, char ***value, int *n) {
+  if(!ini) { return INI_NIL_INI; }
+  if(!section) { return INI_NIL_SECTION; }
+  if(!key) { return INI_NIL_KEY; }
+  if(!isValidKey(key)) { return INI_INVALID_KEY; }
+  if(!isValidHeader(section)) { return INI_INVALID_SECTION; }
+
+  return INI_NIL;
 }
 
 errINI_t deleteINI(ini_t *ini, char *section, char *key) {
@@ -497,10 +637,10 @@ errINI_t deleteINI(ini_t *ini, char *section, char *key) {
           if(prevINI) { prevINI->rest = ini->rest; } // fix ini/sections list
           free(ini->section);
         }
-        return INI_NIL;  
+        return INI_NIL;
       }
     }
   }
 */
-  return INI_NIL;  
+  return INI_NIL;
 }

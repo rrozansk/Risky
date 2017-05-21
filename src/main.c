@@ -32,6 +32,8 @@ log_t *logger = NULL;
 dna_t *dna = NULL;
 risk_t *game = NULL;
 
+int SESSION = -1;
+
 errRISK_t errRISK;
 errINI_t errINI;
 errDNA_t errDNA;
@@ -173,9 +175,12 @@ void setupLOGfromINI(ini_t *ini, log_t **logger) {
   time_t t = time(NULL);
   struct tm *date = localtime(&t);
   char name[80];
-  strftime(name, 80, "%Y_%B_%d_%A_%X.txt", date); // yr_mo_day_weekday_time
+  strftime(name, 80, "%Y_%B_%d_%A_%X", date); // yr_mo_day_weekday_time
 
-  if((errLOG = makeLOG(logger, 120, "training_sessions", name)) != LOG_NIL) {
+  char fname[80];
+  sprintf(fname, "%s_SESSION_%i.txt", name, SESSION);
+
+  if((errLOG = makeLOG(logger, 120, "training_sessions", fname)) != LOG_NIL) {
   //if((errLOG = makeLOG(logger, log, dir, name)) != LOG_NIL) {
     fprintf(stderr, "error! failure to make log\nirritant: %s\nexiting...\n", strErrLOG(errLOG));
     //free(dir);
@@ -183,7 +188,7 @@ void setupLOGfromINI(ini_t *ini, log_t **logger) {
   }
 
   //free(dir);
-  if((errLOG = logTitle(*logger, name)) != LOG_NIL) {
+  if((errLOG = logTitle(*logger, fname)) != LOG_NIL) {
     fprintf(stderr, "error! failure to log title\nirritant: %s\nexiting...\n", strErrLOG(errLOG));
     exit(EXIT_FAILURE);
   }
@@ -191,11 +196,12 @@ void setupLOGfromINI(ini_t *ini, log_t **logger) {
 
 // attempt to set up all the AI/chromosomes from the INI conf file
 void setupDNAfromINI(ini_t *ini, dna_t **dna) {
+/*
   int cps, traits, elitism;
   int lbound, ubound, *chromosome;
-//  char **names;
+  char **names;
   double rate, percentile;
-/*
+
   if((errINI = getIntINI(ini, "Chromosomes", "traits", &traits)) != INI_NIL) {
     fprintf(stderr, "error! failure to get chromosome traits\nirritant: %s\nexiting...\n", strErrINI(errINI));
     exit(EXIT_FAILURE);
@@ -641,6 +647,7 @@ void risky(risk_t *game, dna_t *dna, int games) {
   }
 
   do {
+    SESSION = games;
     setupLOGfromINI(ini, &logger);
     if(logger) {
       //logRISK(game, logger);
@@ -668,7 +675,7 @@ void risky(risk_t *game, dna_t *dna, int games) {
     time_t start = time(NULL);
 
     // sleep(1) hack
-    while(difftime(time(NULL), start) < 1.0);
+    //while(difftime(time(NULL), start) < 1.0);
     //while(1) { // getPlayers(game) > 1) { // TODO: implementeing human/cp turns
       //player = getNextPlayer(game);
       //if(logger) { logEvent(logger, 1, "%s's turn...\n\n"); }
@@ -757,7 +764,7 @@ int main(int argc, char *argv[]) {
   }
 */
   srand(time(NULL)); // set random for risk and dna libs
-  risky(game, dna, 600);
+  risky(game, dna, 10000);
   //risky(game, dna, argc);
 /*
   if(argc > 1) {
