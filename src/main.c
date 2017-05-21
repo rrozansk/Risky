@@ -44,7 +44,7 @@ errLOG_t errLOG;
  ******************************************************************************/
 void freeStrArr(char **arr, int i) {
   for(; i; i--) { free(arr[i-1]); }
-  free(arr);
+  //free(arr);
 }
 
 // Read in an integer, only accepting input between the bounds. Optionally prompt
@@ -105,7 +105,7 @@ int fitness(char *who, int *chromosome, int traits) {
 
   int fitness = 0;
   for(; traits; traits--) {
-    switch(traits) {
+    switch(traits-1) {
       case 0: //offense:     [world domination speed]
         fitness += chromosome[0];
         break;
@@ -147,6 +147,7 @@ int fitness(char *who, int *chromosome, int traits) {
 
 // attempt to set up the logger from the INI conf file.
 void setupLOGfromINI(ini_t *ini, log_t **logger) {
+/*
   int log;
   if((errINI = getBoolINI(ini, "Logging", "log", &log)) != INI_NIL) {
     fprintf(stderr, "error! failure to get log option\nirritant: %s\nexiting...\n", strErrINI(errINI));
@@ -168,19 +169,20 @@ void setupLOGfromINI(ini_t *ini, log_t **logger) {
     fprintf(stderr, "error! failure to get log dir\nirritant: %s\nexiting...\n", strErrINI(errINI));
     exit(EXIT_FAILURE);
   }
-
+*/
   time_t t = time(NULL);
   struct tm *date = localtime(&t);
   char name[80];
   strftime(name, 80, "%Y_%B_%d_%A_%X.txt", date); // yr_mo_day_weekday_time
 
-  if((errLOG = makeLOG(logger, log, dir, name)) != LOG_NIL) {
+  if((errLOG = makeLOG(logger, 120, "training_sessions", name)) != LOG_NIL) {
+  //if((errLOG = makeLOG(logger, log, dir, name)) != LOG_NIL) {
     fprintf(stderr, "error! failure to make log\nirritant: %s\nexiting...\n", strErrLOG(errLOG));
-    free(dir);
+    //free(dir);
     exit(EXIT_FAILURE);
   }
 
-  free(dir);
+  //free(dir);
   if((errLOG = logTitle(*logger, name)) != LOG_NIL) {
     fprintf(stderr, "error! failure to log title\nirritant: %s\nexiting...\n", strErrLOG(errLOG));
     exit(EXIT_FAILURE);
@@ -191,9 +193,9 @@ void setupLOGfromINI(ini_t *ini, log_t **logger) {
 void setupDNAfromINI(ini_t *ini, dna_t **dna) {
   int cps, traits, elitism;
   int lbound, ubound, *chromosome;
-  char **names;
+//  char **names;
   double rate, percentile;
-
+/*
   if((errINI = getIntINI(ini, "Chromosomes", "traits", &traits)) != INI_NIL) {
     fprintf(stderr, "error! failure to get chromosome traits\nirritant: %s\nexiting...\n", strErrINI(errINI));
     exit(EXIT_FAILURE);
@@ -228,45 +230,51 @@ void setupDNAfromINI(ini_t *ini, dna_t **dna) {
     fprintf(stderr, "error! failure to get chromosome cps\nirritant: %s\nexiting...\n", strErrINI(errINI));
     exit(EXIT_FAILURE);
   }
-
-  if((errDNA = makeDNA(dna, cps, traits)) != DNA_NIL) {
+*/
+  char *names[8] = { "cp1", "cp2", "cp3", "cp4", "cp5", "cp6", "cp7", "cp8" };
+  if((errDNA = makeDNA(dna, names, 8, 10)) != DNA_NIL) {
+  //if((errDNA = makeDNA(dna, names, cps, traits)) != DNA_NIL) {
     fprintf(stderr, "error! failure to make dna\nirritant: %s\nexiting...\n", strErrDNA(errDNA));
-    freeStrArr(names, cps);
+    //freeStrArr(names, cps);
     exit(EXIT_FAILURE);
   }
 
   if((errDNA = setFitness(*dna, fitness)) != DNA_NIL) {
+  //if((errDNA = setFitness(*dna, fitness)) != DNA_NIL) {
     fprintf(stderr, "error! failure to get chromosome\nirritant: %s\nexiting...\n", strErrDNA(errDNA));
-    freeStrArr(names, cps);
+    //freeStrArr(names, cps);
     exit(EXIT_FAILURE);
   }
 
-  if((errDNA = setMutation(*dna, lbound, ubound, rate)) != DNA_NIL) {
-    fprintf(stderr, "error! failure to get chromosome\nirritant: %s\nexiting...\n", strErrDNA(errDNA));
-    freeStrArr(names, cps);
+  if((errDNA = setMutation(*dna, 0, 255, 0.01)) != DNA_NIL) {
+  //if((errDNA = setMutation(*dna, lbound, ubound, rate)) != DNA_NIL) {
+    fprintf(stderr, "error! failure to set mutation parameters\nirritant: %s\nexiting...\n", strErrDNA(errDNA));
+    //freeStrArr(names, cps);
     exit(EXIT_FAILURE);
   }
 
-  if((errDNA = setElitism(*dna, elitism, percentile)) != DNA_NIL) {
+  if((errDNA = setElitism(*dna, 1, 0.50)) != DNA_NIL) {
+  //if((errDNA = setElitism(*dna, elitism, percentile)) != DNA_NIL) {
     fprintf(stderr, "error! failure to get chromosome\nirritant: %s\nexiting...\n", strErrDNA(errDNA));
-    freeStrArr(names, cps);
+    //freeStrArr(names, cps);
     exit(EXIT_FAILURE);
   }
-
+/*
   for(; cps; cps--, free(chromosome)) {
     if((errINI = getIntArrINI(ini, "Chromosomes", names[cps-1], &chromosome, &traits)) != INI_NIL) {
       fprintf(stderr, "error! failure to get chromosome %s\nirritant: %s\nexiting...\n", names[cps-1], strErrINI(errINI));
-      freeStrArr(names, cps);
+      //freeStrArr(names, cps);
       exit(EXIT_FAILURE);
     }
     if((errDNA = setStrand(*dna, names[cps-1], chromosome, traits)) != DNA_NIL) {
       fprintf(stderr, "error! failure to set chromosome %s\nirritant: %s\nexiting...\n", names[cps-1], strErrDNA(errDNA));
-      freeStrArr(names, cps);
+      //freeStrArr(names, cps);
       free(chromosome);
       exit(EXIT_FAILURE);
     }
   }
   freeStrArr(names, cps);
+*/
 }
 
 // attempt to set up the risk game from the INI conf file.
@@ -470,8 +478,9 @@ void logDNA(dna_t *dna, log_t *logger) { // TODO: err handling, free
   int *strand;
   char **names;
 
-  logSection(logger, "DNA");
+  logHeader(logger, "DNA");
 
+  logSection(logger, "Settings");
   getMutation(dna, &i, &j, &r);
   logFloatSetting(logger, "Mutation Rate", r);
   logIntSetting(logger, "Lower Bound", i);
@@ -482,12 +491,14 @@ void logDNA(dna_t *dna, log_t *logger) { // TODO: err handling, free
   logFloatSetting(logger, "Percentile", r);
 
   getNames(dna, &names, &i);
-  logHeader(logger, "Chromosomes");
+
+  logSection(logger, "Chromosomes");
   for(; i; i--) {
-    getFitness(dna, names[i-1], &j);
-    logIntSetting(logger, names[i-1], j);
+    logSection(logger, names[i-1]);
     getStrand(dna, names[i-1], &strand, &j);
     logIntArr(logger, strand, j);
+    getFitness(dna, names[i-1], &j);
+    logIntSetting(logger, "fitness", j);
   }
 }
 
@@ -632,12 +643,12 @@ void risky(risk_t *game, dna_t *dna, int games) {
   do {
     setupLOGfromINI(ini, &logger);
     if(logger) {
-      logRISK(game, logger);
+      //logRISK(game, logger);
       logDNA(dna, logger);
     }
 
     if(games > 0) { fprintf(stdout, "sessions left: %i\n", games); }
-
+/*
     // [re]set game
     if((errRISK = initDeck(game)) != RISK_NIL) {
       fprintf(stderr, "error! failure to ini deck\nirritant: %s\nexiting...", strErrRISK(errRISK));
@@ -651,7 +662,7 @@ void risky(risk_t *game, dna_t *dna, int games) {
       fprintf(stderr, "error! failure to ini deck\narmies: %s\nexiting...", strErrRISK(errRISK));
       exit(EXIT_FAILURE);
     }
-
+*/
     //char *player = NULL;
     if(logger) { logHeader(logger, "G A M E P L A Y"); }
     time_t start = time(NULL);
@@ -668,7 +679,10 @@ void risky(risk_t *game, dna_t *dna, int games) {
     int seconds = (int)difftime(time(NULL), start);
 
     if(games) {
-      nextGeneration(dna);
+      if((errDNA = nextGeneration(dna)) != DNA_NIL) {
+        fprintf(stderr, "error! failure to create new generation\nirritant: %s\nexiting...\n", strErrDNA(errDNA));
+        exit(EXIT_FAILURE);
+      }
       logHeader(logger, "N E W   G E N E R A T I O N");
 
       char **ids;
@@ -722,7 +736,7 @@ int main(int argc, char *argv[]) {
   }
 
   atexit(cleanup); // register cleanup() to be called upon exit()
-
+/*
   if((errINI = readINI(&ini, argv[1])) != INI_NIL) {
     fprintf(stderr, "error! failure to read conf\nirritant: %s\nexiting...\n", strErrINI(errINI));
     exit(EXIT_FAILURE);
@@ -732,18 +746,20 @@ int main(int argc, char *argv[]) {
     fprintf(stderr, "error! INI section=Training,key=games\nirritant: %s\nexiting...\n", strErrINI(errINI));
     exit(EXIT_FAILURE);
   }
-
+*/
   setupDNAfromINI(ini, &dna);
+/*
   setupRISKfromINI(ini, &game);
 
   if((errRISK = isValid(game)) != RISK_NIL) {
     fprintf(stderr, "error! invalid game specified by conf\nirritant: %s\nexiting...\n", strErrRISK(errRISK));
     exit(EXIT_FAILURE);
   }
-
+*/
   srand(time(NULL)); // set random for risk and dna libs
-  risky(game, dna, argc);
-
+  risky(game, dna, 600);
+  //risky(game, dna, argc);
+/*
   if(argc > 1) {
     char **ids;
     int *strand;
@@ -775,6 +791,6 @@ int main(int argc, char *argv[]) {
       exit(EXIT_FAILURE);
     }
   }
-
+*/
   exit(EXIT_SUCCESS);
 }

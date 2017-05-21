@@ -2,7 +2,7 @@
  * FILE:    log.c                                                             *
  * AUTHOR:  Ryan Rozanski                                                     *
  * CREATED: 4/30/17                                                           *
- * EDITED:  5/18/17                                                           *
+ * EDITED:  5/20/17                                                           *
  * INFO:    Implementation of the interface located in log.h.                 *
  *                                                                            *
  ******************************************************************************/
@@ -80,7 +80,7 @@ errLOG_t makeLOG(log_t **log, int columns, char *dir, char *name) {
   if(!dir) { return LOG_NIL_DIR; }
   if(!name) { return LOG_NIL_NAME; }
   if(columns < 80) { return LOG_INVALID_WIDTH; }
-  if((strlen(dir) + strlen(name) + 4) > 255) { return LOG_INVALID_DIR; } // +4 for .txt
+  if((strlen(dir) + strlen(name)) > 255) { return LOG_INVALID_DIR; }
 
   struct stat st;
   if(mkdir(dir, 0700) && stat(dir, &st)) { return LOG_DIR_CREATION_FAIL; }
@@ -100,7 +100,7 @@ errLOG_t makeLOG(log_t **log, int columns, char *dir, char *name) {
   (*log)->columns = columns;
 
   char path[255];
-  sprintf(path, "%s/%s.txt", dir, name);
+  sprintf(path, "%s/%s", dir, name);
   if(!((*log)->fp = fopen(path, "w"))) {
     freeLOG(*log); // ignore possible close file error
     *log = NULL;
@@ -437,7 +437,7 @@ errLOG_t logIntSetting(log_t *log, char *key, int val) {
   char buffer[20];
   int vlen = sprintf(buffer, "%d", val);
   int klen = fprintf(log->fp, "%s", key);
-  for(val = log->columns - klen + vlen; val; val--) { fprintf(log->fp, "."); }
+  for(val = log->columns - (klen + vlen); val; val--) { fprintf(log->fp, "."); }
   fprintf(log->fp, "%s\n", buffer);
   fflush(log->fp);
 
@@ -452,7 +452,7 @@ errLOG_t logFloatSetting(log_t *log, char *key, double val) {
   char buffer[20];
   int vlen = sprintf(buffer, "%f", val);
   int klen = fprintf(log->fp, "%s", key);
-  for(val = log->columns - klen + vlen; val; val--) { fprintf(log->fp, "."); }
+  for(val = log->columns - (klen + vlen); val; val--) { fprintf(log->fp, "."); }
   fprintf(log->fp, "%s\n", buffer);
   fflush(log->fp);
 
@@ -465,7 +465,7 @@ errLOG_t logBoolSetting(log_t *log, char *key, int val) {
   if((strlen(key) + 10) > log->columns) { return LOG_INVALID_KEY; }
 
   int klen = fprintf(log->fp, "%s", key);
-  for(val = log->columns - klen + (val ? 4 : 5); val; val--) { fprintf(log->fp, "."); }
+  for(val = log->columns - (klen + (val ? 4 : 5)); val; val--) { fprintf(log->fp, "."); }
   fprintf(log->fp, val ? "true" : "false");
   fflush(log->fp);
 
@@ -478,7 +478,7 @@ errLOG_t logCharSetting(log_t *log, char *key, char val) {
   if((strlen(key) + 10) > log->columns) { return LOG_INVALID_KEY; }
 
   int klen = fprintf(log->fp, "%s", key);
-  for(val = log->columns - klen + 3; val; val--) { fprintf(log->fp, "."); }
+  for(val = log->columns - (klen + 3); val; val--) { fprintf(log->fp, "."); }
   fprintf(log->fp, "'%c'\n", val);
   fflush(log->fp);
 
@@ -492,7 +492,7 @@ errLOG_t logStrSetting(log_t *log, char *key, char *val) {
   if((strlen(key) + strlen(val) + 2) > log->columns) { return LOG_INVALID_KEY; }
 
   int klen = fprintf(log->fp, "%s", key);
-  for(klen = log->columns - klen + strlen(val) + 2; klen; klen--) { fprintf(log->fp, "."); }
+  for(klen = log->columns - (klen + strlen(val) + 2); klen; klen--) { fprintf(log->fp, "."); }
   fprintf(log->fp, "\"%s\"\n", val);
   fflush(log->fp);
 
@@ -512,8 +512,8 @@ errLOG_t logEvent(log_t *log, int timestamp, char *event) {
     fprintf(log->fp, "[%s] ", time);
   }
 
-  char *token = strtok(event, "\t\n\r\v\f ");
-  for(; token; token = strtok(NULL, "\t\n\r\v\f ")) {
+  char *token = strtok(event, " ");
+  for(; token; token = strtok(NULL, " ")) {
     if(col + strlen(token) > log->columns) {
       fprintf(log->fp, "\n");
       col = 0;

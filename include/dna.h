@@ -2,9 +2,14 @@
  * FILE:    dna.h                                                             *
  * AUTHOR:  Ryan Rozanski                                                     *
  * CREATED: 5/4/17                                                            *
- * EDITED:  5/13/17                                                           *
- * INFO:    A library to make working with genetic algorithms easy.           *
- // FIXME: srand(time(NULL)); needs to be called
+ * EDITED:  5/21/17                                                           *
+ * INFO:    A library to make working with genetic algorithms easier through  *
+ *          the use of getters, setters, and convience functions which perform*
+ *          crossover with mutation and elitism. The library exposes all this *
+ *          in addition to the convience functions to allow users the ability *
+ *          to create custom implementations if so needed or desired. Please  *
+ *          note that the c random number must be seeded (srand(time(NULL)))  *
+ *          or mutation will not work. Error handling is also provided.       *
  *                                                                            *
  ******************************************************************************/
 
@@ -19,13 +24,13 @@
 typedef struct dna dna_t; /* A representation of AIs */
 
 typedef enum errDNA { /* All possible errors produced by this library. */
-  DNA_NIL, DNA_NIL_DNA, DNA_NIL_FATHER, DNA_NIL_MOTHER, DNA_NIL_CHILD,
-  DNA_NIL_NAMES, DNA_NIL_STRAND, DNA_INVALID_CHROMOSOMES, DNA_INVALID_TRAITS,
-  DNA_INVALID_ELITISM, DNA_INVALID_RATE, DNA_NIL_FITNESS, DNA_INVALID_BOUNDS,
-  DNA_NIL_NAME, DNA_NIL_FITNESS_INT, DNA_NIL_LBOUND, DNA_NIL_UBOUND, DNA_NIL_RATE,
-  DNA_INVALID_PERCENTILE, DNA_NIL_ELITISM, DNA_NIL_PERCENTILE, DNA_NIL_TRAITS,
-  DNA_NIL_SIZE, DNA_NIL_WHO,
-} errDNA_t; 
+  DNA_NIL, DNA_NIL_DNA, DNA_NIL_FATHER, DNA_NIL_SIZE, DNA_NIL_WHO, DNA_NIL_RATE,
+  DNA_INVALID_ELITISM, DNA_INVALID_RATE, DNA_NIL_TRAITS, DNA_INVALID_PERCENT,
+  DNA_NIL_MOTHER, DNA_NIL_LBOUND, DNA_NIL_UBOUND, DNA_NIL_NAME, DNA_NIL_FITNESS,
+  DNA_NIL_ELITISM, DNA_NIL_STRAND, DNA_NIL_FITNESS_INT, DNA_INVALID_CHROMOSOMES,
+  DNA_INVALID_TRAITS, DNA_INVALID_BOUNDS, DNA_NIL_PERCENT, DNA_NIL_NAMES,
+  DNA_NIL_CHILD, DNA_OUT_OF_MEMORY,
+} errDNA_t;
 
 /******************************************************************************
  *                                                                            *
@@ -35,223 +40,275 @@ typedef enum errDNA { /* All possible errors produced by this library. */
 
 /******************************************************************************
  *                                                                            *
- * PURPOSE: 
+ * PURPOSE: Returns a string representation of any possible error returned by *
+ *          the library.                                                      *
  *                                                                            *
  * ARGUMENT DESCRIPTION                                                       *
  * -------- -----------                                                       *
- * errDNA
+ * errDNA   the error to stringify                                            *
  *                                                                            *
- * RETURNS: 
+ * RETURNS: A string representation of the error.                             *
  *                                                                            *
  ******************************************************************************/
 const char *strErrDNA(errDNA_t errDNA);
 
 /******************************************************************************
  *                                                                            *
- * PURPOSE: 
- *                                                                            *
- * ARGUMENT    DESCRIPTION                                                    *
- * --------    -----------                                                    *
- * dna
- * chromosomes
- * triats
- *                                                                            *
- * RETURNS: 
- *                                                                            *
- ******************************************************************************/
-errDNA_t makeDNA(dna_t **dna, int chromosomes, int traits);
-
-/******************************************************************************
- *                                                                            *
- * PURPOSE: 
+ * PURPOSE: Attempts to create a new dna, if any error is returned the value  *
+ *          stored at dna will be NULL.                                       *
  *                                                                            *
  * ARGUMENT DESCRIPTION                                                       *
  * -------- -----------                                                       *
- * dna
+ * dna      the dna to use                                                    *
+ * strands  the number of chromosomes to track                                *
+ * traits   the number of traits in each chromosome                           *
+ * ids      the ids used to identify the strands                              *
  *                                                                            *
- * RETURNS: 
+ * RETURNS: DNA_NIL_DNA if dna in NULL                                        *
+ *          DNA_INVALID_CHROMOSOMES if chromosomes is < 1                     *
+ *          DNA_INVALID_TRAITS if taits < 1                                   *
+ *          DNA_OUT_OF_MEMORY if failure to allocate                          *
+ *          DNA_NIL if no error                                               *
+ *                                                                            *
+ ******************************************************************************/
+errDNA_t makeDNA(dna_t **dna, char **ids, int strands, int traits);
+
+/******************************************************************************
+ *                                                                            *
+ * PURPOSE: To free any dna created by makeDNA().                             *
+ *                                                                            *
+ * ARGUMENT DESCRIPTION                                                       *
+ * -------- -----------                                                       *
+ * dna      the dna to use                                                    *
+ *                                                                            *
+ * RETURNS: DNA_NIL_DNA if dna in NULL                                        *
+ *          DNA_NIL if no error                                               *
  *                                                                            *
  ******************************************************************************/
 errDNA_t freeDNA(dna_t *dna);
 
 /******************************************************************************
  *                                                                            *
- * PURPOSE: 
+ * PURPOSE: To give the criteria needed in order to properly evaluate every   *
+ *          strand of dna.                                                    *
  *                                                                            *
  * ARGUMENT DESCRIPTION                                                       *
  * -------- -----------                                                       *
- * dna
- * fitness
+ * dna      the dna to use                                                    *
+ * fitness  a function to determine the 'fitness' of a strand of dna          *
  *                                                                            *
- * RETURNS: 
+ * RETURNS: DNA_NIL_DNA if dna in NULL                                        *
+ *          DNA_NIL_FITNESS if fitness is NULL                                *
+ *          DNA_NIL if no error                                               *
  *                                                                            *
  ******************************************************************************/
 errDNA_t setFitness(dna_t *dna, int (*fitness)(char *who, int *strand, int traits));
 
 /******************************************************************************
  *                                                                            *
- * PURPOSE: 
+ * PURPOSE: Retrieves the fitness of any strand of dna given its identifier.  *
  *                                                                            *
  * ARGUMENT DESCRIPTION                                                       *
  * -------- -----------                                                       *
- * dna
- * who
- * fitness
+ * dna      the dna to use                                                    *
+ * who      the id of the strand to get                                       *
+ * fitness  the fitness of the strand in question                             *
  *                                                                            *
- * RETURNS: 
+ * RETURNS: DNA_NIL_DNA if dna in NULL                                        *
+ *          DNA_NIL_NAME if who is NULL                                       *
+ *          DNA_NIL_FITNESS_INT if fitness is NULL                            *
+ *          DNA_NIL if no error                                               *
  *                                                                            *
  ******************************************************************************/
 errDNA_t getFitness(dna_t *dna, char *who, int *fitness);
 
 /******************************************************************************
  *                                                                            *
- * PURPOSE: 
+ * PURPOSE: Set the mutation rate of the dna when crossover is performed.     *
  *                                                                            *
  * ARGUMENT DESCRIPTION                                                       *
  * -------- -----------                                                       *
- * dna
- * lbound
- * ubound
- * rate
+ * dna      the dna to use                                                    *
+ * lbound   the lower bound of acceptable values for a trait to take on       *
+ * ubound   the upper bound of acceptable values for a trait to take on       *
+ * rate     the rate of mutation between 0.0-1.0                              *
  *                                                                            *
- * RETURNS: 
+ * RETURNS: DNA_NIL_DNA if dna in NULL                                        *
+ *          DNA_INVALID_BOUNDS if lbound >= ubound                            *
+ *          DNA_INVALID_RATE if rate is not between 0.0-1.0                   *
+ *          DNA_NIL if no error                                               *
  *                                                                            *
  ******************************************************************************/
 errDNA_t setMutation(dna_t *dna, int lbound, int ubound, double rate);
 
 /******************************************************************************
  *                                                                            *
- * PURPOSE: 
+ * PURPOSE: Get the current mutation rate and the upper and lower bounds of   *
+ *          acceptable trait values.                                          *
  *                                                                            *
  * ARGUMENT DESCRIPTION                                                       *
  * -------- -----------                                                       *
- * dna
- * lbound
- * ubound
- * rate
+ * dna      the dna to use                                                    *
+ * lbound   the lower limit of acceptable trait values                        *
+ * ubound   the upper limit of acceptable trait values                        *
+ * rate     the mutation rate of the dna                                      *
  *                                                                            *
- * RETURNS: 
+ * RETURNS: DNA_NIL_DNA if dna in NULL                                        *
+ *          DNA_NIL_LBOUND if lbound is NULL                                  *
+ *          DNA_NIL_UBOUND if ubound is NULL                                  *
+ *          DNA_NIL_RATE if rate is NULL                                      *
+ *          DNA_NIL if no error                                               *
  *                                                                            *
  ******************************************************************************/
 errDNA_t getMutation(dna_t *dna, int *lbound, int *ubound, double *rate);
 
 /******************************************************************************
  *                                                                            *
- * PURPOSE: 
- *                                                                            *
- * ARGUMENT    DESCRIPTION                                                    *
- * --------    -----------                                                    *
- * dna
- * elitism
- * percentile
- *                                                                            *
- * RETURNS: 
- *                                                                            *
- ******************************************************************************/
-errDNA_t setElitism(dna_t *dna, int elitism, double percentile);
-
-/******************************************************************************
- *                                                                            *
- * PURPOSE: 
+ * PURPOSE: Perform elitism or not (0: no, 1: yes). If yes, then determine    *
+ *          how much elitism to perform.                                      *
  *                                                                            *
  * ARGUMENT DESCRIPTION                                                       *
  * -------- -----------                                                       *
- * dna
- * elitism
- * percentile
+ * dna      the dna to use                                                    *
+ * elitism  to turn elitism on/off                                            *
+ * percent  the percentage to retain per generation if elitism is on          *
  *                                                                            *
- * RETURNS: 
+ * RETURNS: DNA_NIL_DNA if dna in NULL                                        *
+ *          DNA_INVALID_ELITISM if elitism is not 0 or 1                      *
+ *          DNA_INVALID_PERCENT if percent is not between 0.0-1.0             *
+ *          DNA_NIL if no error                                               *
  *                                                                            *
  ******************************************************************************/
-errDNA_t getElitism(dna_t *dna, int *elitism, double *percentile);
+errDNA_t setElitism(dna_t *dna, int elitism, double percent);
 
 /******************************************************************************
  *                                                                            *
- * PURPOSE: 
+ * PURPOSE: Gather if elitism is bening performed during crossover or not,    *
+ *          and if so, the amount being keep around per generation.           *
  *                                                                            *
  * ARGUMENT DESCRIPTION                                                       *
  * -------- -----------                                                       *
- * dna
- * name
- * strand
- * traits
+ * dna      the dna to use                                                    *
+ * elitism  if elitism is turned on/off                                       *
+ * percent  the generational retnetion rate if elitism is turned on           *
  *                                                                            *
- * RETURNS: 
+ * RETURNS: DNA_NIL_DNA if dna in NULL                                        *
+ *          DNA_NIL_ELITISM if elitism is NULL                                *
+ *          DNA_NIL_PERCENT if percent is NULL                                *
+ *          DNA_NIL if no error                                               *
+ *                                                                            *
+ ******************************************************************************/
+errDNA_t getElitism(dna_t *dna, int *elitism, double *percent);
+
+/******************************************************************************
+ *                                                                            *
+ * PURPOSE: Set a strand of dna to be tracked using the library with a given  *
+ *          identifier.                                                       *
+ *                                                                            *
+ * ARGUMENT DESCRIPTION                                                       *
+ * -------- -----------                                                       *
+ * dna      the dna to use                                                    *
+ * names    the identifier for stand                                          *
+ * strand   the stand                                                         *
+ * traits   the number of traits in the strand                                *
+ *                                                                            *
+ * RETURNS: DNA_NIL_DNA if dna in NULL                                        *
+ *          DNA_NIL_NAME if name is NULL                                      *
+ *          DNA_NIL_STRAND if strand is NULL                                  *
+ *          DNA_INVALID_TRAITS if traits < 1                                  *
+ *          DNA_NIL if no error                                               *
  *                                                                            *
  ******************************************************************************/
 errDNA_t setStrand(dna_t *dna, char *name, int *strand, int traits);
 
 /******************************************************************************
  *                                                                            *
- * PURPOSE: 
+ * PURPOSE: To create a copy of a specific strand of dna, the user must free. *
  *                                                                            *
  * ARGUMENT DESCRIPTION                                                       *
  * -------- -----------                                                       *
- * dna
- * name
- * strand
- * traits
+ * dna      the dna to use                                                    *
+ * names    the identifier for stand to get                                   *
+ * strand   the stand gotten                                                  *
+ * traits   the number of traits in the strand                                *
  *                                                                            *
- * RETURNS: 
+ * RETURNS: DNA_NIL_DNA if dna in NULL                                        *
+ *          DNA_NIL_NAME if names is NULL                                     *
+ *          DNA_NIL_STRAND if strand is NULL                                  *
+ *          DNA_NIL_TRAITS if traits is NULL                                  *
+ *          DNA_NIL if no error                                               *
  *                                                                            *
  ******************************************************************************/
 errDNA_t getStrand(dna_t *dna, char *name, int **strand, int *traits);
 
 /******************************************************************************
  *                                                                            *
- * PURPOSE: 
+ * PURPOSE: To allocate a new array of strings containing the identifiers of  *
+ *          each strand contained in the dna.                                 *
  *                                                                            *
  * ARGUMENT DESCRIPTION                                                       *
  * -------- -----------                                                       *
- * dna
- * names
- * size
+ * dna      the dna to use                                                    *
+ * names    an array of identifiers to corresponding strands                  *
+ * size     the size of the array                                             *
  *                                                                            *
- * RETURNS: 
+ * RETURNS: DNA_NIL_DNA if dna in NULL                                        *
+ *          DNA_NIL_NAMES if names is NULL                                    *
+ *          DNA_NIL_SIZE if size is NULL                                      *
+ *          DNA_NIL if no error                                               *
  *                                                                            *
  ******************************************************************************/
 errDNA_t getNames(dna_t *dna, char ***names, int *size);
 
 /******************************************************************************
  *                                                                            *
- * PURPOSE:  so you can do get/set individually
+ * PURPOSE: Create a new strand given to parent ids, and store the resulting  *
+ *          strand at child.                                                  *
  *                                                                            *
  * ARGUMENT DESCRIPTION                                                       *
  * -------- -----------                                                       *
- * dna
- * father
- * mother
- * child
+ * dna      the dna to use                                                    *
+ * father   the id of the first parent to use                                 *
+ * mother   the id of the second parent to use                                *
+ * child    the resulting child                                               *
+ * traits   the number of items in child                                      *
  *                                                                            *
- * RETURNS: 
+ * RETURNS: DNA_NIL_DNA if dna in NULL                                        *
+ *          DNA_NIL_FATHER is father is NULL                                  *
+ *          DNA_NIL_MOTHER if mother is NULL                                  *
+ *          DNA_NIL_CHILD if child is NULL                                    *
+ *          DNA_NIL if no error                                               *
  *                                                                            *
  ******************************************************************************/
-errDNA_t crossover(dna_t *dna, char *father, char *mother, int **child);
+errDNA_t crossover(dna_t *dna, char *father, char *mother, int **child, int *traits);
 
 /******************************************************************************
  *                                                                            *
- * PURPOSE: 
+ * PURPOSE: To mutate a specific strand given an identifier.                  *
  *                                                                            *
  * ARGUMENT DESCRIPTION                                                       *
  * -------- -----------                                                       *
- * dna
- * who
+ * dna      the dna to use                                                    *
+ * who      the id of the strand to mutate                                    *
  *                                                                            *
- * RETURNS: 
+ * RETURNS: DNA_NIL_DNA if dna in NULL                                        *
+ *          DNA_NIL_WHO if who is NULL                                        *
+ *          DNA_NIL if no error                                               *
  *                                                                            *
  ******************************************************************************/
 errDNA_t mutate(dna_t *dna, char *who);
 
 /******************************************************************************
  *                                                                            *
- * PURPOSE: automatically does crossover/mutation with fitness/elitism and    *
- *          replaces current generation                                       *
+ * PURPOSE: Automatically does crossover/mutation with fitness/elitism and    *
+ *          replaces current generation.                                      *
  *                                                                            *
  * ARGUMENT DESCRIPTION                                                       *
  * -------- -----------                                                       *
- * dna
+ * dna      the dna to use                                                    *
  *                                                                            *
- * RETURNS: 
+ * RETURNS: DNA_NIL_DNA if dna in NULL                                        *
+ *          DNA_NIL if no error                                               *
  *                                                                            *
  ******************************************************************************/
 errDNA_t nextGeneration(dna_t *dna);
