@@ -2,7 +2,7 @@
  * FILE:    dna.c                                                             *
  * AUTHOR:  Ryan Rozanski                                                     *
  * CREATED: 5/4/17                                                            *
- * EDITED:  5/21/17                                                           *
+ * EDITED:  5/22/17                                                           *
  * INFO:    Implementation of the interface located in dna.h.                 *
  *                                                                            *
  ******************************************************************************/
@@ -16,6 +16,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+
 #include <stdio.h>
 
 /******************************************************************************
@@ -24,16 +25,16 @@
  *                                                                            *
  ******************************************************************************/
 typedef struct dna {
-  char **ids;        /* array of AI identifiers */
-  int **strands;     /* strands of DNA */
-  int chromosomes;   /* lenght of strands and AIs */
-  int traits;        /* # traits per chromosome in strands */
-  int lbound;        /* lower bound on trait value */
-  int ubound;        /* upper bound on trait value */
+  char **ids;        /* array of chromosome identifiers */
+  int **strands;     /* matrix of chromosomes */
+  int chromosomes;   /* rows in matrix */
+  int traits;        /* columns in matrix */
+  int lbound;        /* lower bound on matrix values */
+  int ubound;        /* upper bound on matrix values */
   double rate;       /* mutation rate 0.00 - 1.00 */
-  int elitism;       /* have or not during ne wgeneration creation */
+  int elitism;       /* enable elitism or not */
   double percent;    /* size of elitist group 0.00 - 1.00 */
-  int (*fitness)(char *who, int *chromosome, int traits);
+  int (*fitness)(char *id, int *strand, int traits);
 } dna_t;
 
 /******************************************************************************
@@ -45,13 +46,11 @@ int myStrCmp(const void *str1, const void *str2) {
   return strcmp((const char *)str1, (const char *)str2);
 }
 
-int find(dna_t *dna, char *who) {
+int find(dna_t *dna, char *id) {
   int cmp, loc, hi, lo;
   for(lo = 0, hi = dna->traits; hi > lo;) {
     loc = lo + ((hi - lo) / 2);
-    if(!(cmp = myStrCmp(who, dna->ids[loc]))) {
-      return loc;
-    }
+    if(!(cmp = myStrCmp(id, dna->ids[loc]))) { return loc; }
     else if(cmp < 0) { hi = loc; }
     else { lo = loc; } // cmp > 0
   }
@@ -74,19 +73,19 @@ const char *strErrDNA(errDNA_t errDNA) {
     case DNA_INVALID_ELITISM: return "elitism must be 0 or 1";
     case DNA_INVALID_RATE: return "rate must be between 0.00 and 1.00";
     case DNA_INVALID_BOUNDS: return "lower bound must be < upper bound";
+    case DNA_INVALID_ID: return "id does not match any know chromosome";
     // nil arg errors
     case DNA_NIL_ELITISM: return "nil elitism";
     case DNA_NIL_PERCENT: return "nil percent";
     case DNA_NIL_TRAITS: return "nil traits";
     case DNA_NIL_SIZE: return "nil size";
-    case DNA_NIL_WHO: return "nil strand identifier";
-    case DNA_NIL_NAME: return "nil name";
+    case DNA_NIL_ID: return "nil id";
     case DNA_NIL_FITNESS_INT: return "nil fitness";
     case DNA_NIL_DNA: return "nil dna";
     case DNA_NIL_FATHER: return "nil father";
     case DNA_NIL_MOTHER: return "nil mother";
     case DNA_NIL_CHILD: return "nil child";
-    case DNA_NIL_NAMES: return "nil names";
+    case DNA_NIL_IDS: return "nil ids";
     case DNA_NIL_STRAND: return "nil strand";
     case DNA_NIL_FITNESS: return "nil fitness function";
     case DNA_NIL_LBOUND: return "nil lower bound";
@@ -147,7 +146,7 @@ errDNA_t freeDNA(dna_t *dna) {
   return DNA_NIL;
 }
 
-errDNA_t setFitness(dna_t *dna, int (*fitness)(char *who, int *strand, int traits)) {
+errDNA_t setFitness(dna_t *dna, int (*fitness)(char *id, int *strand, int traits)) {
   if(!dna) { return DNA_NIL_DNA; }
   if(!fitness) { return DNA_NIL_FITNESS; }
 
@@ -156,17 +155,22 @@ errDNA_t setFitness(dna_t *dna, int (*fitness)(char *who, int *strand, int trait
   return DNA_NIL;
 }
 
-errDNA_t getFitness(dna_t *dna, char *who, int *fitness) {  // TODO
+errDNA_t getFitness(dna_t *dna, char *id, int *fitness) {
   if(!dna) { return DNA_NIL_DNA; }
-  if(!who) { return DNA_NIL_NAME; }
+  if(!id) { return DNA_NIL_ID; }
   if(!fitness) { return DNA_NIL_FITNESS_INT; }
 
-  int *strand = dna->strands[find(dna, who)]; // FIXME: STRAND_NOT_FOUND error possible!!!
-  // copy strand
-  // copy who
-  *fitness = (dna->fitness)(who, strand, dna->traits);
-  // free strand
-  // free who
+  int loc = find(dna, id);
+  if(loc == -1) { return DNA_INVALID_ID; }
+
+  int tmpStrand[dna->traits];
+  int i;
+  for(i = 0; i < dna->traits; i++) { tmpStrand[i] = dna->strands[loc][i]; }
+
+  char tmpID[strlen(id)+1];
+  strncpy(tmpID, id, strlen(id)+1);
+
+  *fitness = (dna->fitness)(tmpID, tmpStrand, dna->traits);
 
   return DNA_NIL;
 }
@@ -218,38 +222,41 @@ errDNA_t getElitism(dna_t *dna, int *elitism, double *percent) {
   return DNA_NIL;
 }
 
-errDNA_t setStrand(dna_t *dna, char *who, int *strand, int traits) {
+errDNA_t setStrand(dna_t *dna, char *id, int *strand, int traits) {
   if(!dna) { return DNA_NIL_DNA; }
-  if(!who) { return DNA_NIL_NAME; }
+  if(!id) { return DNA_NIL_ID; }
   if(!strand) { return DNA_NIL_STRAND; }
   if(traits != dna->traits) { return DNA_INVALID_TRAITS; }
 
-  int id = find(dna, who);  // FIXME: STRAND_NOT_FOUND error possible!!!
-  // FIXME: free if already exists (reset)
-  for(; traits; traits--) { (dna->strands)[id][traits-1] = strand[traits-1]; }
+  int loc = find(dna, id);
+  if(loc == -1) { return DNA_INVALID_ID; }
+
+  for(; traits; traits--) { (dna->strands)[loc][traits-1] = strand[traits-1]; }
 
   return DNA_NIL;
 }
 
-errDNA_t getStrand(dna_t *dna, char *who, int **strand, int *traits) {
+errDNA_t getStrand(dna_t *dna, char *id, int **strand, int *traits) {
   if(!dna) { return DNA_NIL_DNA; }
-  if(!who) { return DNA_NIL_NAME; }
+  if(!id) { return DNA_NIL_ID; }
   if(!strand) { return DNA_NIL_STRAND; }
   if(!traits) { return DNA_NIL_TRAITS; }
+
+  int loc = find(dna, id);
+  if(loc == -1) { return DNA_INVALID_ID; }
 
   *traits = dna->traits;
   if(!(*strand = malloc(sizeof(int) * dna->traits))) { return DNA_OUT_OF_MEMORY; }
 
-  int id = find(dna, who);  // FIXME: STRAND_NOT_FOUND error possible!!!
   int i;
-  for(i = 0; i < dna->traits; i++) { (*strand)[i] = (dna->strands)[id][i]; }
+  for(i = 0; i < dna->traits; i++) { (*strand)[i] = (dna->strands)[loc][i]; }
 
   return DNA_NIL;
 }
 
 errDNA_t getNames(dna_t *dna, char ***ids, int *size) {
   if(!dna) { return DNA_NIL_DNA; }
-  if(!ids) { return DNA_NIL_NAMES; }
+  if(!ids) { return DNA_NIL_IDS; }
   if(!size) { return DNA_NIL_SIZE; }
 
   if(!(*ids = malloc(sizeof(char *) * dna->chromosomes))) { return DNA_OUT_OF_MEMORY; }
@@ -257,7 +264,9 @@ errDNA_t getNames(dna_t *dna, char ***ids, int *size) {
   int id;
   for(id = 0; id < dna->chromosomes; id++) {
     if(!((*ids)[id] = calloc(strlen(dna->ids[id])+1, sizeof(char)))) {
-      freeDNA(dna);
+      for(; id; id--) { free((*ids)[id-1]); }
+      free(*ids);
+      *ids = NULL;
       return DNA_OUT_OF_MEMORY;
     }
     strncpy((*ids)[id], dna->ids[id], strlen(dna->ids[id]));
@@ -274,29 +283,32 @@ errDNA_t crossover(dna_t *dna, char *father, char *mother, int **child, int *tra
   if(!mother) { return DNA_NIL_MOTHER; }
   if(!child) { return DNA_NIL_CHILD; }
 
+  int id1 = find(dna, father);
+  int id2 = find(dna, mother);
+  if(id1 == -1 || id2 == -1) { return DNA_INVALID_ID; }
+
   if(!(*child = malloc(sizeof(int) * dna->traits))) { return DNA_OUT_OF_MEMORY; }
-  int id1 = find(dna, father);  // FIXME: STRAND_NOT_FOUND error possible!!!
-  int id2 = find(dna, mother);  // FIXME: STRAND_NOT_FOUND error possible!!!
 
   int i;
-  for(i = 0; i < dna->traits; i++) {
-    (*child)[i] = (rand() % 2) ? dna->strands[id1][i] : dna->strands[id2][i];
-  }
+  for(i = 0; i < dna->traits; i++) { (*child)[i] = dna->strands[(rand() % 2) ? id1 : id2][i]; }
 
   *traits = dna->traits;
 
   return DNA_NIL;
 }
 
-errDNA_t mutate(dna_t *dna, char *who) {
+errDNA_t mutate(dna_t *dna, char *id) {
   if(!dna) { return DNA_NIL_DNA; }
-  if(!who) { return DNA_NIL_WHO; }
+  if(!id) { return DNA_NIL_ID; }
 
-  int i, mutation, id;
-  for(i = 0, id = find(dna, who); i < dna->traits; i++) {  // FIXME: STRAND_NOT_FOUND error possible!!!
+  int loc = find(dna, id);
+  if(loc == -1) { return DNA_INVALID_ID; }
+
+  int i, mutation;
+  for(i = 0; i < dna->traits; i++) {
     if((rand() % 100) < (dna->rate * 100)) {
       mutation = (rand() % (dna->ubound + 1 - dna->lbound)) + dna->lbound;
-      dna->strands[id][i] = mutation;
+      dna->strands[loc][i] = mutation;
     }
   }
 
@@ -305,10 +317,7 @@ errDNA_t mutate(dna_t *dna, char *who) {
 
 
 int myGenCmp(const void *map1, const void *map2) {
-  //int id1 = ((int *)map1)[0];
   int fit1 = ((int *)map1)[1];
-
-  //int id2 = ((int *)map2)[0];
   int fit2 = ((int *)map2)[1];
   
   if(fit1 == fit2) { return 0; }
@@ -316,39 +325,51 @@ int myGenCmp(const void *map1, const void *map2) {
   else { return 1; } // fit1 > fit2
 }
 
-errDNA_t nextGeneration(dna_t *dna) { // TODO
+errDNA_t nextGeneration(dna_t *dna) {
   if(!dna) { return DNA_NIL_DNA; }
 
   char **ids;
-  int *child;
   int i, j, k;
+
   errDNA_t errDNA;
+  if((errDNA = getNames(dna, &ids, &i)) != DNA_NIL) { return errDNA; }
 
-  errDNA = getNames(dna, &ids, &i);
-
-  // mapping => id loc:fitness
-  int fitness[i][2];
+  int fitness[i][2]; // mapping => id => { loc, fitness }
   for(j = 0; j < i; j++) {
     fitness[j][0] = j;
     if((errDNA = getFitness(dna, ids[j], &fitness[j][1])) != DNA_NIL) {
-      // FIXME: cleanup
+      for(j = 0; j < i; j++) { free(ids[j]); }
+      free(ids);
       return errDNA;  
     }
   }
 
   qsort(fitness, i, sizeof(int)*2, myGenCmp);
-  //int keep = (int)(dna->chromosomes * dna->rate);
 
-  // **elitism**
-  for(j = 0; j < (i/2); j++) { // FIXME: change conditionto loop until gened all i could?
-    if((errDNA = crossover(dna, ids[j], ids[i-j-1], &child, &k)) != DNA_NIL) { return errDNA; }
-
-    // FIXME: need to keep top dna->percent
-    if((errDNA = setStrand(dna, ids[fitness[j][0]], child, k)) != DNA_NIL) { return errDNA; }
-    if((errDNA = mutate(dna, ids[fitness[j][0]])) != DNA_NIL) { return errDNA; }
+  int *child, mother, father;
+  int keep = (int)(dna->chromosomes * dna->rate); // FIXME: get rid of struct '->' refs
+  for(j = dna->chromosomes - keep; j ; j--) {
+    mother = rand() % dna->chromosomes;
+    father = rand() % dna->chromosomes;
+    if((errDNA = crossover(dna, ids[mother], ids[father], &child, &k)) != DNA_NIL) {
+      for(j = 0; j < i; j++) { free(ids[j]); }
+      free(ids);
+      return errDNA;
+    }
+    if((errDNA = setStrand(dna, ids[fitness[j-1][0]], child, k)) != DNA_NIL) {
+      for(j = 0; j < i; j++) { free(ids[j]); }
+      free(ids);
+      return errDNA;
+    }
+    if((errDNA = mutate(dna, ids[fitness[j-1][0]])) != DNA_NIL) {
+      for(j = 0; j < i; j++) { free(ids[j]); }
+      free(ids);
+      return errDNA;
+    }
   }
 
-  // free ids
+  for(j = 0; j < i; j++) { free(ids[j]); }
+  free(ids);
 
   return DNA_NIL;
 }

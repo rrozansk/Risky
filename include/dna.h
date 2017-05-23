@@ -2,14 +2,16 @@
  * FILE:    dna.h                                                             *
  * AUTHOR:  Ryan Rozanski                                                     *
  * CREATED: 5/4/17                                                            *
- * EDITED:  5/21/17                                                           *
+ * EDITED:  5/22/17                                                           *
  * INFO:    A library to make working with genetic algorithms easier through  *
- *          the use of getters, setters, and convience functions which perform*
- *          crossover with mutation and elitism. The library exposes all this *
- *          in addition to the convience functions to allow users the ability *
- *          to create custom implementations if so needed or desired. Please  *
- *          note that the c random number must be seeded (srand(time(NULL)))  *
- *          or mutation will not work. Error handling is also provided.       *
+ *          the use of getters and setters to easily track state, as well as  *
+ *          some convience functions which perform various tasks such as      *
+ *          crossover, mutation, and new generation creation using elitism.   *
+ *          The library exposes all this to allow users the ability to create *
+ *          custom implementations if new geneartion creation if so needed or *
+ *          desired. Please also note that the c random number must be seeded *
+ *          (ex. srand(time(NULL))) or mutation will not work. Error handling *
+ *          is also provided.                                                 *
  *                                                                            *
  ******************************************************************************/
 
@@ -24,12 +26,12 @@
 typedef struct dna dna_t; /* A representation of AIs */
 
 typedef enum errDNA { /* All possible errors produced by this library. */
-  DNA_NIL, DNA_NIL_DNA, DNA_NIL_FATHER, DNA_NIL_SIZE, DNA_NIL_WHO, DNA_NIL_RATE,
-  DNA_INVALID_ELITISM, DNA_INVALID_RATE, DNA_NIL_TRAITS, DNA_INVALID_PERCENT,
-  DNA_NIL_MOTHER, DNA_NIL_LBOUND, DNA_NIL_UBOUND, DNA_NIL_NAME, DNA_NIL_FITNESS,
+  DNA_NIL, DNA_NIL_DNA, DNA_NIL_FATHER, DNA_NIL_SIZE, DNA_NIL_RATE, DNA_NIL_IDS,
   DNA_NIL_ELITISM, DNA_NIL_STRAND, DNA_NIL_FITNESS_INT, DNA_INVALID_CHROMOSOMES,
-  DNA_INVALID_TRAITS, DNA_INVALID_BOUNDS, DNA_NIL_PERCENT, DNA_NIL_NAMES,
-  DNA_NIL_CHILD, DNA_OUT_OF_MEMORY,
+  DNA_INVALID_ELITISM, DNA_INVALID_RATE, DNA_NIL_TRAITS, DNA_INVALID_PERCENT,
+  DNA_NIL_MOTHER, DNA_NIL_LBOUND, DNA_NIL_UBOUND, DNA_NIL_ID, DNA_NIL_FITNESS,
+  DNA_INVALID_TRAITS, DNA_INVALID_BOUNDS, DNA_NIL_PERCENT, DNA_NIL_CHILD,
+  DNA_OUT_OF_MEMORY, DNA_INVALID_ID,
 } errDNA_t;
 
 /******************************************************************************
@@ -81,8 +83,7 @@ errDNA_t makeDNA(dna_t **dna, char **ids, int strands, int traits);
  * -------- -----------                                                       *
  * dna      the dna to use                                                    *
  *                                                                            *
- * RETURNS: DNA_NIL_DNA if dna in NULL                                        *
- *          DNA_NIL if no error                                               *
+ * RETURNS: DNA_NIL if no error                                               *
  *                                                                            *
  ******************************************************************************/
 errDNA_t freeDNA(dna_t *dna);
@@ -102,7 +103,7 @@ errDNA_t freeDNA(dna_t *dna);
  *          DNA_NIL if no error                                               *
  *                                                                            *
  ******************************************************************************/
-errDNA_t setFitness(dna_t *dna, int (*fitness)(char *who, int *strand, int traits));
+errDNA_t setFitness(dna_t *dna, int (*fitness)(char *id, int *strand, int traits));
 
 /******************************************************************************
  *                                                                            *
@@ -111,16 +112,17 @@ errDNA_t setFitness(dna_t *dna, int (*fitness)(char *who, int *strand, int trait
  * ARGUMENT DESCRIPTION                                                       *
  * -------- -----------                                                       *
  * dna      the dna to use                                                    *
- * who      the id of the strand to get                                       *
+ * id       the id of the strand to get                                       *
  * fitness  the fitness of the strand in question                             *
  *                                                                            *
  * RETURNS: DNA_NIL_DNA if dna in NULL                                        *
- *          DNA_NIL_NAME if who is NULL                                       *
+ *          DNA_NIL_ID if id is NULL                                          *
  *          DNA_NIL_FITNESS_INT if fitness is NULL                            *
+ *          DNA_INVALID_ID if id does not match any tracked chromosome id     *
  *          DNA_NIL if no error                                               *
  *                                                                            *
  ******************************************************************************/
-errDNA_t getFitness(dna_t *dna, char *who, int *fitness);
+errDNA_t getFitness(dna_t *dna, char *id, int *fitness);
 
 /******************************************************************************
  *                                                                            *
@@ -208,18 +210,19 @@ errDNA_t getElitism(dna_t *dna, int *elitism, double *percent);
  * ARGUMENT DESCRIPTION                                                       *
  * -------- -----------                                                       *
  * dna      the dna to use                                                    *
- * names    the identifier for stand                                          *
+ * id       the identifier for stand                                          *
  * strand   the stand                                                         *
  * traits   the number of traits in the strand                                *
  *                                                                            *
  * RETURNS: DNA_NIL_DNA if dna in NULL                                        *
- *          DNA_NIL_NAME if name is NULL                                      *
+ *          DNA_NIL_ID if id is NULL                                          *
  *          DNA_NIL_STRAND if strand is NULL                                  *
  *          DNA_INVALID_TRAITS if traits < 1                                  *
+ *          DNA_INVALID_ID if id does not match any tracked chromosome id     *
  *          DNA_NIL if no error                                               *
  *                                                                            *
  ******************************************************************************/
-errDNA_t setStrand(dna_t *dna, char *name, int *strand, int traits);
+errDNA_t setStrand(dna_t *dna, char *id, int *strand, int traits);
 
 /******************************************************************************
  *                                                                            *
@@ -228,18 +231,20 @@ errDNA_t setStrand(dna_t *dna, char *name, int *strand, int traits);
  * ARGUMENT DESCRIPTION                                                       *
  * -------- -----------                                                       *
  * dna      the dna to use                                                    *
- * names    the identifier for stand to get                                   *
+ * id       the identifier for stand to get                                   *
  * strand   the stand gotten                                                  *
  * traits   the number of traits in the strand                                *
  *                                                                            *
  * RETURNS: DNA_NIL_DNA if dna in NULL                                        *
- *          DNA_NIL_NAME if names is NULL                                     *
+ *          DNA_NIL_ID if id is NULL                                          *
  *          DNA_NIL_STRAND if strand is NULL                                  *
  *          DNA_NIL_TRAITS if traits is NULL                                  *
+ *          DNA_INVALID_ID if id does not match any tracked chromosome id     *
+ *          DNA_OUT_OF_MEMORY if allocation of strand fails                   *
  *          DNA_NIL if no error                                               *
  *                                                                            *
  ******************************************************************************/
-errDNA_t getStrand(dna_t *dna, char *name, int **strand, int *traits);
+errDNA_t getStrand(dna_t *dna, char *id, int **strand, int *traits);
 
 /******************************************************************************
  *                                                                            *
@@ -249,16 +254,17 @@ errDNA_t getStrand(dna_t *dna, char *name, int **strand, int *traits);
  * ARGUMENT DESCRIPTION                                                       *
  * -------- -----------                                                       *
  * dna      the dna to use                                                    *
- * names    an array of identifiers to corresponding strands                  *
+ * ids      an array of identifiers to corresponding strands                  *
  * size     the size of the array                                             *
  *                                                                            *
  * RETURNS: DNA_NIL_DNA if dna in NULL                                        *
- *          DNA_NIL_NAMES if names is NULL                                    *
+ *          DNA_NIL_IDS if ids is NULL                                        *
  *          DNA_NIL_SIZE if size is NULL                                      *
+ *          DNA_OUT_OF_MEMORY if allocation of ids fails                      *
  *          DNA_NIL if no error                                               *
  *                                                                            *
  ******************************************************************************/
-errDNA_t getNames(dna_t *dna, char ***names, int *size);
+errDNA_t getNames(dna_t *dna, char ***ids, int *size);
 
 /******************************************************************************
  *                                                                            *
@@ -277,6 +283,8 @@ errDNA_t getNames(dna_t *dna, char ***names, int *size);
  *          DNA_NIL_FATHER is father is NULL                                  *
  *          DNA_NIL_MOTHER if mother is NULL                                  *
  *          DNA_NIL_CHILD if child is NULL                                    *
+ *          DNA_INVALID_ID if mother or father does not match any tracked id  *
+ *          DNA_OUT_OF_MEMORY if allocation of child fails                    *
  *          DNA_NIL if no error                                               *
  *                                                                            *
  ******************************************************************************/
@@ -289,14 +297,15 @@ errDNA_t crossover(dna_t *dna, char *father, char *mother, int **child, int *tra
  * ARGUMENT DESCRIPTION                                                       *
  * -------- -----------                                                       *
  * dna      the dna to use                                                    *
- * who      the id of the strand to mutate                                    *
+ * id       the id of the strand to mutate                                    *
  *                                                                            *
  * RETURNS: DNA_NIL_DNA if dna in NULL                                        *
- *          DNA_NIL_WHO if who is NULL                                        *
+ *          DNA_NIL_ID if id is NULL                                          *
+ *          DNA_INVALID_ID if id does not match any tracked chromosome id     *
  *          DNA_NIL if no error                                               *
  *                                                                            *
  ******************************************************************************/
-errDNA_t mutate(dna_t *dna, char *who);
+errDNA_t mutate(dna_t *dna, char *id);
 
 /******************************************************************************
  *                                                                            *
@@ -309,6 +318,8 @@ errDNA_t mutate(dna_t *dna, char *who);
  *                                                                            *
  * RETURNS: DNA_NIL_DNA if dna in NULL                                        *
  *          DNA_NIL if no error                                               *
+ *          NOTE: any error from functions: crossover, mutate, getNames,      *
+ *          getFitness, and setStrand is also possible                        *
  *                                                                            *
  ******************************************************************************/
 errDNA_t nextGeneration(dna_t *dna);
