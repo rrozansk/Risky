@@ -259,7 +259,7 @@ void setupDNAfromINI(ini_t *ini, dna_t **dna) {
     exit(EXIT_FAILURE);
   }
 
-  if((errDNA = setElitism(*dna, 1, 0.50)) != DNA_NIL) {
+  if((errDNA = setElitism(*dna, 1, 0.20)) != DNA_NIL) {
   //if((errDNA = setElitism(*dna, elitism, percentile)) != DNA_NIL) {
     fprintf(stderr, "error! failure to get chromosome\nirritant: %s\nexiting...\n", strErrDNA(errDNA));
     //freeStrArr(names, cps);
@@ -495,6 +495,8 @@ void logDNA(dna_t *dna, log_t *logger) { // TODO: err handling, free
   getElitism(dna, &i, &r);
   logIntSetting(logger, "Elitism", i);
   logFloatSetting(logger, "Percentile", r);
+  char tmp[] = "";
+  logEvent(logger, 0, tmp);
 
   getNames(dna, &names, &i);
 
@@ -673,6 +675,8 @@ void risky(risk_t *game, dna_t *dna, int games) {
     //char *player = NULL;
     if(logger) { logHeader(logger, "G A M E P L A Y"); }
     time_t start = time(NULL);
+    char tmp[] = "starting game...\n";
+    logEvent(logger, 1, tmp);
 
     // sleep(1) hack
     //while(difftime(time(NULL), start) < 1.0);
@@ -683,6 +687,8 @@ void risky(risk_t *game, dna_t *dna, int games) {
       //if(!getType(game, dna, player)) { computerTurn(game, dna, player, logger); }
       //else { humanTurn(game, player, logger); }
     //}
+    char tmp2[] = "ending game...\n";
+    logEvent(logger, 1, tmp2);
     int seconds = (int)difftime(time(NULL), start);
 
     if(games) {
@@ -721,6 +727,7 @@ void risky(risk_t *game, dna_t *dna, int games) {
     if(logger) {
       logGameTime(logger, seconds);
       freeLOG(logger);
+      logger = NULL;
     }
   } while(--games > 0);
 }
@@ -728,10 +735,10 @@ void risky(risk_t *game, dna_t *dna, int games) {
 // free all memory we alloc'd, if any, ignoring any errors. This is the reason
 // we have four globals tracking these data structures
 void cleanup() {
-  freeINI(ini);
+  //freeINI(ini);
   freeLOG(logger);
   freeDNA(dna);
-  freeRISK(game);
+  //freeRISK(game);
 }
 
 int main(int argc, char *argv[]) {
@@ -764,7 +771,7 @@ int main(int argc, char *argv[]) {
   }
 */
   srand(time(NULL)); // set random for risk and dna libs
-  risky(game, dna, 10000);
+  risky(game, dna, 1);
   //risky(game, dna, argc);
 /*
   if(argc > 1) {

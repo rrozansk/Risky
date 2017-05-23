@@ -514,13 +514,14 @@ errLOG_t logEvent(log_t *log, int timestamp, char *event) {
 
   char *token = strtok(event, " ");
   for(; token; token = strtok(NULL, " ")) {
-    if(col + strlen(token) > log->columns) {
+    if((col + strlen(token)) > log->columns) {
       fprintf(log->fp, "\n");
       col = 0;
     }
-    col += fprintf(log->fp, "%s\n", token);
+    col += fprintf(log->fp, "%s ", token);
   }
 
+  fprintf(log->fp, "\n");
   fflush(log->fp);
 
   return LOG_NIL;
