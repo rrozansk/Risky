@@ -2,7 +2,7 @@
  * FILE:    logger.h                                                          *
  * AUTHOR:  Ryan Rozanski                                                     *
  * CREATED: 4/30/17                                                           *
- * EDITED:  5/18/17                                                           *
+ * EDITED:  6/1/17                                                            *
  * INFO:    A library to implement simple logging. This includes the ability  *
  *          to log three different styles of headers. The different headers,  *
  *          in decending order of importance, are title, header, and section. *
@@ -30,10 +30,8 @@ typedef enum errLOG {
   LOG_INVALID_ARR_SIZE, LOG_NIL_SECTION, LOG_INVALID_TIMESTAMP, LOG_INVALID_DIR,
   LOG_NIL, LOG_OPEN_FAIL, LOG_CLOSE_FAIL, LOG_DIR_CREATION_FAIL, LOG_NIL_HEADER,
   LOG_NIL_TITLE, LOG_NIL_DIR, LOG_OUT_OF_MEMORY, LOG_NIL_KEY, LOG_INVALID_WIDTH,
-  LOG_INVALID_ROW_SIZE, LOG_INVALID_COL_SIZE, LOG_NIL_STR_MATRIX, LOG_NIL_LOG,
-  LOG_NIL_FLOAT_ARR, LOG_NIL_BOOL_ARR, LOG_NIL_CHAR_ARR, LOG_NIL_INT_MATRIX,
-  LOG_NIL_FLOAT_MATRIX, LOG_NIL_BOOL_MATRIX, LOG_NIL_CHAR_MATRIX, LOG_NIL_NAME,
-  LOG_NIL_STR_ARR, LOG_INVALID_SECONDS, LOG_NIL_INT_ARR, LOG_INVALID_KEY,
+  LOG_INVALID_ROW_SIZE, LOG_INVALID_COL_SIZE, LOG_UNKNOWN_TYPE, LOG_INVALID_KEY,
+  LOG_NIL_MATRIX, LOG_NIL_NAME, LOG_INVALID_SECONDS, LOG_NIL_ARR, LOG_NIL_LOG, 
 } errLOG_t;
 
 /******************************************************************************
@@ -98,196 +96,6 @@ errLOG_t freeLOG(log_t *log);
 
 /******************************************************************************
  *                                                                            *
- * PURPOSE: To log an integer array.                                          *
- *                                                                            *
- * ARGUMENT DESCRIPTION                                                       *
- * -------- -----------                                                       *
- * log      the log to record the array in                                    *
- * arr      the array to log                                                  *
- * size     the size of the array                                             *
- *                                                                            *
- * RETURNS: LOG_NIL_LOG if log is NULL                                        *
- *          LOG_NIL_INT_ARR if arr is NULL                                    *
- *          LOG_INVALID_ARR_SIZE if size < 1                                  *
- *          LOG_NIL if no error                                               *
- *                                                                            *
- ******************************************************************************/
-errLOG_t logIntArr(log_t *log, int *arr, int size);
-
-/******************************************************************************
- *                                                                            *
- * PURPOSE: To log an integer matrix.                                         *
- *                                                                            *
- * ARGUMENT DESCRIPTION                                                       *
- * -------- -----------                                                       *
- * log      the log to record the matrix in                                   *
- * matrix   the matrix to log                                                 *
- * r        the number of the rows in the matrix                              *
- * c        the number of the colums in the matrix                            *
- *                                                                            *
- * RETURNS: LOG_NIL_LOG if log is NULL                                        *
- *          LOG_NIL_INT_MATRIX if matrix is NULL                              *
- *          LOG_INVALID_ROW_SIZE if r < 1                                     *
- *          LOG_INVALID_COL_SIZE if c < 1                                     *
- *          LOG_NIL if no error                                               *
- *                                                                            *
- ******************************************************************************/
-errLOG_t logIntMatrix(log_t *log, int **matrix, int r, int c);
-
-/******************************************************************************
- *                                                                            *
- * PURPOSE: To log an array of floats.                                        *
- *                                                                            *
- * ARGUMENT DESCRIPTION                                                       *
- * -------- -----------                                                       *
- * log      the log to record the array in                                    *
- * arr      the array to log                                                  *
- * size     the size of the array                                             *
- *                                                                            *
- * RETURNS: LOG_NIL_LOG if log is NULL                                        *
- *          LOG_NIL_FLOAT_ARR if arr is NULL                                  *
- *          LOG_INVALID_ARR_SIZE if size < 1                                  *
- *          LOG_NIL if no error                                               *
- *                                                                            *
- ******************************************************************************/
-errLOG_t logFloatArr(log_t *log, double *arr, int size);
-
-/******************************************************************************
- *                                                                            *
- * PURPOSE: To log a matrix of floats.                                        *
- *                                                                            *
- * ARGUMENT DESCRIPTION                                                       *
- * -------- -----------                                                       *
- * log      the log to record the matrix in                                   *
- * matrix   the matrix to log                                                 *
- * r        the number of the rows in the matrix                              *
- * c        the number of the colums in the matrix                            *
- *                                                                            *
- * RETURNS: LOG_NIL_LOG if log is NULL                                        *
- *          LOG_NIL_FLOAT_MATRIX if matrix is NULL                            *
- *          LOG_INVALID_ROW_SIZE if r < 1                                     *
- *          LOG_INVALID_COL_SIZE if c < 1                                     *
- *          LOG_NIL if no error                                               *
- *                                                                            *
- ******************************************************************************/
-errLOG_t logFloatMatrix(log_t *log, double **matrix, int r, int c);
-
-/******************************************************************************
- *                                                                            *
- * PURPOSE: To log an array of bools, encoded as integers. 0: false, 1: true  *
- *                                                                            *
- * ARGUMENT DESCRIPTION                                                       *
- * -------- -----------                                                       *
- * log      the log to record the array in                                    *
- * arr      the array to log                                                  *
- * size     the size of the array                                             *
- *                                                                            *
- * RETURNS: LOG_NIL_LOG if log is NULL                                        *
- *          LOG_NIL_BOOL_ARR if arr is NULL                                   *
- *          LOG_INVALID_ARR_SIZE if size < 1                                  *
- *          LOG_NIL if no error                                               *
- *                                                                            *
- ******************************************************************************/
-errLOG_t logBoolArr(log_t *log, int *arr, int size);
-
-/******************************************************************************
- *                                                                            *
- * PURPOSE: To log a matrixof bools, encoded as integers. 0: false, 1: true   *
- *                                                                            *
- * ARGUMENT DESCRIPTION                                                       *
- * -------- -----------                                                       *
- * log      the log to record the matrix in                                   *
- * matrix   the matrix to log                                                 *
- * r        the number of the rows in the matrix                              *
- * c        the number of the colums in the matrix                            *
- *                                                                            *
- * RETURNS: LOG_NIL_LOG if log is NULL                                        *
- *          LOG_NIL_BOOL_MATRIX if matrix is NULL                             *
- *          LOG_INVALID_ROW_SIZE if r < 1                                     *
- *          LOG_INVALID_COL_SIZE if c < 1                                     *
- *          LOG_NIL if no error                                               *
- *                                                                            *
- ******************************************************************************/
-errLOG_t logBoolMatrix(log_t *log, int **matrix, int r, int c);
-
-/******************************************************************************
- *                                                                            *
- * PURPOSE: To log an array of characters.                                    *
- *                                                                            *
- * ARGUMENT DESCRIPTION                                                       *
- * -------- -----------                                                       *
- * log      the log to record the array in                                    *
- * arr      the array to log                                                  *
- * size     the size of the array                                             *
- *                                                                            *
- * RETURNS: LOG_NIL_LOG if log is NULL                                        *
- *          LOG_NIL_CHAR_ARR if arr is NULL                                   *
- *          LOG_INVALID_ARR_SIZE if size < 1                                  *
- *          LOG_NIL if no error                                               *
- *                                                                            *
- ******************************************************************************/
-errLOG_t logCharArr(log_t *log, char *arr, int size);
-
-/******************************************************************************
- *                                                                            *
- * PURPOSE: To log a matrix of characters.                                    *
- *                                                                            *
- * ARGUMENT DESCRIPTION                                                       *
- * -------- -----------                                                       *
- * log      the log to record the matrix in                                   *
- * matrix   the matrix to log                                                 *
- * r        the number of the rows in the matrix                              *
- * c        the number of the colums in the matrix                            *
- *                                                                            *
- * RETURNS: LOG_NIL_LOG if log is NULL                                        *
- *          LOG_NIL_CHAR_MATRIX if matrix is NULL                             *
- *          LOG_INVALID_ROW_SIZE if r < 1                                     *
- *          LOG_INVALID_COL_SIZE if c < 1                                     *
- *          LOG_NIL if no error                                               *
- *                                                                            *
- ******************************************************************************/
-errLOG_t logCharMatrix(log_t *log, char **matrix, int r, int c);
-
-/******************************************************************************
- *                                                                            *
- * PURPOSE: To log an array of strings.                                       *
- *                                                                            *
- * ARGUMENT DESCRIPTION                                                       *
- * -------- -----------                                                       *
- * log      the log to record the matrix in                                   *
- * arr      the array to log                                                  *
- * size     the size of the array                                             *
- *                                                                            *
- * RETURNS: LOG_NIL_LOG if log is NULL                                        *
- *          LOG_NIL_STR_ARR if arr is NULL                                    *
- *          LOG_INVALID_ARR_SIZE if size < 1                                  *
- *          LOG_NIL if no error                                               *
- *                                                                            *
- ******************************************************************************/
-errLOG_t logStrArr(log_t *log, char **arr, int size);
-
-/******************************************************************************
- *                                                                            *
- * PURPOSE: To log a matrix of strings.                                       *
- *                                                                            *
- * ARGUMENT DESCRIPTION                                                       *
- * -------- -----------                                                       *
- * log      the log to record the matrix in                                   *
- * matrix   the matrix to log                                                 *
- * r        the number of the rows in the matrix                              *
- * c        the number of the colums in the matrix                            *
- *                                                                            *
- * RETURNS: LOG_NIL_LOG if log is NULL                                        *
- *          LOG_NIL_STR_MATRIX if matrix is NULL                              *
- *          LOG_INVALID_ROW_SIZE if r < 1                                     *
- *          LOG_INVALID_COL_SIZE if c < 1                                     *
- *          LOG_NIL if no error                                               *
- *                                                                            *
- ******************************************************************************/
-errLOG_t logStrMatrix(log_t *log, char ***matrix, int r, int c);
-
-/******************************************************************************
- *                                                                            *
  * PURPOSE: To log a title. A title prints as 5 seperate lines. Lines 1 and 5 *
  *          are lines of #'s. Lines 2 and 4 start and end with a single # and *
  *          are sperated by blank space. Line 3 prints like lines 2 and 4,    *
@@ -343,6 +151,26 @@ errLOG_t logSection(log_t *log, char *section);
 
 /******************************************************************************
  *                                                                            *
+ * PURPOSE: To log an arbitrary event, possibly with a timestamp. The event   *
+ *          will be broken up by its whitespace so that it conforms to the    *
+ *          column length of the library. This function also mutates the      *
+ *          underlying string event.                                          *
+ *                                                                            *
+ * ARGUMENT  DESCRIPTION                                                      *
+ * --------  -----------                                                      *
+ * log       the log to record the event in                                   *
+ * timestamp to include a timestamp with the event or not                     *
+ * event     the event to log                                                 *
+ *                                                                            *
+ * RETURNS: LOG_NIL_LOG if log is NULL                                        *
+ *          LOG_INVALID_TIMESTAMP if timestamp is not 0 or 1                  *
+ *          LOG_NIL if no error                                               *
+ *                                                                            *
+ ******************************************************************************/
+errLOG_t logEvent(log_t *log, int timestamp, char *event);
+
+/******************************************************************************
+ *                                                                            *
  * PURPOSE: To log the key followed by .'s and the the integer value such     *
  *          that an entire log line is filled up.                             *
  *                                                                            *
@@ -362,6 +190,44 @@ errLOG_t logIntSetting(log_t *log, char *key, int val);
 
 /******************************************************************************
  *                                                                            *
+ * PURPOSE: To log an integer array.                                          *
+ *                                                                            *
+ * ARGUMENT DESCRIPTION                                                       *
+ * -------- -----------                                                       *
+ * log      the log to record the array in                                    *
+ * arr      the array to log                                                  *
+ * size     the size of the array                                             *
+ *                                                                            *
+ * RETURNS: LOG_NIL_LOG if log is NULL                                        *
+ *          LOG_NIL_INT_ARR if arr is NULL                                    *
+ *          LOG_INVALID_ARR_SIZE if size < 1                                  *
+ *          LOG_NIL if no error                                               *
+ *                                                                            *
+ ******************************************************************************/
+errLOG_t logIntArr(log_t *log, int *arr, int size);
+
+/******************************************************************************
+ *                                                                            *
+ * PURPOSE: To log an integer matrix.                                         *
+ *                                                                            *
+ * ARGUMENT DESCRIPTION                                                       *
+ * -------- -----------                                                       *
+ * log      the log to record the matrix in                                   *
+ * matrix   the matrix to log                                                 *
+ * r        the number of the rows in the matrix                              *
+ * c        the number of the colums in the matrix                            *
+ *                                                                            *
+ * RETURNS: LOG_NIL_LOG if log is NULL                                        *
+ *          LOG_NIL_INT_MATRIX if matrix is NULL                              *
+ *          LOG_INVALID_ROW_SIZE if r < 1                                     *
+ *          LOG_INVALID_COL_SIZE if c < 1                                     *
+ *          LOG_NIL if no error                                               *
+ *                                                                            *
+ ******************************************************************************/
+errLOG_t logIntMatrix(log_t *log, int *matrix, int r, int c);
+
+/******************************************************************************
+ *                                                                            *
  * PURPOSE: To log the key followed by .'s and the the float value such that  *
  *          an entire log line is filled up.                                  *
  *                                                                            *
@@ -378,6 +244,44 @@ errLOG_t logIntSetting(log_t *log, char *key, int val);
  *                                                                            *
  ******************************************************************************/
 errLOG_t logFloatSetting(log_t *log, char *key, double val);
+
+/******************************************************************************
+ *                                                                            *
+ * PURPOSE: To log an array of floats.                                        *
+ *                                                                            *
+ * ARGUMENT DESCRIPTION                                                       *
+ * -------- -----------                                                       *
+ * log      the log to record the array in                                    *
+ * arr      the array to log                                                  *
+ * size     the size of the array                                             *
+ *                                                                            *
+ * RETURNS: LOG_NIL_LOG if log is NULL                                        *
+ *          LOG_NIL_FLOAT_ARR if arr is NULL                                  *
+ *          LOG_INVALID_ARR_SIZE if size < 1                                  *
+ *          LOG_NIL if no error                                               *
+ *                                                                            *
+ ******************************************************************************/
+errLOG_t logFloatArr(log_t *log, double *arr, int size);
+
+/******************************************************************************
+ *                                                                            *
+ * PURPOSE: To log a matrix of floats.                                        *
+ *                                                                            *
+ * ARGUMENT DESCRIPTION                                                       *
+ * -------- -----------                                                       *
+ * log      the log to record the matrix in                                   *
+ * matrix   the matrix to log                                                 *
+ * r        the number of the rows in the matrix                              *
+ * c        the number of the colums in the matrix                            *
+ *                                                                            *
+ * RETURNS: LOG_NIL_LOG if log is NULL                                        *
+ *          LOG_NIL_FLOAT_MATRIX if matrix is NULL                            *
+ *          LOG_INVALID_ROW_SIZE if r < 1                                     *
+ *          LOG_INVALID_COL_SIZE if c < 1                                     *
+ *          LOG_NIL if no error                                               *
+ *                                                                            *
+ ******************************************************************************/
+errLOG_t logFloatMatrix(log_t *log, double **matrix, int r, int c);
 
 /******************************************************************************
  *                                                                            *
@@ -401,6 +305,44 @@ errLOG_t logBoolSetting(log_t *log, char *key, int val);
 
 /******************************************************************************
  *                                                                            *
+ * PURPOSE: To log an array of bools, encoded as integers. 0: false, 1: true  *
+ *                                                                            *
+ * ARGUMENT DESCRIPTION                                                       *
+ * -------- -----------                                                       *
+ * log      the log to record the array in                                    *
+ * arr      the array to log                                                  *
+ * size     the size of the array                                             *
+ *                                                                            *
+ * RETURNS: LOG_NIL_LOG if log is NULL                                        *
+ *          LOG_NIL_BOOL_ARR if arr is NULL                                   *
+ *          LOG_INVALID_ARR_SIZE if size < 1                                  *
+ *          LOG_NIL if no error                                               *
+ *                                                                            *
+ ******************************************************************************/
+errLOG_t logBoolArr(log_t *log, int *arr, int size);
+
+/******************************************************************************
+ *                                                                            *
+ * PURPOSE: To log a matrixof bools, encoded as integers. 0: false, 1: true   *
+ *                                                                            *
+ * ARGUMENT DESCRIPTION                                                       *
+ * -------- -----------                                                       *
+ * log      the log to record the matrix in                                   *
+ * matrix   the matrix to log                                                 *
+ * r        the number of the rows in the matrix                              *
+ * c        the number of the colums in the matrix                            *
+ *                                                                            *
+ * RETURNS: LOG_NIL_LOG if log is NULL                                        *
+ *          LOG_NIL_BOOL_MATRIX if matrix is NULL                             *
+ *          LOG_INVALID_ROW_SIZE if r < 1                                     *
+ *          LOG_INVALID_COL_SIZE if c < 1                                     *
+ *          LOG_NIL if no error                                               *
+ *                                                                            *
+ ******************************************************************************/
+errLOG_t logBoolMatrix(log_t *log, int **matrix, int r, int c);
+
+/******************************************************************************
+ *                                                                            *
  * PURPOSE: To log the key followed by .'s and the the character value such   *
  *          that an entire log line is filled up.                             *
  *                                                                            *
@@ -417,6 +359,44 @@ errLOG_t logBoolSetting(log_t *log, char *key, int val);
  *                                                                            *
  ******************************************************************************/
 errLOG_t logCharSetting(log_t *log, char *key, char val);
+
+/******************************************************************************
+ *                                                                            *
+ * PURPOSE: To log an array of characters.                                    *
+ *                                                                            *
+ * ARGUMENT DESCRIPTION                                                       *
+ * -------- -----------                                                       *
+ * log      the log to record the array in                                    *
+ * arr      the array to log                                                  *
+ * size     the size of the array                                             *
+ *                                                                            *
+ * RETURNS: LOG_NIL_LOG if log is NULL                                        *
+ *          LOG_NIL_CHAR_ARR if arr is NULL                                   *
+ *          LOG_INVALID_ARR_SIZE if size < 1                                  *
+ *          LOG_NIL if no error                                               *
+ *                                                                            *
+ ******************************************************************************/
+errLOG_t logCharArr(log_t *log, char *arr, int size);
+
+/******************************************************************************
+ *                                                                            *
+ * PURPOSE: To log a matrix of characters.                                    *
+ *                                                                            *
+ * ARGUMENT DESCRIPTION                                                       *
+ * -------- -----------                                                       *
+ * log      the log to record the matrix in                                   *
+ * matrix   the matrix to log                                                 *
+ * r        the number of the rows in the matrix                              *
+ * c        the number of the colums in the matrix                            *
+ *                                                                            *
+ * RETURNS: LOG_NIL_LOG if log is NULL                                        *
+ *          LOG_NIL_CHAR_MATRIX if matrix is NULL                             *
+ *          LOG_INVALID_ROW_SIZE if r < 1                                     *
+ *          LOG_INVALID_COL_SIZE if c < 1                                     *
+ *          LOG_NIL if no error                                               *
+ *                                                                            *
+ ******************************************************************************/
+errLOG_t logCharMatrix(log_t *log, char **matrix, int r, int c);
 
 /******************************************************************************
  *                                                                            *
@@ -439,22 +419,40 @@ errLOG_t logStrSetting(log_t *log, char *key, char *val);
 
 /******************************************************************************
  *                                                                            *
- * PURPOSE: To log an arbitrary event, possibly with a timestamp. The event   *
- *          will be broken up by its whitespace so that it conforms to the    *
- *          column length of the library. This function also mutates the      *
- *          underlying string event.                                          *
+ * PURPOSE: To log an array of strings.                                       *
  *                                                                            *
- * ARGUMENT  DESCRIPTION                                                      *
- * --------  -----------                                                      *
- * log       the log to record the event in                                   *
- * timestamp to include a timestamp with the event or not                     *
- * event     the event to log                                                 *
+ * ARGUMENT DESCRIPTION                                                       *
+ * -------- -----------                                                       *
+ * log      the log to record the matrix in                                   *
+ * arr      the array to log                                                  *
+ * size     the size of the array                                             *
  *                                                                            *
  * RETURNS: LOG_NIL_LOG if log is NULL                                        *
- *          LOG_INVALID_TIMESTAMP if timestamp is not 0 or 1                  *
+ *          LOG_NIL_STR_ARR if arr is NULL                                    *
+ *          LOG_INVALID_ARR_SIZE if size < 1                                  *
  *          LOG_NIL if no error                                               *
  *                                                                            *
  ******************************************************************************/
-errLOG_t logEvent(log_t *log, int timestamp, char *event);
+errLOG_t logStrArr(log_t *log, char **arr, int size);
+
+/******************************************************************************
+ *                                                                            *
+ * PURPOSE: To log a matrix of strings.                                       *
+ *                                                                            *
+ * ARGUMENT DESCRIPTION                                                       *
+ * -------- -----------                                                       *
+ * log      the log to record the matrix in                                   *
+ * matrix   the matrix to log                                                 *
+ * r        the number of the rows in the matrix                              *
+ * c        the number of the colums in the matrix                            *
+ *                                                                            *
+ * RETURNS: LOG_NIL_LOG if log is NULL                                        *
+ *          LOG_NIL_STR_MATRIX if matrix is NULL                              *
+ *          LOG_INVALID_ROW_SIZE if r < 1                                     *
+ *          LOG_INVALID_COL_SIZE if c < 1                                     *
+ *          LOG_NIL if no error                                               *
+ *                                                                            *
+ ******************************************************************************/
+errLOG_t logStrMatrix(log_t *log, char ***matrix, int r, int c);
 
 #endif

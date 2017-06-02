@@ -2,13 +2,13 @@
  * FILE:    dna.h                                                             *
  * AUTHOR:  Ryan Rozanski                                                     *
  * CREATED: 5/4/17                                                            *
- * EDITED:  5/22/17                                                           *
+ * EDITED:  5/31/17                                                           *
  * INFO:    A library to make working with genetic algorithms easier through  *
  *          the use of getters and setters to easily track state, as well as  *
  *          some convience functions which perform various tasks such as      *
  *          crossover, mutation, and new generation creation using elitism.   *
  *          The library exposes all this to allow users the ability to create *
- *          custom implementations if new geneartion creation if so needed or *
+ *          custom implementations of new geneartion creation if so needed or *
  *          desired. Please also note that the c random number must be seeded *
  *          (ex. srand(time(NULL))) or mutation will not work. Error handling *
  *          is also provided.                                                 *
@@ -31,7 +31,7 @@ typedef enum errDNA { /* All possible errors produced by this library. */
   DNA_INVALID_ELITISM, DNA_INVALID_RATE, DNA_NIL_TRAITS, DNA_INVALID_PERCENT,
   DNA_NIL_MOTHER, DNA_NIL_LBOUND, DNA_NIL_UBOUND, DNA_NIL_ID, DNA_NIL_FITNESS,
   DNA_INVALID_TRAITS, DNA_INVALID_BOUNDS, DNA_NIL_PERCENT, DNA_NIL_CHILD,
-  DNA_OUT_OF_MEMORY, DNA_INVALID_ID,
+  DNA_OUT_OF_MEMORY, DNA_INVALID_ID, DNA_INVALID_IDS,
 } errDNA_t;
 
 /******************************************************************************
@@ -64,12 +64,13 @@ const char *strErrDNA(errDNA_t errDNA);
  * dna      the dna to use                                                    *
  * strands  the number of chromosomes to track                                *
  * traits   the number of traits in each chromosome                           *
- * ids      the ids used to identify the strands                              *
+ * ids      the ids used to identify the strands, 36 charactermax per each    *
  *                                                                            *
  * RETURNS: DNA_NIL_DNA if dna in NULL                                        *
  *          DNA_INVALID_CHROMOSOMES if chromosomes is < 1                     *
  *          DNA_INVALID_TRAITS if taits < 1                                   *
  *          DNA_OUT_OF_MEMORY if failure to allocate                          *
+ *          DNA_INVALID_IDS if any id in ids is larger than 36 characters     *
  *          DNA_NIL if no error                                               *
  *                                                                            *
  ******************************************************************************/
@@ -240,31 +241,47 @@ errDNA_t setStrand(dna_t *dna, char *id, int *strand, int traits);
  *          DNA_NIL_STRAND if strand is NULL                                  *
  *          DNA_NIL_TRAITS if traits is NULL                                  *
  *          DNA_INVALID_ID if id does not match any tracked chromosome id     *
- *          DNA_OUT_OF_MEMORY if allocation of strand fails                   *
  *          DNA_NIL if no error                                               *
  *                                                                            *
  ******************************************************************************/
-errDNA_t getStrand(dna_t *dna, char *id, int **strand, int *traits);
+errDNA_t getStrand(dna_t *dna, char *id, int *strand, int *traits);
 
 /******************************************************************************
  *                                                                            *
- * PURPOSE: To allocate a new array of strings containing the identifiers of  *
- *          each strand contained in the dna.                                 *
+ * PURPOSE: To get the details about dna strands, in particular the           *
+ *          information needed so the user may alloc strands on the stack or  *
+ *          heap when using other functions in this library.                  *
+ *                                                                            *
+ * ARGUMENT DESCRIPTION                                                       *
+ * -------- -----------                                                       *
+ * dna      the dna to use                                                    *
+ * strands  the number of strand tracked in dna                               *
+ * traits   the number of traits per strand of dna                            *
+ *                                                                            *
+ * RETURNS: DNA_NIL_DNA if dna in NULL                                        *
+ *          DNA_NIL_STRAND if strand is NULL                                  *
+ *          DNA_NIL_TRAITS if traits is NULL                                  *
+ *          DNA_NIL if no error                                               *
+ *                                                                            *
+ ******************************************************************************/
+errDNA_t getChromosomes(dna_t *dna, int *strands, int *traits);
+
+/******************************************************************************
+ *                                                                            *
+ * PURPOSE: To get all the identifiers of each strand contained in the dna.   *
  *                                                                            *
  * ARGUMENT DESCRIPTION                                                       *
  * -------- -----------                                                       *
  * dna      the dna to use                                                    *
  * ids      an array of identifiers to corresponding strands                  *
- * size     the size of the array                                             *
  *                                                                            *
  * RETURNS: DNA_NIL_DNA if dna in NULL                                        *
  *          DNA_NIL_IDS if ids is NULL                                        *
  *          DNA_NIL_SIZE if size is NULL                                      *
- *          DNA_OUT_OF_MEMORY if allocation of ids fails                      *
  *          DNA_NIL if no error                                               *
  *                                                                            *
  ******************************************************************************/
-errDNA_t getNames(dna_t *dna, char ***ids, int *size);
+errDNA_t getIDs(dna_t *dna, char ids[][36]);
 
 /******************************************************************************
  *                                                                            *
@@ -284,11 +301,10 @@ errDNA_t getNames(dna_t *dna, char ***ids, int *size);
  *          DNA_NIL_MOTHER if mother is NULL                                  *
  *          DNA_NIL_CHILD if child is NULL                                    *
  *          DNA_INVALID_ID if mother or father does not match any tracked id  *
- *          DNA_OUT_OF_MEMORY if allocation of child fails                    *
  *          DNA_NIL if no error                                               *
  *                                                                            *
  ******************************************************************************/
-errDNA_t crossover(dna_t *dna, char *father, char *mother, int **child, int *traits);
+errDNA_t crossover(dna_t *dna, char *father, char *mother, int *child, int *traits);
 
 /******************************************************************************
  *                                                                            *
