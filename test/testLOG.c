@@ -1,11 +1,101 @@
+/******************************************************************************
+ * FILE:    testLOG.c                                                         *
+ * AUTHOR:  Ryan Rozanski                                                     *
+ * CREATED: 6/3/17                                                            *
+ * EDITED:  6/4/17                                                            *
+ * INFO:    Test file for implementation of the interface located in log.h.   *
+ *                                                                            *
+ ******************************************************************************/
+
+/******************************************************************************
+ *                                                                            *
+ *   I N C L U D E S                                                          *
+ *                                                                            *
+ ******************************************************************************/
 #include <time.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <log.h> 
 
+/******************************************************************************
+ *                                                                            *
+ *   C O N S T A N T S                                                        *
+ *                                                                            *
+ ******************************************************************************/
 #define columns 120
 #define directory "logger_tests"
+#define TOTAL_TESTS 1
+
+/******************************************************************************
+ *                                                                            *
+ *   T Y P E S                                                                *
+ *                                                                            *
+ ******************************************************************************/
+typedef enum testResultLOG { LOG_SUCC, LOG_FAIL } testResultLOG_t;
+
+/******************************************************************************
+ *                                                                            *
+ *   G L O B A L S                                                            *
+ *                                                                            *
+ ******************************************************************************/
+log_t *logger;
+
+/******************************************************************************
+ *                                                                            *
+ *   T E S T S                                                                *
+ *                                                                            *
+ ******************************************************************************/
+testResultLOG_t testMakeLOG() {
+  fprintf(stdout, "FAIL: testMakeLOG\n");
+  return LOG_FAIL;
+/*
+  time_t t = time(NULL);
+  struct tm *date = localtime(&t);
+  char name[80];
+  strftime(name, 80, "%Y_%B_%d_%A_%X", date); // yr_mo_day_weekday_time
+
+  char fname[80];
+  sprintf(fname, "_LOGGER_TEST.txt", name);
+
+  log_t *logger;
+  errLOG_t errLOG;
+  if((errLOG = makeLOG(&logger, columns, directory, fname)) != LOG_NIL) {
+    fprintf(stderr, "error! failure to make log\nirritant: %s\nexiting...\n", strErrLOG(errLOG));
+    exit(EXIT_FAILURE);
+  }
+
+  if((errLOG = logTitle(logger, fname)) != LOG_NIL) {
+    fprintf(stderr, "error! failure to log title\nirritant: %s\nexiting...\n", strErrLOG(errLOG));
+    exit(EXIT_FAILURE);
+  }
+
+  logHeader(logger, "testing");
+
+  logSection(logger, "testing integer logging");
+  testInt(logger);
+
+  int r, c;
+  fprintf(stdout, "rows: ");
+  scanf("%i", &r);
+  fprintf(stdout, "cols: ");
+  scanf("%i", &c);
+
+  logSection(logger, "testing float logging");
+  testFloat(logger, 1, 1);
+
+  logSection(logger, "testing boolean logging");
+  testBool(logger, 1, 1);
+
+  logSection(logger, "testing character logging");
+  testChar(logger, 1, 1);
+
+  logSection(logger, "testing string logging");
+  testStr(logger, 1, 1);
+
+  return 0;  
+  */
+}
 
 void testInt(log_t *logger) {
   logEvent(logger, 0, "testing logger int abilities\n");
@@ -130,49 +220,26 @@ void testStr(log_t *logger, int m, int n) {
   logEvent(logger, 0, "\n");
 }
 
+/******************************************************************************
+ *                                                                            *
+ *   M A I N                                                                  *
+ *                                                                            *
+ ******************************************************************************/
+testResultLOG_t (*TESTS[TOTAL_TESTS])() = {
+  testMakeLOG,
+};
+
 int main() {
-  time_t t = time(NULL);
-  struct tm *date = localtime(&t);
-  char name[80];
-  strftime(name, 80, "%Y_%B_%d_%A_%X", date); // yr_mo_day_weekday_time
 
-  char fname[80];
-  sprintf(fname, "_LOGGER_TEST.txt", name);
-
-  log_t *logger;
-  errLOG_t errLOG;
-  if((errLOG = makeLOG(&logger, columns, directory, fname)) != LOG_NIL) {
-    fprintf(stderr, "error! failure to make log\nirritant: %s\nexiting...\n", strErrLOG(errLOG));
-    exit(EXIT_FAILURE);
+  int test, passes, fails;
+  for(test = passes = fails = 0; test < TOTAL_TESTS; test++) {
+    ((*TESTS[test])() == LOG_SUCC) ? passes++ : fails++;
   }
 
-  if((errLOG = logTitle(logger, fname)) != LOG_NIL) {
-    fprintf(stderr, "error! failure to log title\nirritant: %s\nexiting...\n", strErrLOG(errLOG));
-    exit(EXIT_FAILURE);
-  }
-
-  logHeader(logger, "testing");
-
-  logSection(logger, "testing integer logging");
-  testInt(logger);
-
-  int r, c;
-  fprintf(stdout, "rows: ");
-  scanf("%i", &r);
-  fprintf(stdout, "cols: ");
-  scanf("%i", &c);
-
-  logSection(logger, "testing float logging");
-  testFloat(logger, 1, 1);
-
-  logSection(logger, "testing boolean logging");
-  testBool(logger, 1, 1);
-
-  logSection(logger, "testing character logging");
-  testChar(logger, 1, 1);
-
-  logSection(logger, "testing string logging");
-  testStr(logger, 1, 1);
+  fprintf(stdout, "\n--------------------\n"
+                    "Passes:           %i\n"
+                    "Fails:            %i\n"
+                    "Total Tests:      %i\n", passes, fails, passes+fails);
 
   return 0;  
 }
