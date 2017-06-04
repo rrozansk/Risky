@@ -2,7 +2,7 @@
  * FILE:    main.c                                                            *
  * AUTHOR:  Ryan Rozanski                                                     *
  * CREATED: 4/4/17                                                            *
- * EDITED:  6/1/17                                                            *
+ * EDITED:  6/4/17                                                            *
  * INFO:    main.c is the glue which holds together the ini, log, dna, and    *
  *          risk libraries.                                                   *
  *                                                                            *
@@ -44,11 +44,6 @@ errLOG_t errLOG;
  *   F U N C T I O N S                                                        *
  *                                                                            *
  ******************************************************************************/
-void freeStrArr(char **arr, int i) {
-  for(; i; i--) { free(arr[i-1]); }
-  //free(arr);
-}
-
 // Read in an integer, only accepting input between the bounds. Optionally prompt
 // user 'are you sure'. Handles all errors appropriately.
 void readInt(int lbound, int ubound, int *pick, int prompt) {
@@ -147,165 +142,8 @@ int fitness(char *who, int *chromosome, int traits) {
   return fitness;
 }
 
-
-void testLOG(log_t *logger) {
-  // ints
-  int i = 5;
-  int ia[5] = { 0, 1, 2, 3, 4 };
-  int ial[20] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19 };
-  int im[2][5]  = {
-    { 0, 9, 8, 7, 6 },
-    { 1, 2, 3, 4, 5 }
-  };
-  int j = 20;
-  int *iml[i = 10];
-  for(; i; i--) {
-    int arr[j];
-    iml[i-1] = arr;
-    for(; j; j--) {
-      iml[i-1][j-1] = j;
-    }
-  } /*
-  int iml[10][20]  = {
-    { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19 },
-    { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19 },
-    { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19 },
-    { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19 },
-    { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19 },
-    { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19 },
-    { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19 },
-    { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19 },
-    { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19 },
-    { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19 }
-  };
-*/
-  // floats
-  double f = 5.23;
-  double fa[5] = { 0.9, 1.8, 2.7, 3.6, 4.5 };
-  double fal[20] = { 0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0 };
-  double fm[2][5]  = {
-    { 0.9, 1.8, 2.7, 3.6, 4.5 },
-    { 0.9, 1.8, 2.7, 3.6, 4.5 }
-  };
-  double fml[10][20] = {
-    { 0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0 },
-    { 0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0 },
-    { 0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0 },
-    { 0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0 },
-    { 0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0 },
-    { 0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0 },
-    { 0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0 },
-    { 0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0 },
-    { 0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0 },
-    { 0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0 }
-  };
-  // bools
-  int b = 1;
-  int ba[5] = { 0, 1, 0, 0, 1 };
-  int bal[20] = { 0, 0, 1, 0, 1, 1, 1, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 1, 0 };
-  int bm[2][5]  = {
-    { 0, 1, 0, 0, 1 },
-    { 1, 0, 1, 1, 0 }
-  };
-  int bml[10][20] = {
-    { 0, 0, 1, 0, 1, 1, 1, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 1, 0 },
-    { 0, 0, 1, 0, 1, 1, 1, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 1, 0 },
-    { 0, 0, 1, 0, 1, 1, 1, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 1, 0 },
-    { 0, 0, 1, 0, 1, 1, 1, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 1, 0 },
-    { 0, 0, 1, 0, 1, 1, 1, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 1, 0 },
-    { 0, 0, 1, 0, 1, 1, 1, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 1, 0 },
-    { 0, 0, 1, 0, 1, 1, 1, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 1, 0 },
-    { 0, 0, 1, 0, 1, 1, 1, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 1, 0 },
-    { 0, 0, 1, 0, 1, 1, 1, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 1, 0 },
-    { 0, 0, 1, 0, 1, 1, 1, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 1, 0 }
-  };
-  // chars
-  char c = 'h';
-  char ca[5] = { 'h', 'e', 'l', 'l', 'o' };
-  char cal[30] = { 'h', 'e', 'l', 'l', 'o', 'w', 'o', 'r', 'l', 'd', 'h', 'e', 'l', 'l', 'o', 'w', 'o', 'r', 'l', 'd', 'h', 'e', 'l', 'l', 'o', 'w', 'o', 'r', 'l', 'd' };
-  char cm[2][5] = {
-    { 'h', 'e', 'l', 'l', 'o' },
-    { 'w', 'o', 'r', 'l', 'd' }
-  };
-  char cml[10][30] = {
-    { 'h', 'e', 'l', 'l', 'o', 'w', 'o', 'r', 'l', 'd', 'h', 'e', 'l', 'l', 'o', 'w', 'o', 'r', 'l', 'd', 'h', 'e', 'l', 'l', 'o', 'w', 'o', 'r', 'l', 'd' },
-    { 'h', 'e', 'l', 'l', 'o', 'w', 'o', 'r', 'l', 'd', 'h', 'e', 'l', 'l', 'o', 'w', 'o', 'r', 'l', 'd', 'h', 'e', 'l', 'l', 'o', 'w', 'o', 'r', 'l', 'd' },
-    { 'h', 'e', 'l', 'l', 'o', 'w', 'o', 'r', 'l', 'd', 'h', 'e', 'l', 'l', 'o', 'w', 'o', 'r', 'l', 'd', 'h', 'e', 'l', 'l', 'o', 'w', 'o', 'r', 'l', 'd' },
-    { 'h', 'e', 'l', 'l', 'o', 'w', 'o', 'r', 'l', 'd', 'h', 'e', 'l', 'l', 'o', 'w', 'o', 'r', 'l', 'd', 'h', 'e', 'l', 'l', 'o', 'w', 'o', 'r', 'l', 'd' },
-    { 'h', 'e', 'l', 'l', 'o', 'w', 'o', 'r', 'l', 'd', 'h', 'e', 'l', 'l', 'o', 'w', 'o', 'r', 'l', 'd', 'h', 'e', 'l', 'l', 'o', 'w', 'o', 'r', 'l', 'd' },
-    { 'h', 'e', 'l', 'l', 'o', 'w', 'o', 'r', 'l', 'd', 'h', 'e', 'l', 'l', 'o', 'w', 'o', 'r', 'l', 'd', 'h', 'e', 'l', 'l', 'o', 'w', 'o', 'r', 'l', 'd' },
-    { 'h', 'e', 'l', 'l', 'o', 'w', 'o', 'r', 'l', 'd', 'h', 'e', 'l', 'l', 'o', 'w', 'o', 'r', 'l', 'd', 'h', 'e', 'l', 'l', 'o', 'w', 'o', 'r', 'l', 'd' },
-    { 'h', 'e', 'l', 'l', 'o', 'w', 'o', 'r', 'l', 'd', 'h', 'e', 'l', 'l', 'o', 'w', 'o', 'r', 'l', 'd', 'h', 'e', 'l', 'l', 'o', 'w', 'o', 'r', 'l', 'd' },
-    { 'h', 'e', 'l', 'l', 'o', 'w', 'o', 'r', 'l', 'd', 'h', 'e', 'l', 'l', 'o', 'w', 'o', 'r', 'l', 'd', 'h', 'e', 'l', 'l', 'o', 'w', 'o', 'r', 'l', 'd' },
-    { 'h', 'e', 'l', 'l', 'o', 'w', 'o', 'r', 'l', 'd', 'h', 'e', 'l', 'l', 'o', 'w', 'o', 'r', 'l', 'd', 'h', 'e', 'l', 'l', 'o', 'w', 'o', 'r', 'l', 'd' }
-  };
-  // strings
-  char *s = "sup!";
-  char *sa[5] = { "hello", "there", "small", "world", ":-)" };
-  char *sal[20] = { "hello", "there", "small", "world", ":-)", "hello", "there", "small", "world", ":-)", "hello", "there", "small", "world", ":-)", "hello", "there", "small", "world", ":-)" };
-  char *sm[2][5] = {
-    { "hello", "there", "small", "world", ":-)" },
-    { "hello", "there", "small", "world", ":-)" }
-  };
-  char *sml[10][20] = {
-    { "hello", "there", "small", "world", ":-)", "hello", "there", "small", "world", ":-)", "hello", "there", "small", "world", ":-)", "hello", "there", "small", "world", ":-)" },
-    { "hello", "there", "small", "world", ":-)", "hello", "there", "small", "world", ":-)", "hello", "there", "small", "world", ":-)", "hello", "there", "small", "world", ":-)" },
-    { "hello", "there", "small", "world", ":-)", "hello", "there", "small", "world", ":-)", "hello", "there", "small", "world", ":-)", "hello", "there", "small", "world", ":-)" },
-    { "hello", "there", "small", "world", ":-)", "hello", "there", "small", "world", ":-)", "hello", "there", "small", "world", ":-)", "hello", "there", "small", "world", ":-)" },
-    { "hello", "there", "small", "world", ":-)", "hello", "there", "small", "world", ":-)", "hello", "there", "small", "world", ":-)", "hello", "there", "small", "world", ":-)" },
-    { "hello", "there", "small", "world", ":-)", "hello", "there", "small", "world", ":-)", "hello", "there", "small", "world", ":-)", "hello", "there", "small", "world", ":-)" },
-    { "hello", "there", "small", "world", ":-)", "hello", "there", "small", "world", ":-)", "hello", "there", "small", "world", ":-)", "hello", "there", "small", "world", ":-)" },
-    { "hello", "there", "small", "world", ":-)", "hello", "there", "small", "world", ":-)", "hello", "there", "small", "world", ":-)", "hello", "there", "small", "world", ":-)" },
-    { "hello", "there", "small", "world", ":-)", "hello", "there", "small", "world", ":-)", "hello", "there", "small", "world", ":-)", "hello", "there", "small", "world", ":-)" },
-    { "hello", "there", "small", "world", ":-)", "hello", "there", "small", "world", ":-)", "hello", "there", "small", "world", ":-)", "hello", "there", "small", "world", ":-)" }
-  };
-
-  logSection(logger, "testing");
-
-  logEvent(logger, 0, "testing logger int abilities");
-  logIntSetting(logger, "int test", i);
-  logIntArr(logger, ia, 5);
-  logIntArr(logger, ial, 20);
-  //logIntMatrix(logger, im, 2, 5);
-  //logIntMatrix(logger, (int *)iml, 10, 20);
-  logEvent(logger, 0, "\n");
-
-  logEvent(logger, 0, "testing logger float abilities");
-  logFloatSetting(logger, "float test", f);
-  logFloatArr(logger, fa, 15);
-  logFloatArr(logger, fal, 20);
-  //logFloatMatrix(logger, fm, 2, 5);
-  //logFloatMatrix(logger, fml, 10, 20);
-  logEvent(logger, 0, "\n");
-
-  logEvent(logger, 0, "testing logger bool abilities");
-  logBoolSetting(logger, "bool test", b);
-  logBoolArr(logger, ba, 5);
-  logBoolArr(logger, bal, 20);
-  //logBoolMatrix(logger, bm, 2, 5);
-  //logBoolMatrix(logger, bml, 10, 20);
-  logEvent(logger, 0, "\n");
-
-  logEvent(logger, 0, "testing logger char abilities");
-  logCharSetting(logger, "char test", c);
-  logCharArr(logger, ca, 5);
-  logCharArr(logger, cal, 30);
-  //logCharMatrix(logger, cm, 2, 5);
-  //logCharMatrix(logger, cml, 10, 30);
-  logEvent(logger, 0, "\n");
-
-  logEvent(logger, 0, "testing logger str abilities");
-  logStrSetting(logger, "str test", s);
-  logStrArr(logger, sa, 5);
-  logStrArr(logger, sal, 20);
-  //logStrMatrix(logger, sm, 2, 5);
-  //logStrMatrix(logger, sml, 10, 20);
-  logEvent(logger, 0, "\n");
-}
-
 // attempt to set up the logger from the INI conf file.
 void setupLOGfromINI(ini_t *ini, log_t **logger) {
-/*
   int log;
   if((errINI = getBoolINI(ini, "Logging", "log", &log)) != INI_NIL) {
     fprintf(stderr, "error! failure to get log option\nirritant: %s\nexiting...\n", strErrINI(errINI));
@@ -322,12 +160,12 @@ void setupLOGfromINI(ini_t *ini, log_t **logger) {
     exit(EXIT_FAILURE);
   }
 
-  char *dir;
-  if((errINI = getStrINI(ini, "Logging", "dir", &dir)) != INI_NIL) {
+  char dir[255];
+  if((errINI = getStrINI(ini, "Logging", "dir", (char **)dir)) != INI_NIL) { // FIXME: incorrect 4th arg
     fprintf(stderr, "error! failure to get log dir\nirritant: %s\nexiting...\n", strErrINI(errINI));
     exit(EXIT_FAILURE);
   }
-*/
+
   time_t t = time(NULL);
   struct tm *date = localtime(&t);
   char name[80];
@@ -336,14 +174,11 @@ void setupLOGfromINI(ini_t *ini, log_t **logger) {
   char fname[80];
   sprintf(fname, "%s_SESSION_%i.txt", name, SESSION);
 
-  if((errLOG = makeLOG(logger, 120, "training_sessions", fname)) != LOG_NIL) {
-  //if((errLOG = makeLOG(logger, log, dir, name)) != LOG_NIL) {
+  if((errLOG = makeLOG(logger, log, dir, name)) != LOG_NIL) {
     fprintf(stderr, "error! failure to make log\nirritant: %s\nexiting...\n", strErrLOG(errLOG));
-    //free(dir);
     exit(EXIT_FAILURE);
   }
 
-  //free(dir);
   if((errLOG = logTitle(*logger, fname)) != LOG_NIL) {
     fprintf(stderr, "error! failure to log title\nirritant: %s\nexiting...\n", strErrLOG(errLOG));
     exit(EXIT_FAILURE);
@@ -352,10 +187,9 @@ void setupLOGfromINI(ini_t *ini, log_t **logger) {
 
 // attempt to set up all the AI/chromosomes from the INI conf file
 void setupDNAfromINI(ini_t *ini, dna_t **dna) {
-/*
   int cps, traits, elitism;
   int lbound, ubound, *chromosome;
-  char **names;
+  char **ids;
   double rate, percentile;
 
   if((errINI = getIntINI(ini, "Chromosomes", "traits", &traits)) != INI_NIL) {
@@ -388,61 +222,48 @@ void setupDNAfromINI(ini_t *ini, dna_t **dna) {
     exit(EXIT_FAILURE);
   }
 
-  if((errINI = getStrArrINI(ini, "Chromosomes", "cps", &names, &cps)) != INI_NIL) {
+  if((errINI = getStrArrINI(ini, "Chromosomes", "cps", &ids, &cps)) != INI_NIL) {
     fprintf(stderr, "error! failure to get chromosome cps\nirritant: %s\nexiting...\n", strErrINI(errINI));
     exit(EXIT_FAILURE);
   }
-*/
-  char *ids[8] = { "cp1", "cp2", "cp3", "cp4", "cp5", "cp6", "cp7", "cp8" };
-  if((errDNA = makeDNA(dna, ids, 8, 10)) != DNA_NIL) {
-  //if((errDNA = makeDNA(dna, ids, cps, traits)) != DNA_NIL) {
+
+  if((errDNA = makeDNA(dna, ids, cps, traits)) != DNA_NIL) {
     fprintf(stderr, "error! failure to make dna\nirritant: %s\nexiting...\n", strErrDNA(errDNA));
-    //freeStrArr(names, cps);
     exit(EXIT_FAILURE);
   }
 
   if((errDNA = setFitness(*dna, fitness)) != DNA_NIL) {
-  //if((errDNA = setFitness(*dna, fitness)) != DNA_NIL) {
     fprintf(stderr, "error! failure to get chromosome\nirritant: %s\nexiting...\n", strErrDNA(errDNA));
-    //freeStrArr(names, cps);
     exit(EXIT_FAILURE);
   }
 
-  if((errDNA = setMutation(*dna, 0, 255, 0.01)) != DNA_NIL) {
-  //if((errDNA = setMutation(*dna, lbound, ubound, rate)) != DNA_NIL) {
+  if((errDNA = setMutation(*dna, lbound, ubound, rate)) != DNA_NIL) {
     fprintf(stderr, "error! failure to set mutation parameters\nirritant: %s\nexiting...\n", strErrDNA(errDNA));
-    //freeStrArr(names, cps);
     exit(EXIT_FAILURE);
   }
 
-  if((errDNA = setElitism(*dna, 1, 0.20)) != DNA_NIL) {
-  //if((errDNA = setElitism(*dna, elitism, percentile)) != DNA_NIL) {
+  if((errDNA = setElitism(*dna, elitism, percentile)) != DNA_NIL) {
     fprintf(stderr, "error! failure to get chromosome\nirritant: %s\nexiting...\n", strErrDNA(errDNA));
-    //freeStrArr(names, cps);
     exit(EXIT_FAILURE);
   }
-/*
-  for(; cps; cps--, free(chromosome)) {
-    if((errINI = getIntArrINI(ini, "Chromosomes", names[cps-1], &chromosome, &traits)) != INI_NIL) {
-      fprintf(stderr, "error! failure to get chromosome %s\nirritant: %s\nexiting...\n", names[cps-1], strErrINI(errINI));
-      //freeStrArr(names, cps);
+
+  for(; cps; cps--) {
+    if((errINI = getIntArrINI(ini, "Chromosomes", ids[cps-1], &chromosome, &traits)) != INI_NIL) {
+      fprintf(stderr, "error! failure to get chromosome %s\nirritant: %s\nexiting...\n", ids[cps-1], strErrINI(errINI));
       exit(EXIT_FAILURE);
     }
-    if((errDNA = setStrand(*dna, names[cps-1], chromosome, traits)) != DNA_NIL) {
-      fprintf(stderr, "error! failure to set chromosome %s\nirritant: %s\nexiting...\n", names[cps-1], strErrDNA(errDNA));
-      //freeStrArr(names, cps);
-      free(chromosome);
+
+    if((errDNA = setStrand(*dna, ids[cps-1], chromosome, traits)) != DNA_NIL) {
+      fprintf(stderr, "error! failure to set chromosome %s\nirritant: %s\nexiting...\n", ids[cps-1], strErrDNA(errDNA));
       exit(EXIT_FAILURE);
     }
   }
-  freeStrArr(names, cps);
-*/
+
 }
 
 // attempt to set up the risk game from the INI conf file.
-/*
-void setupRISKfromINI(ini_t *ini, risk_t **game) {
-  int i, j, k, n;
+void setupRISKfromINI(ini_t *ini, risk_t **game) { }
+ /* int i, j, k, n;
   int *iarr;
   char **sarr1, **sarr2, **sarr3;
 
@@ -484,7 +305,6 @@ void setupRISKfromINI(ini_t *ini, risk_t **game) {
 
   if((errINI = getStrArrINI(ini, "Players", "computers", &sarr2, &j)) != INI_NIL) {
     fprintf(stderr, "error! failure to get players computers\nirritant: %s\nexiting...\n", strErrINI(errINI));
-    freeStrArr(sarr1, i);
     exit(EXIT_FAILURE);
   }
   char *computers[j];
@@ -497,10 +317,8 @@ void setupRISKfromINI(ini_t *ini, risk_t **game) {
   free(sarr2);
   if((errRISK = setPlayers(*game, k, players)) != RISK_NIL) {
     fprintf(stderr, "error! failure to set up players\nirritant: %s\nexiting...\n", strErrRISK(errRISK));
-    freeStrArr(sarr3, k);
     exit(EXIT_FAILURE);
   }
-  freeStrArr(sarr3, k);
 
   if((errINI = getStrArrINI(ini, "Cards", "types", &sarr2, &i)) != INI_NIL) {
     fprintf(stderr, "error! failure to get cards types\nirritant: %s\nexiting...\n", strErrINI(errINI));
@@ -510,16 +328,13 @@ void setupRISKfromINI(ini_t *ini, risk_t **game) {
 
   if((errINI = getIntINI(ini, "Cards", "wilds", &j)) != INI_NIL) {
     fprintf(stderr, "error! failure to get cards wilds\nirritant: %s\nexiting...\n", strErrINI(errINI));
-    freeStrArr(sarr2, i);
     exit(EXIT_FAILURE);
   }
 
   if((errRISK = setDeck(*game, i, sarr2, j)) != RISK_NIL) {
     fprintf(stderr, "error! failure to set up deck\nirritant: %s\nexiting...\n", strErrRISK(errRISK));
-    freeStrArr(sarr2, i);
     exit(EXIT_FAILURE);
   }
-  freeStrArr(sarr2, i);
 
   if((errINI = getIntArrINI(ini, "Cards", "trades", &iarr, &k)) != INI_NIL) {
     fprintf(stderr, "error! failure to get cards trades\nirritant: %s\nexiting...\n", strErrINI(errINI));
@@ -545,10 +360,8 @@ void setupRISKfromINI(ini_t *ini, risk_t **game) {
   }
   if((errRISK = setContinents(*game, sarr2, k)) != RISK_NIL) {
     fprintf(stderr, "error! failure to set continents\nirritant: %s\nexiting...\n", strErrRISK(errRISK));
-    freeStrArr(sarr2, k);
     exit(EXIT_FAILURE);
   }
-  freeStrArr(sarr2, k);
 
   if((errINI = getIntArrINI(ini, "Map", "continents_bonus", &iarr, &n)) != INI_NIL) {
     fprintf(stderr, "error! failure to get map continents_bonus\nirritant: %s\nexiting...\n", strErrINI(errINI));
@@ -572,29 +385,23 @@ void setupRISKfromINI(ini_t *ini, risk_t **game) {
   }
   if((errRISK = setCountries(*game, sarr1, k, n)) != RISK_NIL) {
     fprintf(stderr, "error! failure to set countries\nirritant: %s\nexiting...\n", strErrRISK(errRISK));
-    freeStrArr(sarr1, k);
     exit(EXIT_FAILURE);
   }
   for(i = 0; i < k; i++) {
     if((errINI = getStrArrINI(ini, "Map", sarr1[i], &sarr2, &j)) != INI_NIL) {
       fprintf(stderr, "error! failure to get map adjacencies for %s\nirritant: %s\nexiting...\n", sarr1[i], strErrINI(errINI));
-      freeStrArr(sarr1, k);
       exit(EXIT_FAILURE);
     }
     if((errRISK = setAdjacencies(*game, sarr1[i], sarr2, j)) != RISK_NIL) {
       fprintf(stderr, "error! failure to set map adjacencies for %s\nirritant: %s\nexiting...\n", sarr1[i], strErrRISK(errRISK));
-      freeStrArr(sarr2, j);
-      freeStrArr(sarr1, k);
       exit(EXIT_FAILURE);
     }
-    freeStrArr(sarr2, j);
   }
-  freeStrArr(sarr1, k);
 }
 */
 
 // log the game setup
-void logRISK(risk_t *game, log_t *logger) { // TODO: err handling, free, adj mat
+void logRISK(risk_t *game, log_t *logger) {
   int i, j, k;
   char **names;
   int *trades;
@@ -633,7 +440,7 @@ void logRISK(risk_t *game, log_t *logger) { // TODO: err handling, free, adj mat
 }
 
 // log dna
-void logDNA(dna_t *dna, log_t *logger) { // TODO: err handling, free
+void logDNA(dna_t *dna, log_t *logger) {
   int i, j, chromosomes, traits;
   double r;
 
@@ -812,14 +619,13 @@ void risky(risk_t *game, dna_t *dna, int games) {
   do {
     SESSION = games;
     setupLOGfromINI(ini, &logger);
-    testLOG(logger);
     if(logger) {
-      //logRISK(game, logger);
+      logRISK(game, logger);
       logDNA(dna, logger);
     }
 
     if(games > 0) { fprintf(stdout, "sessions left: %i\n", games); }
-/*
+
     // [re]set game
     if((errRISK = initDeck(game)) != RISK_NIL) {
       fprintf(stderr, "error! failure to ini deck\nirritant: %s\nexiting...", strErrRISK(errRISK));
@@ -833,7 +639,7 @@ void risky(risk_t *game, dna_t *dna, int games) {
       fprintf(stderr, "error! failure to ini deck\narmies: %s\nexiting...", strErrRISK(errRISK));
       exit(EXIT_FAILURE);
     }
-*/
+
     //char *player = NULL;
     if(logger) { logHeader(logger, "G A M E P L A Y"); }
     time_t start = time(NULL);
@@ -896,16 +702,10 @@ void risky(risk_t *game, dna_t *dna, int games) {
 // free all memory we alloc'd, if any, ignoring any errors. This is the reason
 // we have four globals tracking these data structures
 void cleanup() {
-  //freeINI(ini);
+  freeINI(ini);
   freeLOG(logger);
   freeDNA(dna);
-  //freeRISK(game);
-}
-
-// TODO: do all setINI() calls to test it works for all the getters used in this
-// file. this way i do not have to write parser to test
-void setupTmpINI(ini_t *ini) {
-  setIntINI(ini, "Training", "games", 1);
+  freeRISK(game);
 }
 
 int main(int argc, char *argv[]) {
@@ -917,7 +717,6 @@ int main(int argc, char *argv[]) {
   }
 
   atexit(cleanup); // register cleanup() to be called upon exit()
-/*
   if((errINI = readINI(&ini, argv[1])) != INI_NIL) {
     fprintf(stderr, "error! failure to read conf\nirritant: %s\nexiting...\n", strErrINI(errINI));
     exit(EXIT_FAILURE);
@@ -927,62 +726,53 @@ int main(int argc, char *argv[]) {
     fprintf(stderr, "error! INI section=Training,key=games\nirritant: %s\nexiting...\n", strErrINI(errINI));
     exit(EXIT_FAILURE);
   }
-*/
+
   if((errINI = makeINI(&ini)) != INI_NIL) {
     fprintf(stderr, "error! failure to make conf\nirritant: %s\nexiting...\n", strErrINI(errINI));
     exit(EXIT_FAILURE);
   }
 
-  setupTmpINI(ini);
-/*  
-  int i;
-  if((errINI = getIntINI(ini, "Training", "games", &i)) != INI_NIL) {
-    fprintf(stderr, "error! INI section=Training,key=games\nirritant: %s\nexiting...\n", strErrINI(errINI));
-    exit(EXIT_FAILURE);
-  }
-*/
-  setupDNAfromINI(ini, &dna); //TODO: err check
-/*
+  setupDNAfromINI(ini, &dna);
+
   setupRISKfromINI(ini, &game);
   if((errRISK = isValid(game)) != RISK_NIL) {
     fprintf(stderr, "error! invalid game specified by conf\nirritant: %s\nexiting...\n", strErrRISK(errRISK));
     exit(EXIT_FAILURE);
   }
-*/
+
   srand(time(NULL)); // set random for risk and dna libs
   risky(game, dna, 1);
-/*
-  if(*i > 1) {
-    char **ids;
-    int *strand;
-    int i, j, traits;
 
-    if((errDNA = getNames(dna, &ids, &i)) != DNA_NIL) {
+  if(argc > 1) {
+    int strands, traits;
+    if((errDNA = getChromosomes(dna, &strands, &traits)) != DNA_NIL) {
+      fprintf(stderr, "error! failure to get dna chromosomes\nirritant: %s\nexiting...\n", strErrDNA(errDNA));
+      exit(EXIT_FAILURE);
+    }
+
+    char ids[strands][36];
+    if((errDNA = getIDs(dna, ids)) != DNA_NIL) {
       fprintf(stderr, "error! failure to get dna identifiers\nirritant: %s\nexiting...\n", strErrDNA(errDNA));
       exit(EXIT_FAILURE);
     }
 
-    for(j = 0; j < i; j++) {
-      if((errDNA = getStrand(dna, ids[j], &strand, &traits)) != DNA_NIL) {
-        fprintf(stderr, "error! failure to get dna strand %s\nirritant: %s\nexiting...\n", ids[j], strErrDNA(errDNA));
-        freeStrArr(ids, i);
+    int strand[traits];
+    for(; strands; strands--) {
+      if((errDNA = getStrand(dna, ids[strands-1], strand, &traits)) != DNA_NIL) {
+        fprintf(stderr, "error! failure to get dna strand %s\nirritant: %s\nexiting...\n", ids[strands-1], strErrDNA(errDNA));
         exit(EXIT_FAILURE);
       }
-      if((errINI = setIntArrINI(ini, "Chromosomes", ids[j], strand, traits)) != INI_NIL) {
-        fprintf(stderr, "error! failure to get dna strand %s\nirritant: %s\nexiting...\n", ids[j], strErrDNA(errDNA));
-        freeStrArr(ids, i);
-        free(strand);
+      if((errINI = setIntArrINI(ini, "Chromosomes", ids[strands-1], strand, traits)) != INI_NIL) {
+        fprintf(stderr, "error! failure to get dna strand %s\nirritant: %s\nexiting...\n", ids[strands-1], strErrDNA(errDNA));
         exit(EXIT_FAILURE);
       }
-      free(strand);
     }
-    freeStrArr(ids, i);
 
     if((errINI = writeINI(ini, argv[1])) != INI_NIL) {
       fprintf(stderr, "error! failure to write conf\nirritant: %s\nexiting...\n", strErrINI(errINI));
       exit(EXIT_FAILURE);
     }
   }
-*/
+
   exit(EXIT_SUCCESS);
 }

@@ -2,7 +2,7 @@
  * FILE:    ini.h                                                             *
  * AUTHOR:  Ryan Rozanski                                                     *
  * CREATED: 3/27/17                                                           *
- * EDITED:  5/13/17                                                           *
+ * EDITED:  6/4/17                                                            *
  * INFO:    A ini configuration file library. Allows the static reading from  *
  *          and output to a file, as well as dynamic CRUD operations. The     *
  *          library API is designed to return errors, which should be checked *
@@ -10,7 +10,7 @@
  *          returned. Below is the grammar accepted and output by the library.*
  *                                                                            *
  *                ::BNF GRAMMAR::                                             *
- *       FIXME                                                                     *
+ *       FIXME                                                                *
  *         <ini>     ::= <section>*                                           *
  *         <section> ::= <header><setting>+                                   *
  *         <header>  ::= [<term>]                                             *
@@ -56,7 +56,8 @@ typedef struct ini ini_t; /* INI configuration files. */
 typedef enum errINI { /* All the possible errors returned from the library. */
   INI_CLOSE_FAILURE, INI_OPEN_FAILURE, INI_INVALID_KEY, INI_INVALID_SECTION,
   INI_INVALID_VAL, INI_OUT_OF_MEMORY, INI_NIL_KEY, INI_NIL_VAL, INI_NIL,
-  INI_NIL_SECTION, INI_NIL_INI, INI_NIL_FNAME, INI_INVALID_CONF
+  INI_NIL_SECTION, INI_NIL_INI, INI_NIL_FNAME, INI_INVALID_CONF,
+  INI_NIL_LEN, INI_TYPE_MISMATCH, INI_UNKNOWN_TYPE, INI_NOT_FOUND, INI_INVALID_LEN,
 } errINI_t;
 
 /******************************************************************************
