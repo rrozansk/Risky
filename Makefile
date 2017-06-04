@@ -39,30 +39,30 @@ rebuild: clean build
 all:     $(MAIN)
 
 $(MAIN): $(MAIN_OBJS)
-	        $(CC) $(CFLAGS) $(INCLUDES) -o $(MAIN) $(MAIN_OBJS)
+	$(CC) $(CFLAGS) $(INCLUDES) -o $(MAIN) $(MAIN_OBJS)
 
 .c.o:
-	      	$(CC) $(CFLAGS) $(INCLUDES) -c $<  -o $@
+	$(CC) $(CFLAGS) $(INCLUDES) -c $<  -o $@
 
 install:  rebuild
-					\cp $(MAIN) /usr/bin/
+	\cp $(MAIN) /usr/bin/
 
 clean:
-	        \rm -f *.o *~ src/*.o test/*.o $(MAIN) $(DNA_TEST) $(INI_TEST) $(RISK_TEST) $(LOG_TEST)
+	\rm -f *.o *~ src/*.o test/*.o $(MAIN) $(DNA_TEST) $(INI_TEST) $(RISK_TEST) $(LOG_TEST)
 
 tar:
-					tar -cvf $(MAIN).tar $(TAR_FILES)
+	tar -cvf $(MAIN).tar $(TAR_FILES)
 
 tests: $(DNA_TEST) $(INI_TEST) $(RISK_TEST) $(LOG_TEST)
 
 $(DNA_TEST): $(DNA_OBJS)
-					$(CC) $(CFLAGS) $(INCLUDES) -o $(DNA_TEST) $(DNA_OBJS)
+	$(CC) $(CFLAGS) $(INCLUDES) -o $(DNA_TEST) $(DNA_OBJS)
 
 $(INI_TEST): $(INI_OBJS)
-					$(CC) $(CFLAGS) $(INCLUDES) -o $(INI_TEST) $(INI_OBJS)
+	$(CC) $(CFLAGS) $(INCLUDES) -o $(INI_TEST) $(INI_OBJS)
 
 $(RISK_TEST): $(RISK_OBJS)
-					$(CC) $(CFLAGS) $(INCLUDES) -o $(RISK_TEST) $(RISK_OBJS)
+	$(CC) $(CFLAGS) $(INCLUDES) -o $(RISK_TEST) $(RISK_OBJS)
 
 $(LOG_TEST): $(LOG_OBJS)
-					$(CC) $(CFLAGS) $(INCLUDES) -o $(LOG_TEST) $(LOG_OBJS)
+	$(CC) $(CFLAGS) $(INCLUDES) -o $(LOG_TEST) $(LOG_OBJS)
