@@ -2,7 +2,7 @@
  * FILE:    ini.h                                                             *
  * AUTHOR:  Ryan Rozanski                                                     *
  * CREATED: 3/27/17                                                           *
- * EDITED:  6/4/17                                                            *
+ * EDITED:  6/17/17                                                           *
  * INFO:    A ini configuration file library. Allows the static reading from  *
  *          and output to a file, as well as dynamic CRUD operations. The     *
  *          library API is designed to return errors, which should be checked *
@@ -10,27 +10,32 @@
  *          returned. Below is the grammar accepted and output by the library.*
  *                                                                            *
  *                ::BNF GRAMMAR::                                             *
- *       FIXME                                                                *
+ *                                                                            *
  *         <ini>     ::= <section>*                                           *
  *         <section> ::= <header><setting>+                                   *
  *         <header>  ::= [<term>]                                             *
  *         <setting> ::= <term><dividor><value><space>+                       *
- *         <term>    ::= <char>+                                              *
- *         <value>   ::= <int> | <float> | <char> | <bool> | <array>          *
- *         <array>   ::= <iArr> | <sArr> | <cArr>                             *
+ *         <term>    ::= <elem>+                                              *
+ *         <value>   ::= <int> | <float> | <bool> | <char> | <str> | <array>  *
+ *         <array>   ::= <iArr> | <fArr> | <bArr> | <cArr> | <sArr>           *
  *         <iArr>    ::= {<int><ints>*}                                       *
- *         <sArr>    ::= {<string><strings>*}                                 *
+ *         <fArr>    ::= {<float><floats>*}                                   *
+ *         <bArr>    ::= {<bool><bools>*}                                     *
  *         <cArr>    ::= {<char><chars>*}                                     *
- *         <int>     ::= <int>+                                               *
- *         <float>   ::= <int>*.<int>+                                        *
+ *         <sArr>    ::= {<string><strings>*}                                 *
  *         <ints>    ::= ,<int>                                               *
- *         <string>  ::= "<char>*"                                            *
- *         <strings> ::= ,<string>                                            *
+ *         <floats>  ::= ,<float>                                             *
+ *         <bools>   ::= ,<bool>                                              *
  *         <chars>   ::= ,<char>                                              *
- *         <char>    ::= '<lower>' | '<upper>' | '<digit>' | '<special>'      *
+ *         <strings> ::= ,<string>                                            *
+ *         <int>     ::= <digit>+                                             *
+ *         <float>   ::= <digit>*.<digit>+                                    *
  *         <bool>    ::= true | false                                         *
+ *         <char>    ::= '<elem>'                                             *
+ *         <string>  ::= "<elem>*"                                            *
  *         <dividor> ::= : | =                                                *
  *         <space>   ::= \t | \v | \f | \n | \r | ' '                         *
+ *         <elem>    ::= <lower> | <upper> | <digit> | <special>              *
  *         <lower>   ::= a | b | c | d | e | f | g | h | i | j | k | l | m |  *
  *                       n | o | p | q | r | s | t | u | v | w | x | y | z    *
  *         <upper>   ::= A | B | C | D | E | F | G | H | I | J | K | L | M |  *
@@ -117,13 +122,6 @@ errINI_t freeINI(ini_t *ini);
  *                                                                            *
  * RETURNS: INI_NULL_INI, INI_NULL_FNAME, INI_OPEN_FAILURE, INI_OUT_OF_MEMORY,*
  *          INI_CLOSE_FAILURE, INI_INVALID_CONF, INI_INVALID_SECTION,         *
- * ini      the ini conf to use                                               *
- * section  the section to make a new setting under                           *
- * key      the key of the new setting                                        *
- * val      the val of the new setting                                        *
- * n        the size of the array of the var val                              *
- *          INI_INVALID_KEY, INI_INVALID_VAL, INI_NULL_SECTION, INI_NULL_KEY, *
- *          INI_NULL_VAL, INI_NULL_VAL, or INI_NIL if no error.               *
  *                                                                            *
  ******************************************************************************/
 errINI_t readINI(ini_t **ini, char *fname);
@@ -168,9 +166,9 @@ errINI_t setIntINI(ini_t *ini, char *section, char *key, int val);
  * ARGUMENT DESCRIPTION                                                       *
  * -------- -----------                                                       *
  * ini      the ini conf to use                                               *
- * sec      the section to look under                                         *
+ * section  the section to look under                                         *
  * key      the key of the setting to get                                     *
- * v        a pointer which to set with the val of the setting found, if any  *
+ * val      a pointer which to set with the val of the setting found, if any  *
  *                                                                            *
  * RETURNS: INI_NULL_INI, INI_NULL_SECTION, INI_NULL_KEY, INI_NULL_VAL,       *
  *          INI_INVALID_SECTION, INI_INVALID_KEY, or INI_NIL if no error.     *
@@ -180,7 +178,7 @@ errINI_t getIntINI(ini_t *ini, char *section, char *key, int *val);
 
 /******************************************************************************
  *                                                                            *
- * PURPOSE: 
+ * PURPOSE: Create/Update a new key value setting under the specified section.*
  *                                                                            *
  * ARGUMENT DESCRIPTION                                                       *
  * -------- -----------                                                       *
@@ -196,7 +194,7 @@ errINI_t setFloatINI(ini_t *ini, char *section, char *key, double val);
 
 /******************************************************************************
  *                                                                            *
- * PURPOSE: 
+ * PURPOSE: Read a value from the conf given by section and key.              *
  *                                                                            *
  * ARGUMENT DESCRIPTION                                                       *
  * -------- -----------                                                       *
@@ -212,7 +210,7 @@ errINI_t getFloatINI(ini_t *ini, char *section, char *key, double *val);
 
 /******************************************************************************
  *                                                                            *
- * PURPOSE: 
+ * PURPOSE: Create/Update a new key value setting under the specified section.*
  *                                                                            *
  * ARGUMENT DESCRIPTION                                                       *
  * -------- -----------                                                       *
@@ -228,7 +226,7 @@ errINI_t setBoolINI(ini_t *ini, char *section, char *key, int val);
 
 /******************************************************************************
  *                                                                            *
- * PURPOSE: 
+ * PURPOSE: Read a value from the conf given by section and key.              *
  *                                                                            *
  * ARGUMENT DESCRIPTION                                                       *
  * -------- -----------                                                       *
@@ -244,7 +242,7 @@ errINI_t getBoolINI(ini_t *ini, char *section, char *key, int *val);
 
 /******************************************************************************
  *                                                                            *
- * PURPOSE: 
+ * PURPOSE: Create/Update a new key value setting under the specified section.*
  *                                                                            *
  * ARGUMENT DESCRIPTION                                                       *
  * -------- -----------                                                       *
@@ -260,7 +258,7 @@ errINI_t setCharINI(ini_t *ini, char *section, char *key, char val);
 
 /******************************************************************************
  *                                                                            *
- * PURPOSE: 
+ * PURPOSE: Read a value from the conf given by section and key.              *
  *                                                                            *
  * ARGUMENT DESCRIPTION                                                       *
  * -------- -----------                                                       *
@@ -276,7 +274,7 @@ errINI_t getCharINI(ini_t *ini, char *section, char *key, char *val);
 
 /******************************************************************************
  *                                                                            *
- * PURPOSE: 
+ * PURPOSE: Create/Update a new key value setting under the specified section.*
  *                                                                            *
  * ARGUMENT DESCRIPTION                                                       *
  * -------- -----------                                                       *
@@ -292,7 +290,7 @@ errINI_t setStrINI(ini_t *ini, char *section, char *key, char *val);
 
 /******************************************************************************
  *                                                                            *
- * PURPOSE: 
+ * PURPOSE: Read a value from the conf given by section and key.              *
  *                                                                            *
  * ARGUMENT DESCRIPTION                                                       *
  * -------- -----------                                                       *
@@ -308,7 +306,7 @@ errINI_t getStrINI(ini_t *ini, char *section, char *key, char **val);
 
 /******************************************************************************
  *                                                                            *
- * PURPOSE: 
+ * PURPOSE: Create/Update a new key value setting under the specified section.*
  *                                                                            *
  * ARGUMENT DESCRIPTION                                                       *
  * -------- -----------                                                       *
@@ -325,7 +323,7 @@ errINI_t setIntArrINI(ini_t *ini, char *section, char *key, int *val, int n);
 
 /******************************************************************************
  *                                                                            *
- * PURPOSE: 
+ * PURPOSE: Read a value from the conf given by section and key.              *
  *                                                                            *
  * ARGUMENT DESCRIPTION                                                       *
  * -------- -----------                                                       *
@@ -342,7 +340,7 @@ errINI_t getIntArrINI(ini_t *ini, char *section, char *key, int **val, int *n);
 
 /******************************************************************************
  *                                                                            *
- * PURPOSE: 
+ * PURPOSE: Create/Update a new key value setting under the specified section.*
  *                                                                            *
  * ARGUMENT DESCRIPTION                                                       *
  * -------- -----------                                                       *
@@ -359,7 +357,7 @@ errINI_t setFloatArrINI(ini_t *ini, char *section, char *key, double *val, int n
 
 /******************************************************************************
  *                                                                            *
- * PURPOSE: 
+ * PURPOSE: Read a value from the conf given by section and key.              *
  *                                                                            *
  * ARGUMENT DESCRIPTION                                                       *
  * -------- -----------                                                       *
@@ -376,7 +374,7 @@ errINI_t getFloatArrINI(ini_t *ini, char *section, char *key, double **val, int 
 
 /******************************************************************************
  *                                                                            *
- * PURPOSE: 
+ * PURPOSE: Create/Update a new key value setting under the specified section.*
  *                                                                            *
  * ARGUMENT DESCRIPTION                                                       *
  * -------- -----------                                                       *
@@ -393,7 +391,7 @@ errINI_t setBoolArrINI(ini_t *ini, char *section, char *key, int *val, int n);
 
 /******************************************************************************
  *                                                                            *
- * PURPOSE: 
+ * PURPOSE: Read a value from the conf given by section and key.              *
  *                                                                            *
  * ARGUMENT DESCRIPTION                                                       *
  * -------- -----------                                                       *
@@ -410,7 +408,7 @@ errINI_t getBoolArrINI(ini_t *ini, char *section, char *key, int **val, int *n);
 
 /******************************************************************************
  *                                                                            *
- * PURPOSE: 
+ * PURPOSE: Create/Update a new key value setting under the specified section.*
  *                                                                            *
  * ARGUMENT DESCRIPTION                                                       *
  * -------- -----------                                                       *
@@ -427,7 +425,7 @@ errINI_t setCharArrINI(ini_t *ini, char *section, char *key, char *val, int n);
 
 /******************************************************************************
  *                                                                            *
- * PURPOSE: 
+ * PURPOSE: Read a value from the conf given by section and key.              *
  *                                                                            *
  * ARGUMENT DESCRIPTION                                                       *
  * -------- -----------                                                       *
@@ -444,7 +442,7 @@ errINI_t getCharArrINI(ini_t *ini, char *section, char *key, char **val, int *n)
 
 /******************************************************************************
  *                                                                            *
- * PURPOSE: 
+ * PURPOSE: Create/Update a new key value setting under the specified section.*
  *                                                                            *
  * ARGUMENT DESCRIPTION                                                       *
  * -------- -----------                                                       *
@@ -461,7 +459,7 @@ errINI_t setStrArrINI(ini_t *ini, char *section, char *key, char **val, int n);
 
 /******************************************************************************
  *                                                                            *
- * PURPOSE: 
+ * PURPOSE: Read a value from the conf given by section and key.              *
  *                                                                            *
  * ARGUMENT DESCRIPTION                                                       *
  * -------- -----------                                                       *

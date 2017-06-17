@@ -2,7 +2,7 @@
  * FILE:    dna.c                                                             *
  * AUTHOR:  Ryan Rozanski                                                     *
  * CREATED: 5/4/17                                                            *
- * EDITED:  6/1/17                                                            *
+ * EDITED:  6/11/17                                                           *
  * INFO:    Implementation of the interface located in dna.h.                 *
  *                                                                            *
  ******************************************************************************/
@@ -30,10 +30,10 @@ typedef struct dna {
   int traits;        /* columns in matrix */
   int lbound;        /* lower bound on matrix values */
   int ubound;        /* upper bound on matrix values */
-  double rate;       /* mutation rate 0.00 - 1.00 */
+  float rate;        /* mutation rate 0.00 - 1.00 */
   int elitism;       /* enable elitism or not */
-  double percent;    /* size of elitist group 0.00 - 1.00 */
-  int (*fitness)(char *id, int *strand, int traits);
+  float percent;     /* size of elitist group 0.00 - 1.00 */
+  int (*fitness)(char *id, int strand[], int traits);
 } dna_t;
 
 /******************************************************************************
@@ -46,8 +46,8 @@ static int myGenCmp(const void *map1, const void *map2) {
   int fit2 = ((int *)map2)[1];
   
   if(fit1 == fit2) { return 0; }
-  else if(fit1 < fit2) { return -1; }
-  else { return 1; } // fit1 > fit2
+  if(fit1 < fit2) { return -1; }
+  return 1; // fit1 > fit2
 }
 
 static int myStrCmp(const void *str1, const void *str2) { 
@@ -146,19 +146,20 @@ errDNA_t makeDNA(dna_t **dna, char **ids, int strands, int traits) {
 errDNA_t freeDNA(dna_t *dna) {
   if(!dna) { return DNA_NIL; }
 
-  if(dna->strands) { free(dna->strands); }
-  if(dna->ids) { 
-    int i;
-    for(i = dna->chromosomes; i; i--) { free(dna->ids[i-1]); }
-    free(dna->ids);
+  int i;
+  for(i = dna->chromosomes; i; i--) {
+    if(dna->strands) { free(dna->strands[i-1]); }
+    if(dna->ids) { free(dna->ids[i-1]); }
   }
+  if(dna->strands) { free(dna->strands); }
+  if(dna->ids) { free(dna->ids); }
 
   free(dna);
 
   return DNA_NIL;
 }
 
-errDNA_t setFitness(dna_t *dna, int (*fitness)(char *id, int *strand, int traits)) {
+errDNA_t setFitness(dna_t *dna, int (*fitness)(char *id, int strand[], int traits)) {
   if(!dna) { return DNA_NIL_DNA; }
   if(!fitness) { return DNA_NIL_FITNESS; }
 
@@ -172,11 +173,10 @@ errDNA_t getFitness(dna_t *dna, char *id, int *fitness) {
   if(!id) { return DNA_NIL_ID; }
   if(!fitness) { return DNA_NIL_FITNESS_INT; }
 
-  int loc = find(dna, id);
-  if(loc == -1) { return DNA_INVALID_ID; }
+  int loc, i;
+  if((loc = find(dna, id)) == -1) { return DNA_INVALID_ID; }
 
   int tmpStrand[dna->traits];
-  int i;
   for(i = dna->traits; i; i--) { tmpStrand[i-1] = dna->strands[loc][i-1]; }
 
   char tmpID[strlen(id)+1];
@@ -187,7 +187,7 @@ errDNA_t getFitness(dna_t *dna, char *id, int *fitness) {
   return DNA_NIL;
 }
 
-errDNA_t setMutation(dna_t *dna, int lbound, int ubound, double rate) {
+errDNA_t setMutation(dna_t *dna, int lbound, int ubound, float rate) {
   if(!dna) { return DNA_NIL_DNA; }
   if(lbound >= ubound) { return DNA_INVALID_BOUNDS; }
   if(rate < 0.0 || rate > 1.0) { return DNA_INVALID_RATE; }
@@ -199,7 +199,7 @@ errDNA_t setMutation(dna_t *dna, int lbound, int ubound, double rate) {
   return DNA_NIL;
 }
 
-errDNA_t getMutation(dna_t *dna, int *lbound, int *ubound, double *rate) {
+errDNA_t getMutation(dna_t *dna, int *lbound, int *ubound, float *rate) {
   if(!dna) { return DNA_NIL_DNA; }
   if(!lbound) { return DNA_NIL_LBOUND; }
   if(!ubound) { return DNA_NIL_UBOUND; }
@@ -212,10 +212,10 @@ errDNA_t getMutation(dna_t *dna, int *lbound, int *ubound, double *rate) {
   return DNA_NIL;
 }
 
-errDNA_t setElitism(dna_t *dna, int elitism, double percent) {
+errDNA_t setElitism(dna_t *dna, int elitism, float percent) {
   if(!dna) { return DNA_NIL_DNA; }
   if(!(elitism == 0 || elitism == 1)) { return DNA_INVALID_ELITISM; }
-  if(percent < 0.00 || percent > 1.00) { return DNA_INVALID_PERCENT; }
+  if(percent < 0.0 || percent > 1.0) { return DNA_INVALID_PERCENT; }
 
   dna->elitism = elitism;
   dna->percent = percent;
@@ -223,7 +223,7 @@ errDNA_t setElitism(dna_t *dna, int elitism, double percent) {
   return DNA_NIL;
 }
 
-errDNA_t getElitism(dna_t *dna, int *elitism, double *percent) {
+errDNA_t getElitism(dna_t *dna, int *elitism, float *percent) {
   if(!dna) { return DNA_NIL_DNA; }
   if(!elitism) { return DNA_NIL_ELITISM; }
   if(!percent) { return DNA_NIL_PERCENT; }
@@ -293,6 +293,7 @@ errDNA_t crossover(dna_t *dna, char *father, char *mother, int *child, int *trai
   if(!mother) { return DNA_NIL_MOTHER; }
   if(!child) { return DNA_NIL_CHILD; }
 
+  // TODO: make mutually exclusive, error if not atleast 2 distinct parents
   int id1 = find(dna, father);
   int id2 = find(dna, mother);
   if(id1 == -1 || id2 == -1) { return DNA_INVALID_ID; }
@@ -310,10 +311,9 @@ errDNA_t mutate(dna_t *dna, char *id) {
   if(!dna) { return DNA_NIL_DNA; }
   if(!id) { return DNA_NIL_ID; }
 
-  int loc = find(dna, id);
-  if(loc == -1) { return DNA_INVALID_ID; }
+  int loc, mutation, i;
+  if((loc = find(dna, id)) == -1) { return DNA_INVALID_ID; }
 
-  int i, mutation;
   for(i = 0; i < dna->traits; i++) {
     if((rand() % 100) < (dna->rate * 100)) {
       mutation = (rand() % (dna->ubound + 1 - dna->lbound)) + dna->lbound;
@@ -328,8 +328,9 @@ errDNA_t nextGeneration(dna_t *dna) {
   if(!dna) { return DNA_NIL_DNA; }
 
   int strands, traits, mother, father;
+  int newTrait, loc;
   int fitness[dna->chromosomes][2]; // mapping => id => { loc, fitness }
-  int strand[dna->traits]; // tmp strand for fitness func
+  int strand[dna->traits];          // tmp strand for fitness func
 
   for(strands = dna->chromosomes; strands; strands--) {
     for(traits = dna->traits; traits; traits--) {
@@ -342,18 +343,17 @@ errDNA_t nextGeneration(dna_t *dna) {
   qsort(fitness, dna->chromosomes, sizeof(int)*2, myGenCmp);
 
   for(strands = (dna->chromosomes - (dna->chromosomes * dna->rate)); strands < dna->chromosomes; strands++) {
-    mother = rand() % dna->chromosomes; // choose mates
-    father = rand() % dna->chromosomes; // TODO: choose these more fairly/evenly and mutually exclusive
-    for(traits = dna->traits; traits; traits--) {      // crossover
-      strand[traits-1] = dna->strands[(rand() % 2) ? mother : father][traits-1];
-    }
-    for(traits = dna->traits; traits; traits--) {  // mutate
-      if((rand() % 100) < (dna->rate * 100)) {
-        strand[traits-1] = (rand() % (dna->ubound + 1 - dna->lbound)) + dna->lbound;
+    // choose mutually exclusive mates TODO
+    mother = rand() % dna->chromosomes;
+    father = rand() % dna->chromosomes;
+    loc = fitness[dna->chromosomes-strands-1][0];
+    for(traits = dna->traits; traits; traits--) {
+      if((rand() % 100) < (dna->rate * 100)) { // mutation
+        newTrait = (rand() % (dna->ubound + 1 - dna->lbound)) + dna->lbound;
+      } else { // crossover
+        newTrait = dna->strands[(rand() % 2) ? mother : father][traits-1];
       }
-    }
-    for(traits = dna->traits; traits; traits--) {      // replace a strand
-      dna->strands[fitness[dna->chromosomes-strands-1][0]][traits-1] = strand[traits-1];
+      dna->strands[loc][traits-1] = newTrait; // overwrite
     }
   }
 

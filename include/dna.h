@@ -142,7 +142,7 @@ errDNA_t getFitness(dna_t *dna, char *id, int *fitness);
  *          DNA_NIL if no error                                               *
  *                                                                            *
  ******************************************************************************/
-errDNA_t setMutation(dna_t *dna, int lbound, int ubound, double rate);
+errDNA_t setMutation(dna_t *dna, int lbound, int ubound, float rate);
 
 /******************************************************************************
  *                                                                            *
@@ -163,7 +163,7 @@ errDNA_t setMutation(dna_t *dna, int lbound, int ubound, double rate);
  *          DNA_NIL if no error                                               *
  *                                                                            *
  ******************************************************************************/
-errDNA_t getMutation(dna_t *dna, int *lbound, int *ubound, double *rate);
+errDNA_t getMutation(dna_t *dna, int *lbound, int *ubound, float *rate);
 
 /******************************************************************************
  *                                                                            *
@@ -182,7 +182,7 @@ errDNA_t getMutation(dna_t *dna, int *lbound, int *ubound, double *rate);
  *          DNA_NIL if no error                                               *
  *                                                                            *
  ******************************************************************************/
-errDNA_t setElitism(dna_t *dna, int elitism, double percent);
+errDNA_t setElitism(dna_t *dna, int elitism, float percent);
 
 /******************************************************************************
  *                                                                            *
@@ -201,7 +201,7 @@ errDNA_t setElitism(dna_t *dna, int elitism, double percent);
  *          DNA_NIL if no error                                               *
  *                                                                            *
  ******************************************************************************/
-errDNA_t getElitism(dna_t *dna, int *elitism, double *percent);
+errDNA_t getElitism(dna_t *dna, int *elitism, float *percent);
 
 /******************************************************************************
  *                                                                            *
