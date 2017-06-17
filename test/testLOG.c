@@ -2,7 +2,7 @@
  * FILE:    testLOG.c                                                         *
  * AUTHOR:  Ryan Rozanski                                                     *
  * CREATED: 6/3/17                                                            *
- * EDITED:  6/4/17                                                            *
+ * EDITED:  6/17/17                                                           *
  * INFO:    Test file for implementation of the interface located in log.h.   *
  *                                                                            *
  ******************************************************************************/
@@ -25,14 +25,14 @@
  ******************************************************************************/
 #define columns 120
 #define directory "logger_tests"
-#define TOTAL_TESTS 1
+#define TOTAL_TESTS 43
 
 /******************************************************************************
  *                                                                            *
  *   T Y P E S                                                                *
  *                                                                            *
  ******************************************************************************/
-typedef enum testResultLOG { LOG_SUCC, LOG_FAIL } testResultLOG_t;
+typedef enum testResultLOG { LOG_PASS, LOG_FAIL } testResultLOG_t;
 
 /******************************************************************************
  *                                                                            *
@@ -46,6 +46,94 @@ log_t *logger;
  *   T E S T S                                                                *
  *                                                                            *
  ******************************************************************************/
+testResultLOG_t testStrErrLOG_OUT_OF_MEMORY() {
+  return (strcmp(strErrLOG(LOG_OUT_OF_MEMORY), "")) ? LOG_PASS : LOG_FAIL;
+}
+
+testResultLOG_t testStrErrLOG_OPEN_FAIL() {
+  return (strcmp(strErrLOG(LOG_OPEN_FAIL), "")) ? LOG_PASS : LOG_FAIL;
+}
+
+testResultLOG_t testStrErrLOG_CLOSE_FAIL() {
+  return (strcmp(strErrLOG(LOG_CLOSE_FAIL), "")) ? LOG_PASS : LOG_FAIL;
+}
+
+testResultLOG_t testStrErrLOG_DIR_CREATION_FAIL() {
+  return (strcmp(strErrLOG(LOG_DIR_CREATION_FAIL), "")) ? LOG_PASS : LOG_FAIL;
+}
+
+testResultLOG_t testStrErrLOG_UNKNOWN_TYPE() {
+  return (strcmp(strErrLOG(LOG_UNKNOWN_TYPE), "")) ? LOG_PASS : LOG_FAIL;
+}
+
+testResultLOG_t testStrErrLOG_INVALID_ROW_SIZE() {
+  return (strcmp(strErrLOG(LOG_INVALID_ROW_SIZE), "")) ? LOG_PASS : LOG_FAIL;
+}
+
+testResultLOG_t testStrErrLOG_INVALID_COL_SIZE() {
+  return (strcmp(strErrLOG(LOG_INVALID_COL_SIZE), "")) ? LOG_PASS : LOG_FAIL;
+}
+
+testResultLOG_t testStrErrLOG_INVALID_ARR_SIZE() {
+  return (strcmp(strErrLOG(LOG_INVALID_ARR_SIZE), "")) ? LOG_PASS : LOG_FAIL;
+}
+
+testResultLOG_t testStrErrLOG_INVALID_WIDTH() {
+  return (strcmp(strErrLOG(LOG_INVALID_WIDTH), "")) ? LOG_PASS : LOG_FAIL;
+}
+
+testResultLOG_t testStrErrLOG_INVALID_TIMESTAMP() {
+  return (strcmp(strErrLOG(LOG_INVALID_TIMESTAMP), "")) ? LOG_PASS : LOG_FAIL;
+}
+
+testResultLOG_t testStrErrLOG_INVALID_DIR() {
+  return (strcmp(strErrLOG(LOG_INVALID_DIR), "")) ? LOG_PASS : LOG_FAIL;
+}
+
+testResultLOG_t testStrErrLOG_INVALID_KEY() {
+  return (strcmp(strErrLOG(LOG_INVALID_KEY), "")) ? LOG_PASS : LOG_FAIL;
+}
+
+testResultLOG_t testStrErrLOG_NIL_LOG() {
+  return (strcmp(strErrLOG(LOG_NIL_LOG), "")) ? LOG_PASS : LOG_FAIL;
+}
+
+testResultLOG_t testStrErrLOG_NIL_NAME() {
+  return (strcmp(strErrLOG(LOG_NIL_NAME), "")) ? LOG_PASS : LOG_FAIL;
+}
+
+testResultLOG_t testStrErrLOG_NIL_DIR() {
+  return (strcmp(strErrLOG(LOG_NIL_DIR), "")) ? LOG_PASS : LOG_FAIL;
+}
+
+testResultLOG_t testStrErrLOG_NIL_TITLE() {
+  return (strcmp(strErrLOG(LOG_NIL_TITLE), "")) ? LOG_PASS : LOG_FAIL;
+}
+
+testResultLOG_t testStrErrLOG_NIL_HEADER() {
+  return (strcmp(strErrLOG(LOG_NIL_HEADER), "")) ? LOG_PASS : LOG_FAIL;
+}
+
+testResultLOG_t testStrErrLOG_NIL_SECTION() {
+  return (strcmp(strErrLOG(LOG_NIL_SECTION), "")) ? LOG_PASS : LOG_FAIL;
+}
+
+testResultLOG_t testStrErrLOG_NIL_KEY() {
+  return (strcmp(strErrLOG(LOG_NIL_KEY), "")) ? LOG_PASS : LOG_FAIL;
+}
+
+testResultLOG_t testStrErrLOG_NIL_ARR() {
+  return (strcmp(strErrLOG(LOG_NIL_ARR), "")) ? LOG_PASS : LOG_FAIL;
+}
+
+testResultLOG_t testStrErrLOG_NIL_MATRIX() {
+  return (strcmp(strErrLOG(LOG_NIL_MATRIX), "")) ? LOG_PASS : LOG_FAIL;
+}
+
+testResultLOG_t testStrErrLOG_NIL() {
+  return (!strcmp(strErrLOG(LOG_NIL), "")) ? LOG_PASS : LOG_FAIL;
+}
+
 testResultLOG_t testMakeLOG() {
   fprintf(stdout, "FAIL: testMakeLOG\n");
   return LOG_FAIL;
@@ -97,6 +185,107 @@ testResultLOG_t testMakeLOG() {
   */
 }
 
+testResultLOG_t testFreeLOG() {
+  //freeLOG(log_t *log)
+  return LOG_FAIL;
+}
+
+testResultLOG_t testLogTitle() {
+  //logTitle(log_t *log, char *title)
+  return LOG_FAIL;
+}
+
+testResultLOG_t testLogHeader() {
+  //logHeader(log_t *log, char *header)
+  return LOG_FAIL;
+}
+
+testResultLOG_t testLogSection() {
+  //logSection(log_t *log, char *section)
+  return LOG_FAIL;
+}
+
+testResultLOG_t testLogEvent() {
+  //logEvent(log_t *log, int timestamp, char *event)
+  return LOG_FAIL;
+}
+
+testResultLOG_t testLogIntSetting() {
+  //logIntSetting(log_t *log, char *key, int val)
+  return LOG_FAIL;
+}
+
+testResultLOG_t testLogIntArr() {
+  //logIntArr(log_t *log, int *arr, int size)
+  return LOG_FAIL;
+}
+
+testResultLOG_t testLogIntMatrix() {
+  //logIntMatrix(log_t *log, int *matrix, int r, int c)
+  return LOG_FAIL;
+}
+
+testResultLOG_t testLogFloatSetting() {
+  //logFloatSetting(log_t *log, char *key, double val)
+  return LOG_FAIL;
+}
+
+testResultLOG_t testLogFloatArr() {
+  //logFloatArr(log_t *log, double *arr, int size)
+  return LOG_FAIL;
+}
+
+testResultLOG_t testLogFloatMatrix() {
+  //logFloatMatrix(log_t *log, double **matrix, int r, int c)
+  return LOG_FAIL;
+}
+
+testResultLOG_t testLogBoolSetting() {
+  //logBoolSetting(log_t *log, char *key, int val)
+  return LOG_FAIL;
+}
+
+testResultLOG_t testLogBoolArr() {
+  //logBoolArr(log_t *log, int *arr, int size)
+  return LOG_FAIL;
+}
+
+testResultLOG_t testLogBoolMatrix() {
+  //logBoolMatrix(log_t *log, int **matrix, int r, int c)
+  return LOG_FAIL;
+}
+
+testResultLOG_t testLogCharSetting() {
+  //logCharSetting(log_t *log, char *key, char val)
+  return LOG_FAIL;
+}
+
+testResultLOG_t testLogCharArr() {
+  //logCharArr(log_t *log, char *arr, int size)
+  return LOG_FAIL;
+}
+
+testResultLOG_t testLogCharMatrix() {
+  //logCharMatrix(log_t *log, char **matrix, int r, int c)
+  return LOG_FAIL;
+}
+
+testResultLOG_t testLogStrSetting() {
+  //logStrSetting(log_t *log, char *key, char *val)
+  return LOG_FAIL;
+}
+
+testResultLOG_t testLogStrArr() {
+  //logStrArr(log_t *log, char **arr, int size)
+  return LOG_FAIL;
+}
+
+testResultLOG_t testLogStrMatrix() {
+  //logStrMatrix(log_t *log, char ***matrix, int r, int c)
+  return LOG_FAIL;
+}
+
+/*
 void testInt(log_t *logger) {
   logEvent(logger, 0, "testing logger int abilities\n");
   logEvent(logger, 0, "static setting");
@@ -219,21 +408,72 @@ void testStr(log_t *logger, int m, int n) {
   //logStrMatrix(logger, sml, 10, 20);
   logEvent(logger, 0, "\n");
 }
+*/
 
 /******************************************************************************
  *                                                                            *
  *   M A I N                                                                  *
  *                                                                            *
  ******************************************************************************/
-testResultLOG_t (*TESTS[TOTAL_TESTS])() = {
-  testMakeLOG,
+void *TESTS[TOTAL_TESTS][2] = {
+  { testStrErrLOG_OUT_OF_MEMORY,       "testStrErrLOG_OUT_OF_MEMORY"         },
+  { testStrErrLOG_OPEN_FAIL,           "testStrErrLOG_OPEN_FAIL"             },
+  { testStrErrLOG_CLOSE_FAIL,          "testStrErrLOG_CLOSE_FAIL"            },
+  { testStrErrLOG_DIR_CREATION_FAIL,   "testStrErrLOG_DIR_CREATION_FAIL"     },
+  { testStrErrLOG_UNKNOWN_TYPE,        "testStrErrLOG_UNKNOWN_TYPE"          },
+  { testStrErrLOG_INVALID_ROW_SIZE,    "testStrErrLOG_INVALID_ROW_SIZE"      },
+  { testStrErrLOG_INVALID_COL_SIZE,    "testStrErrLOG_INVALID_COL_SIZE"      },
+  { testStrErrLOG_INVALID_ARR_SIZE,    "testStrErrLOG_INVALID_ARR_SIZE"      },
+  { testStrErrLOG_INVALID_WIDTH,       "testStrErrLOG_INVALID_WIDTH"         },
+  { testStrErrLOG_INVALID_TIMESTAMP,   "testStrErrLOG_INVALID_TIMESTAMP"     },
+  { testStrErrLOG_INVALID_DIR,         "testStrErrLOG_INVALID_DIR"           },
+  { testStrErrLOG_INVALID_KEY,         "testStrErrLOG_INVALID_KEY"           },
+  { testStrErrLOG_NIL_LOG,             "testStrErrLOG_NIL_LOG"               },
+  { testStrErrLOG_NIL_NAME,            "testStrErrLOG_NIL_NAME"              },
+  { testStrErrLOG_NIL_DIR,             "testStrErrLOG_NIL_DIR"               },
+  { testStrErrLOG_NIL_TITLE,           "testStrErrLOG_NIL_TITLE"             },
+  { testStrErrLOG_NIL_HEADER,          "testStrErrLOG_NIL_HEADER"            },
+  { testStrErrLOG_NIL_SECTION,         "testStrErrLOG_NIL_SECTION"           },
+  { testStrErrLOG_NIL_KEY,             "testStrErrLOG_NIL_KEY"               },
+  { testStrErrLOG_NIL_ARR,             "testStrErrLOG_NIL_ARR"               },
+  { testStrErrLOG_NIL_MATRIX,          "testStrErrLOG_NIL_MATRIX"            },
+  { testStrErrLOG_NIL,                 "testStrErrLOG_NIL"                   },
+  { testMakeLOG,                       "testMakeLOG"                         },
+  { testFreeLOG,                       "testFreeLOG"                         },
+  { testLogTitle,                      "testLogTitle"                        },
+  { testLogHeader,                     "testLogHeader"                       },
+  { testLogSection,                    "testLogSection"                      },
+  { testLogEvent,                      "testLogEvent"                        },
+  { testLogIntSetting,                 "testLogIntSetting"                   },
+  { testLogIntArr,                     "testLogIntArr"                       },
+  { testLogIntMatrix,                  "testLogIntMatrix"                    },
+  { testLogFloatSetting,               "testLogFloatSetting"                 },
+  { testLogFloatArr,                   "testLogFloatArr"                     },
+  { testLogFloatMatrix,                "testLogFloatMatrix"                  },
+  { testLogBoolSetting,                "testLogBoolSetting"                  },
+  { testLogBoolArr,                    "testLogBoolArr"                      },
+  { testLogBoolMatrix,                 "testLogBoolMatrix"                   },
+  { testLogCharSetting,                "testLogCharSetting"                  },
+  { testLogCharArr,                    "testLogCharArr"                      },
+  { testLogCharMatrix,                 "testLogCharMatrix"                   },
+  { testLogStrSetting,                 "testLogStrSetting"                   },
+  { testLogStrArr,                     "testLogStrArr"                       },
+  { testLogStrMatrix,                  "testLogStrMatrix"                    },
 };
 
 int main() {
 
+  testResultLOG_t result;
   int test, passes, fails;
   for(test = passes = fails = 0; test < TOTAL_TESTS; test++) {
-    ((*TESTS[test])() == LOG_SUCC) ? passes++ : fails++;
+    result = ((testResultLOG_t (*)(void))(TESTS[test][0]))();
+    if(result == LOG_PASS) {
+      passes++;
+      fprintf(stdout, "PASS: %s\n", (char *)TESTS[test][1]);
+    } else {
+      fprintf(stdout, "FAIL: %s\n", (char *)TESTS[test][1]);
+      fails++;
+    }
   }
 
   fprintf(stdout, "\n--------------------\n"
