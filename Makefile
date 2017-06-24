@@ -11,19 +11,19 @@ MAIN_SRCS = src/ini.c src/log.c src/dna.c src/risk.c src/main.c
 MAIN_OBJS = $(MAIN_SRCS:.c=.o)
 MAIN = risky
 # log library test executable
-LOG_DEPS = src/log.c test/testLOG.c
+LOG_DEPS = include/log.h src/log.c test/testLOG.c
 LOG_OBJS = $(LOG_DEPS:.c=.o)
 LOG_TEST = logtest
 # ini library test executable
-INI_DEPS = src/ini.c test/testINI.c
+INI_DEPS = include/ini.h src/ini.c test/testINI.c
 INI_OBJS = $(INI_DEPS:.c=.o)
 INI_TEST = initest
 # dna library test executable
-DNA_DEPS = src/dna.c test/testDNA.c
+DNA_DEPS = include/dna.h src/dna.c test/testDNA.c
 DNA_OBJS = $(DNA_DEPS:.c=.o)
 DNA_TEST = dnatest
 # risk library test executable
-RISK_DEPS = src/risk.c test/testRISK.c
+RISK_DEPS = include/risk.h src/risk.c test/testRISK.c
 RISK_OBJS = $(RISK_DEPS:.c=.o)
 RISK_TEST = risktest
 
