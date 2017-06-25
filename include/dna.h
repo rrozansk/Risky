@@ -85,7 +85,7 @@ const char *strErrDNA(errDNA_t errDNA);
  *          DNA_NIL if no error                                               *
  *                                                                            *
  ******************************************************************************/
-errDNA_t makeDNA(dna_t **dna, char **ids, int strands, int traits);
+errDNA_t makeDNA(dna_t **dna, char *ids[], int strands, int traits);
 
 /******************************************************************************
  *                                                                            *
@@ -134,6 +134,7 @@ errDNA_t setFitness(dna_t *dna, int (*fitness)(char *id, int strand[], int trait
  * RETURNS: DNA_NIL_DNA if dna in NULL                                        *
  *          DNA_NIL_ID if id is NULL                                          *
  *          DNA_NIL_FITNESS_INT if fitness is NULL                            *
+ *          DNA_NIL_FITNESS if there is no currently tracked fitness function *
  *          DNA_INVALID_ID if id does not match any tracked chromosome id     *
  *          DNA_NIL if no error                                               *
  *                                                                            *
@@ -303,7 +304,7 @@ errDNA_t getChromosomes(dna_t *dna, int *strands, int *traits);
  *          DNA_NIL if no error                                               *
  *                                                                            *
  ******************************************************************************/
-errDNA_t getIDs(dna_t *dna, char **ids);
+errDNA_t getIDs(dna_t *dna, char *ids[]);
 
 /******************************************************************************
  *                                                                            *
@@ -323,6 +324,7 @@ errDNA_t getIDs(dna_t *dna, char **ids);
  *          DNA_NIL_FATHER is father is NULL                                  *
  *          DNA_NIL_MOTHER if mother is NULL                                  *
  *          DNA_NIL_CHILD if child is NULL                                    *
+ *          DNA_NIL_TRAITS if traits is NULL                                  *
  *          DNA_INVALID_ID if mother or father does not match any tracked id  *
  *          DNA_INVALID_PARENTS if mother and father are the same             *
  *          DNA_NIL if no error                                               *

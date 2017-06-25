@@ -2,7 +2,7 @@
  * FILE:    dna.c                                                             *
  * AUTHOR:  Ryan Rozanski                                                     *
  * CREATED: 5/4/17                                                            *
- * EDITED:  6/24/17                                                           *
+ * EDITED:  6/25/17                                                           *
  * INFO:    Implementation of the interface located in dna.h.                 *
  *                                                                            *
  ******************************************************************************/
@@ -48,16 +48,17 @@ static int myGenCmp(const void *whoFitness1, const void *whoFitness2) {
 }
 
 static int myStrCmp(const void *str1, const void *str2) { 
-  return strcmp((const char *)str1, (const char *)str2);
+  //return strcmp((const char *)str1, (const char *)str2);
+  return strcmp(*(char **)str1, *(char **)str2);
 }
 
 static int find(dna_t *dna, char *id) {
   int cmp, loc, hi, lo;
-  for(lo = 0, hi = dna->traits; hi > lo;) {
+  for(lo = 0, hi = dna->chromosomes-1; lo <= hi;) {
     loc = lo + ((hi - lo) / 2);
-    if(!(cmp = myStrCmp(id, dna->ids[loc]))) { return loc; }
-    else if(cmp < 0) { hi = loc; }
-    else { lo = loc; } // cmp > 0
+    if((cmp = strcmp(id, dna->ids[loc])) == 0) { return loc; } // cmp == 0
+    else if(cmp < 0) { hi = loc-1; }
+    else { lo = loc+1; } // cmp > 0
   }
   return -1; // not found
 }
@@ -103,7 +104,7 @@ const char *strErrDNA(errDNA_t errDNA) {
   }
 }
 
-errDNA_t makeDNA(dna_t **dna, char **ids, int strands, int traits) {
+errDNA_t makeDNA(dna_t **dna, char *ids[], int strands, int traits) {
   if(!dna) { return DNA_NIL_DNA; }
   if(!ids) { return DNA_NIL_IDS; }
   if(strands < 1) { return DNA_INVALID_CHROMOSOMES; }
@@ -130,7 +131,7 @@ errDNA_t makeDNA(dna_t **dna, char **ids, int strands, int traits) {
     }
     strncpy((*dna)->ids[id], ids[id], strlen(ids[id]));
   }
-  qsort((*dna)->strands, strands, sizeof(char *), myStrCmp);
+  qsort((*dna)->ids, strands, sizeof(char *), myStrCmp);
 
   (*dna)->chromosomes = strands;
   (*dna)->traits = traits;
@@ -167,6 +168,7 @@ errDNA_t getFitness(dna_t *dna, char *id, int *fitness) {
   if(!dna) { return DNA_NIL_DNA; }
   if(!id) { return DNA_NIL_ID; }
   if(!fitness) { return DNA_NIL_FITNESS_INT; }
+  if(!dna->fitness) { return DNA_NIL_FITNESS; }
 
   int loc, i;
   if((loc = find(dna, id)) == -1) { return DNA_INVALID_ID; }
@@ -270,14 +272,12 @@ errDNA_t getChromosomes(dna_t *dna, int *strands, int *traits) {
   return DNA_NIL;
 }
 
-errDNA_t getIDs(dna_t *dna, char **ids) {
+errDNA_t getIDs(dna_t *dna, char *ids[]) {
   if(!dna) { return DNA_NIL_DNA; }
   if(!ids) { return DNA_NIL_IDS; }
 
   int id;
-  for(id = dna->chromosomes; id; id--) {
-    strncpy(ids[id-1], dna->ids[id-1], strlen(dna->ids[id-1]));
-  }
+  for(id = dna->chromosomes; id; id--) { strcpy(ids[id-1], dna->ids[id-1]); }
 
   return DNA_NIL;
 }
@@ -287,6 +287,7 @@ errDNA_t crossover(dna_t *dna, char *father, char *mother, int *child, int *trai
   if(!father) { return DNA_NIL_FATHER; }
   if(!mother) { return DNA_NIL_MOTHER; }
   if(!child) { return DNA_NIL_CHILD; }
+  if(!traits) { return DNA_NIL_TRAITS; }
 
   int id1 = find(dna, father);
   int id2 = find(dna, mother);

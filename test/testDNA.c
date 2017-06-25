@@ -2,7 +2,7 @@
  * FILE:    testDNA.c                                                         *
  * AUTHOR:  Ryan Rozanski                                                     *
  * CREATED: 6/3/17                                                            *
- * EDITED:  6/17/17                                                           *
+ * EDITED:  6/25/17                                                           *
  * INFO:    Test file for implementation of the interface located in dna.h.   *
  *                                                                            *
  ******************************************************************************/
@@ -15,6 +15,7 @@
 #include<stdio.h>
 #include<stdlib.h>
 #include<string.h>
+#include<time.h>
 #include<dna.h>
 
 /******************************************************************************
@@ -22,9 +23,7 @@
  *   C O N S T A N T S                                                        *
  *                                                                            *
  ******************************************************************************/
-#define STRANDS 3
-#define TRAITS  10
-#define TOTAL_TESTS 39
+#define TOTAL_TESTS 92
 
 /******************************************************************************
  *                                                                            *
@@ -77,8 +76,8 @@ testResultDNA_t testStrErrDNA_INVALID_ID() {
   return (strcmp(strErrDNA(DNA_INVALID_ID), "")) ? DNA_PASS : DNA_FAIL;
 }
 
-testResultDNA_t testStrErrDNA_INVALID_IDS() {
-  return (strcmp(strErrDNA(DNA_INVALID_IDS), "")) ? DNA_PASS : DNA_FAIL;
+testResultDNA_t testStrErrDNA_INVALID_PARENTS() {
+  return (strcmp(strErrDNA(DNA_INVALID_PARENTS), "")) ? DNA_PASS : DNA_FAIL;
 }
 
 testResultDNA_t testStrErrDNA_NIL_ELITISM() {
@@ -149,95 +148,839 @@ testResultDNA_t testStrErrDNA_NIL() {
   return (!strcmp(strErrDNA(DNA_NIL), "")) ? DNA_PASS : DNA_FAIL;
 }
 
+testResultDNA_t testMakeDNANilDna() {
+  char *ids[3] = { "foo", "bar", "baz" };
+
+  errDNA_t errDNA = makeDNA(NULL, ids, 3, 10);
+  return (errDNA != DNA_NIL_DNA) ?  DNA_FAIL : DNA_PASS;
+}
+
+testResultDNA_t testMakeDNANilIDs() {
+  dna_t *dna;
+
+  errDNA_t errDNA = makeDNA(&dna, NULL, 3, 10);
+  return (errDNA != DNA_NIL_IDS) ?  DNA_FAIL : DNA_PASS;
+}
+
+testResultDNA_t testMakeDNAInvalidStrands() {
+  char *ids[3] = { "foo", "bar", "baz" };
+  dna_t *dna;
+
+  errDNA_t errDNA = makeDNA(&dna, ids, 0, 10);
+  return (errDNA != DNA_INVALID_CHROMOSOMES) ?  DNA_FAIL : DNA_PASS;
+}
+
+testResultDNA_t testMakeDNAInvalidTraits() {
+  char *ids[3] = { "foo", "bar", "baz" };
+  dna_t *dna;
+
+  errDNA_t errDNA = makeDNA(&dna, ids, 3, 0);
+  return (errDNA != DNA_INVALID_TRAITS) ?  DNA_FAIL : DNA_PASS;
+}
+
+testResultDNA_t testMakeDNAValid() {
+  char *ids[3] = { "foo", "bar", "baz" };
+  dna_t *dna;
+
+  errDNA_t errDNA = makeDNA(&dna, ids, 3, 10);
+  return (errDNA != DNA_NIL) ?  DNA_FAIL : DNA_PASS;
+}
+
+testResultDNA_t testFreeDNANilDNA() {
+  errDNA_t errDNA = freeDNA(NULL);
+  return (errDNA != DNA_NIL) ?  DNA_FAIL : DNA_PASS;
+}
+
+testResultDNA_t testFreeDNAValid() {
+  char *ids[3] = { "foo", "bar", "baz" };
+  dna_t *dna;
+
+  errDNA_t errDNA = makeDNA(&dna, ids, 3, 10);
+  if(errDNA != DNA_NIL) { return DNA_FAIL; }
+
+  errDNA = freeDNA(dna);
+  return (errDNA != DNA_NIL) ?  DNA_FAIL : DNA_PASS;
+}
+
+testResultDNA_t testSetFitnessNilFitness() {
+  char *ids[3] = { "foo", "bar", "baz" };
+  dna_t *dna;
+
+  errDNA_t errDNA = makeDNA(&dna, ids, 3, 10);
+  if(errDNA != DNA_NIL) { return DNA_FAIL; }
+
+  errDNA = setFitness(dna, NULL);
+  return (errDNA != DNA_NIL_FITNESS) ?  DNA_FAIL : DNA_PASS;
+}
+
 // simple fitness function just to test with
-int testFitness(char *id, int *strand, int traits) {
+int testFitness(char *id, int strand[], int traits) {
   int total;
-  for(total = 0; traits; total += strand[--traits]);
+  for(total = 0; traits >= 0; total += strand[--traits]);
   return total;
 }
 
-testResultDNA_t testMakeNilDNA() {
-  return DNA_FAIL;
+testResultDNA_t testSetFitnessNilDNA() {
+  errDNA_t errDNA = setFitness(NULL, testFitness);
+  return (errDNA != DNA_NIL_DNA) ?  DNA_FAIL : DNA_PASS;
 }
 
-testResultDNA_t testMakeDNA() {
+testResultDNA_t testSetFitnessValid() {
+  char *ids[3] = { "foo", "bar", "baz" };
   dna_t *dna;
-  char *ids[STRANDS] = { "id1", "id2", "id3" };
 
-  errDNA_t errDNA = DNA_NIL;
-  if((errDNA = makeDNA(&dna, ids, STRANDS, TRAITS)) != DNA_NIL) {
-  }
- 
-  int strands, traits;
-  if((errDNA = getChromosomes(dna, &strands, &traits)) != DNA_NIL) {
-  }
+  errDNA_t errDNA = makeDNA(&dna, ids, 3, 10);
+  if(errDNA != DNA_NIL) { return DNA_FAIL; }
 
-  if(strands != STRANDS) {
-  }
+  errDNA = setFitness(dna, testFitness);
+  return (errDNA != DNA_NIL) ?  DNA_FAIL : DNA_PASS;
+}
 
-  if(traits != TRAITS) {
-  }
+testResultDNA_t testGetFitnessNilDNA() {
+  int fitness;
+  
+  errDNA_t errDNA = getFitness(NULL, "foo", &fitness);
+  return (errDNA != DNA_NIL_DNA) ?  DNA_FAIL : DNA_PASS;
+}
+
+testResultDNA_t testGetFitnessNilId() {
+  char *ids[3] = { "foo", "bar", "baz" };
+  dna_t *dna;
+
+  errDNA_t errDNA = makeDNA(&dna, ids, 3, 10);
+  if(errDNA != DNA_NIL) { return DNA_FAIL; }
+
+  int fitness;
+  errDNA = getFitness(dna, NULL, &fitness);
+  return (errDNA != DNA_NIL_ID) ?  DNA_FAIL : DNA_PASS;
+}
+
+testResultDNA_t testGetFitnessNilFitnessDest() {
+  char *ids[3] = { "foo", "bar", "baz" };
+  dna_t *dna;
+
+  errDNA_t errDNA = makeDNA(&dna, ids, 3, 10);
+  if(errDNA != DNA_NIL) { return DNA_FAIL; }
+
+  errDNA = getFitness(dna, "foo", NULL);
+  return (errDNA != DNA_NIL_FITNESS_INT) ?  DNA_FAIL : DNA_PASS;
+}
+
+testResultDNA_t testGetFitnessNilFitness() {
+  char *ids[3] = { "foo", "bar", "baz" };
+  dna_t *dna;
+
+  errDNA_t errDNA = makeDNA(&dna, ids, 3, 10);
+  if(errDNA != DNA_NIL) { return DNA_FAIL; }
+
+  int fitness;
+  errDNA = getFitness(dna, "foo", &fitness);
+  return (errDNA != DNA_NIL_FITNESS) ?  DNA_FAIL : DNA_PASS;
+}
+
+testResultDNA_t testGetFitnessInvalidId() {
+  char *ids[3] = { "foo", "bar", "baz" };
+  dna_t *dna;
+
+  errDNA_t errDNA = makeDNA(&dna, ids, 3, 10);
+  if(errDNA != DNA_NIL) { return DNA_FAIL; }
+
+  errDNA = setFitness(dna, testFitness);
+  if(errDNA != DNA_NIL) { return DNA_FAIL; }
+
+  int fitness;
+  errDNA = getFitness(dna, "foobarber", &fitness);
+  return (errDNA != DNA_INVALID_ID) ?  DNA_FAIL : DNA_PASS;
+}
+
+testResultDNA_t testGetFitnessValid() {
+  char *ids[3] = { "foo", "bar", "baz" };
+  dna_t *dna;
+
+  errDNA_t errDNA = makeDNA(&dna, ids, 3, 10);
+  if(errDNA != DNA_NIL) { return DNA_FAIL; }
+
+  errDNA = setFitness(dna, testFitness);
+  if(errDNA != DNA_NIL) { return DNA_FAIL; }
+
+  int fitness = 10;
+  errDNA = getFitness(dna, "foo", &fitness);
+  return (errDNA != DNA_NIL || fitness) ?  DNA_FAIL : DNA_PASS;
+}
+
+testResultDNA_t testSetMutationNilDNA() {
+  errDNA_t errDNA = setMutation(NULL, 0, 10, 0.0);
+  return (errDNA != DNA_NIL_DNA) ?  DNA_FAIL : DNA_PASS;
+}
+
+testResultDNA_t testSetMutationInvalidBounds() {
+  char *ids[3] = { "foo", "bar", "baz" };
+  dna_t *dna;
+
+  errDNA_t errDNA = makeDNA(&dna, ids, 3, 10);
+  if(errDNA != DNA_NIL) { return DNA_FAIL; }
+
+  errDNA = setMutation(dna, 10, 5, 0.0);
+  return (errDNA != DNA_INVALID_BOUNDS) ?  DNA_FAIL : DNA_PASS;
+}
+
+testResultDNA_t testSetMutationInvalidRate() {
+  char *ids[3] = { "foo", "bar", "baz" };
+  dna_t *dna;
+
+  errDNA_t errDNA = makeDNA(&dna, ids, 3, 10);
+  if(errDNA != DNA_NIL) { return DNA_FAIL; }
+
+  errDNA = setMutation(dna, 1, 5, 1000.0);
+  return (errDNA != DNA_INVALID_RATE) ?  DNA_FAIL : DNA_PASS;
+}
+
+testResultDNA_t testSetMutationValid() {
+  char *ids[3] = { "foo", "bar", "baz" };
+  dna_t *dna;
+
+  errDNA_t errDNA = makeDNA(&dna, ids, 3, 10);
+  if(errDNA != DNA_NIL) { return DNA_FAIL; }
+
+  errDNA = setMutation(dna, 0, 50, 0.0);
+  return (errDNA != DNA_NIL) ?  DNA_FAIL : DNA_PASS;
+}
+
+testResultDNA_t testGetMutationNilDNA() {
+  int lbound, ubound;
+  float rate;
+
+  errDNA_t errDNA = getMutation(NULL, &lbound, &ubound, &rate);
+  return (errDNA != DNA_NIL_DNA) ?  DNA_FAIL : DNA_PASS;
+}
+
+testResultDNA_t testGetMutationNilLowerBound() {
+  char *ids[3] = { "foo", "bar", "baz" };
+  dna_t *dna;
+
+  errDNA_t errDNA = makeDNA(&dna, ids, 3, 10);
+  if(errDNA != DNA_NIL) { return DNA_FAIL; }
+
+  int ubound;
+  float rate;
+
+  errDNA = getMutation(dna, NULL, &ubound, &rate);
+  return (errDNA != DNA_NIL_LBOUND) ?  DNA_FAIL : DNA_PASS;
+}
+
+testResultDNA_t testGetMutationNilUpperBound() {
+  char *ids[3] = { "foo", "bar", "baz" };
+  dna_t *dna;
+
+  errDNA_t errDNA = makeDNA(&dna, ids, 3, 10);
+  if(errDNA != DNA_NIL) { return DNA_FAIL; }
+
+  int lbound;
+  float rate;
+
+  errDNA = getMutation(dna, &lbound, NULL, &rate);
+  return (errDNA != DNA_NIL_UBOUND) ?  DNA_FAIL : DNA_PASS;
+}
+
+testResultDNA_t testGetMutationNilRate() {
+  char *ids[3] = { "foo", "bar", "baz" };
+  dna_t *dna;
+
+  errDNA_t errDNA = makeDNA(&dna, ids, 3, 10);
+  if(errDNA != DNA_NIL) { return DNA_FAIL; }
+
+  int lbound, ubound;
+
+  errDNA = getMutation(dna, &lbound, &ubound, NULL);
+  return (errDNA != DNA_NIL_RATE) ?  DNA_FAIL : DNA_PASS;
+}
+
+testResultDNA_t testGetMutationValid() {
+  char *ids[3] = { "foo", "bar", "baz" };
+  dna_t *dna;
+
+  errDNA_t errDNA = makeDNA(&dna, ids, 3, 10);
+  if(errDNA != DNA_NIL) { return DNA_FAIL; }
+
+  int lbound, ubound;
+  float rate;
+
+  lbound = ubound = 10;
+  rate = 10.0;
+  errDNA = getMutation(dna, &lbound, &ubound, &rate);
+  return (errDNA != DNA_NIL || ubound || lbound || rate != 0.0) ?  DNA_FAIL : DNA_PASS;
+}
+
+testResultDNA_t testSetElitismNilDNA() {
+  errDNA_t errDNA = setElitism(NULL, 0, 0.0);
+  return (errDNA != DNA_NIL_DNA) ?  DNA_FAIL : DNA_PASS;
+}
+
+testResultDNA_t testSetElitismInvalidElitism() {
+  char *ids[3] = { "foo", "bar", "baz" };
+  dna_t *dna;
+
+  errDNA_t errDNA = makeDNA(&dna, ids, 3, 10);
+  if(errDNA != DNA_NIL) { return DNA_FAIL; }
+
+  errDNA = setElitism(dna, 2, 0.0);
+  return (errDNA != DNA_INVALID_ELITISM) ?  DNA_FAIL : DNA_PASS;
+}
+
+testResultDNA_t testSetElitismInvalidPercent() {
+  char *ids[3] = { "foo", "bar", "baz" };
+  dna_t *dna;
+
+  errDNA_t errDNA = makeDNA(&dna, ids, 3, 10);
+  if(errDNA != DNA_NIL) { return DNA_FAIL; }
+
+  errDNA = setElitism(dna, 1, -1.0);
+  return (errDNA != DNA_INVALID_PERCENT) ?  DNA_FAIL : DNA_PASS;
+}
+
+testResultDNA_t testSetElitismValid() {
+  char *ids[3] = { "foo", "bar", "baz" };
+  dna_t *dna;
+
+  errDNA_t errDNA = makeDNA(&dna, ids, 3, 10);
+  if(errDNA != DNA_NIL) { return DNA_FAIL; }
+
+  errDNA = setElitism(dna, 1, 11.0);
+  return (errDNA != DNA_NIL) ?  DNA_FAIL : DNA_PASS;
+}
+
+testResultDNA_t testGetElitismNilDNA() {
+  int elitism;
+  float percent;
+
+  errDNA_t errDNA = getElitism(NULL, &elitism, &percent);
+  return (errDNA != DNA_NIL_DNA) ?  DNA_FAIL : DNA_PASS;
+}
+
+testResultDNA_t testGetElitismNilElitism() {
+  char *ids[3] = { "foo", "bar", "baz" };
+  dna_t *dna;
+
+  errDNA_t errDNA = makeDNA(&dna, ids, 3, 10);
+  if(errDNA != DNA_NIL) { return DNA_FAIL; }
+
+  float percent;
+
+  errDNA = getElitism(dna, NULL, &percent);
+  return (errDNA != DNA_NIL_ELITISM) ?  DNA_FAIL : DNA_PASS;
+}
+
+testResultDNA_t testGetElitismNilPercent() {
+  char *ids[3] = { "foo", "bar", "baz" };
+  dna_t *dna;
+
+  errDNA_t errDNA = makeDNA(&dna, ids, 3, 10);
+  if(errDNA != DNA_NIL) { return DNA_FAIL; }
+
+  int elitism;
+
+  errDNA = getElitism(dna, &elitism, NULL);
+  return (errDNA != DNA_NIL_PERCENT) ?  DNA_FAIL : DNA_PASS;
+}
+
+testResultDNA_t testGetElitismValid() {
+  char *ids[3] = { "foo", "bar", "baz" };
+  dna_t *dna;
+
+  errDNA_t errDNA = makeDNA(&dna, ids, 3, 10);
+  if(errDNA != DNA_NIL) { return DNA_FAIL; }
+
+  int elitism = 10;
+  float percent = 10.0;
+
+  errDNA = getElitism(dna, &elitism, &percent);
+  return (errDNA != DNA_NIL || elitism || percent != 0.0) ?  DNA_FAIL : DNA_PASS;
+}
+
+testResultDNA_t testSetStrandNilDNA() {
+  int strand[5] = {0, 1, 2, 3, 4};
+
+  errDNA_t errDNA = setStrand(NULL, "foo", strand, 5);
+  return (errDNA != DNA_NIL_DNA) ?  DNA_FAIL : DNA_PASS;
+}
+
+testResultDNA_t testSetStrandNilID() {
+  char *ids[3] = { "foo", "bar", "baz" };
+  dna_t *dna;
+
+  errDNA_t errDNA = makeDNA(&dna, ids, 3, 5);
+  if(errDNA != DNA_NIL) { return DNA_FAIL; }
+
+  int strand[5] = {0, 1, 2, 3, 4};
+
+  errDNA = setStrand(dna, NULL, strand, 5);
+  return (errDNA != DNA_NIL_ID) ?  DNA_FAIL : DNA_PASS;
+}
+
+testResultDNA_t testSetStrandNilStrand() {
+  char *ids[3] = { "foo", "bar", "baz" };
+  dna_t *dna;
+
+  errDNA_t errDNA = makeDNA(&dna, ids, 3, 5);
+  if(errDNA != DNA_NIL) { return DNA_FAIL; }
+
+  errDNA = setStrand(dna, "foo", NULL, 5);
+  return (errDNA != DNA_NIL_STRAND) ?  DNA_FAIL : DNA_PASS;
+}
+
+testResultDNA_t testSetStrandInvalidTraits() {
+  char *ids[3] = { "foo", "bar", "baz" };
+  dna_t *dna;
+
+  errDNA_t errDNA = makeDNA(&dna, ids, 3, 5);
+  if(errDNA != DNA_NIL) { return DNA_FAIL; }
+
+  int strand[5] = {0, 1, 2, 3, 4};
+
+  errDNA = setStrand(dna, "foo", strand, 6);
+  return (errDNA != DNA_INVALID_TRAITS) ?  DNA_FAIL : DNA_PASS;
+}
+
+testResultDNA_t testSetStrandInvalidID() {
+  char *ids[3] = { "foo", "bar", "baz" };
+  dna_t *dna;
+
+  errDNA_t errDNA = makeDNA(&dna, ids, 3, 5);
+  if(errDNA != DNA_NIL) { return DNA_FAIL; }
+
+  int strand[5] = {0, 1, 2, 3, 4};
+
+  errDNA = setStrand(dna, "foobarber", strand, 5);
+  return (errDNA != DNA_INVALID_ID) ?  DNA_FAIL : DNA_PASS;
+}
+
+testResultDNA_t testSetStrandValid() {
+  char *ids[3] = { "foo", "bar", "baz" };
+  dna_t *dna;
+
+  errDNA_t errDNA = makeDNA(&dna, ids, 3, 5);
+  if(errDNA != DNA_NIL) { return DNA_FAIL; }
+
+  int strand[5] = {0, 1, 2, 3, 4};
+
+  errDNA = setStrand(dna, "foo", strand, 5);
+  return (errDNA != DNA_NIL) ?  DNA_FAIL : DNA_PASS;
+}
+
+testResultDNA_t testGetStrandNilDNA() {
+  char id[3] = "foo";
+  int traits = 5;
+  int strand[5] = {0, 0, 0, 0, 0};
+
+  errDNA_t errDNA = getStrand(NULL, id, strand, &traits);
+  return (errDNA != DNA_NIL_DNA) ?  DNA_FAIL : DNA_PASS;
+}
+
+testResultDNA_t testGetStrandNilID() {
+  char *ids[3] = { "foo", "bar", "baz" };
+  dna_t *dna;
+
+  errDNA_t errDNA = makeDNA(&dna, ids, 3, 5);
+  if(errDNA != DNA_NIL) { return DNA_FAIL; }
+
+  int traits = 5;
+  int strand[5] = {0, 0, 0, 0, 0};
+
+  errDNA = getStrand(dna, NULL, strand, &traits);
+  return (errDNA != DNA_NIL_ID) ?  DNA_FAIL : DNA_PASS;
+}
+
+testResultDNA_t testGetStrandNilStrand() {
+  char *ids[3] = { "foo", "bar", "baz" };
+  dna_t *dna;
+
+  errDNA_t errDNA = makeDNA(&dna, ids, 3, 5);
+  if(errDNA != DNA_NIL) { return DNA_FAIL; }
+
+  int traits = 5;
+
+  errDNA = getStrand(dna, "foo", NULL, &traits);
+  return (errDNA != DNA_NIL_STRAND) ?  DNA_FAIL : DNA_PASS;
+}
+
+testResultDNA_t testGetStrandNilTraits() {
+  char *ids[3] = { "foo", "bar", "baz" };
+  dna_t *dna;
+
+  errDNA_t errDNA = makeDNA(&dna, ids, 3, 5);
+  if(errDNA != DNA_NIL) { return DNA_FAIL; }
+
+  int strand[5] = {0, 0, 0, 0, 0};
+
+  errDNA = getStrand(dna, "foo", strand, NULL);
+  return (errDNA != DNA_NIL_TRAITS) ?  DNA_FAIL : DNA_PASS;
+}
+
+testResultDNA_t testGetStrandInvalidId() {
+  char *ids[3] = { "foo", "bar", "baz" };
+  dna_t *dna;
+
+  errDNA_t errDNA = makeDNA(&dna, ids, 3, 5);
+  if(errDNA != DNA_NIL) { return DNA_FAIL; }
+
+  int traits = 5;
+  int strand[5] = {0, 0, 0, 0, 0};
+
+  errDNA = getStrand(dna, "\0\0\0", strand, &traits);
+  return (errDNA != DNA_INVALID_ID) ?  DNA_FAIL : DNA_PASS;
+}
+
+testResultDNA_t testGetStrandValid() {
+  char *ids[3] = { "foo", "bar", "baz" };
+  dna_t *dna;
+
+  errDNA_t errDNA = makeDNA(&dna, ids, 3, 5);
+  if(errDNA != DNA_NIL) { return DNA_FAIL; }
+
+  int traits = 10;
+  int strand[5] = {0, 0, 0, 0, 0};
+
+  errDNA = getStrand(dna, "foo", strand, &traits);
+  if(errDNA != DNA_NIL || traits != 5) { return DNA_FAIL; }
+
+  for(; traits; traits--) { if(strand[traits-1]) { return DNA_FAIL; } }
 
   return DNA_PASS;
 }
 
-testResultDNA_t testFreeNilDNA() {
-  //errDNA_t freeDNA(dna_t *dna);
-  return DNA_FAIL;
+testResultDNA_t testGetChromosomesNilDNA() {
+  int strands, traits;
+
+  errDNA_t errDNA = getChromosomes(NULL, &strands, &traits);
+  return (errDNA != DNA_NIL_DNA) ?  DNA_FAIL : DNA_PASS;
 }
 
-testResultDNA_t testFreeDNA() {
-  //errDNA_t freeDNA(dna_t *dna);
-  return DNA_FAIL;
+testResultDNA_t testGetChromosomesNilStrand() {
+  char *ids[3] = { "foo", "bar", "baz" };
+  dna_t *dna;
+
+  errDNA_t errDNA = makeDNA(&dna, ids, 3, 5);
+  if(errDNA != DNA_NIL) { return DNA_FAIL; }
+
+  int traits;
+
+  errDNA = getChromosomes(dna, NULL, &traits);
+  return (errDNA != DNA_NIL_STRAND) ?  DNA_FAIL : DNA_PASS;
 }
 
-testResultDNA_t testFitnessDNA() {
-//errDNA_t setFitness(dna_t *dna, int (*fitness)(char *id, int *strand, int traits));
-  //errDNA_t getFitness(dna_t *dna, char *id, int *fitness);
-  return DNA_FAIL;
+testResultDNA_t testGetChromosomesNilTraits() {
+  char *ids[3] = { "foo", "bar", "baz" };
+  dna_t *dna;
+
+  errDNA_t errDNA = makeDNA(&dna, ids, 3, 5);
+  if(errDNA != DNA_NIL) { return DNA_FAIL; }
+
+  int strands;
+
+  errDNA = getChromosomes(dna, &strands, NULL);
+  return (errDNA != DNA_NIL_TRAITS) ?  DNA_FAIL : DNA_PASS;
 }
 
-testResultDNA_t testMutationDNA() {
-  //errDNA_t setMutation(dna_t *dna, int lbound, int ubound, double rate);
-  //errDNA_t getMutation(dna_t *dna, int *lbound, int *ubound, double *rate);
-  return DNA_FAIL;
+testResultDNA_t testGetChromosomesValid() {
+  char *ids[3] = { "foo", "bar", "baz" };
+  dna_t *dna;
+
+  errDNA_t errDNA = makeDNA(&dna, ids, 3, 5);
+  if(errDNA != DNA_NIL) { return DNA_FAIL; }
+
+  int strands, traits;
+  strands = traits = 0;
+
+  errDNA = getChromosomes(dna, &strands, &traits);
+  return (errDNA != DNA_NIL || strands != 3 || traits != 5) ?  DNA_FAIL : DNA_PASS;
 }
 
-testResultDNA_t testElitismDNA() {
-  //errDNA_t setElitism(dna_t *dna, int elitism, double percent);
-  //errDNA_t getElitism(dna_t *dna, int *elitism, double *percent);
-  return DNA_FAIL;
+testResultDNA_t testGetIDsNilDNA() {
+  char *ids[3];
+
+  errDNA_t errDNA = getIDs(NULL, ids);
+  return (errDNA != DNA_NIL_DNA) ?  DNA_FAIL : DNA_PASS;
 }
 
-testResultDNA_t testStrandDNA() {
-  //errDNA_t setStrand(dna_t *dna, char *id, int *strand, int traits);
-  //errDNA_t getStrand(dna_t *dna, char *id, int *strand, int *traits);
-  return DNA_FAIL;
+testResultDNA_t testGetIDsNilIDs() {
+  char *ids[3] = { "foo", "bar", "baz" };
+  dna_t *dna;
+
+  errDNA_t errDNA = makeDNA(&dna, ids, 3, 5);
+  if(errDNA != DNA_NIL) { return DNA_FAIL; }
+
+  errDNA = getIDs(dna, NULL);
+  return (errDNA != DNA_NIL_IDS) ?  DNA_FAIL : DNA_PASS;
 }
 
-testResultDNA_t testChromosomesDNA() {
-  //errDNA_t getChromosomes(dna_t *dna, int *strands, int *traits) {
-  return DNA_FAIL;
+testResultDNA_t testGetIDsValid() {
+  char *ids[3] = { "bar", "baz", "foo" }; // strcmp ordered
+  dna_t *dna;
+
+  errDNA_t errDNA = makeDNA(&dna, ids, 3, 5);
+  if(errDNA != DNA_NIL) { return DNA_FAIL; }
+
+  char *ids_cpy[3];
+  int i;
+  for(i = 0; i < 3; i++) {
+    // instead of = "---", since strcpy cannot handle mutating constant strings
+    ids_cpy[i] = malloc(sizeof(char) * 4);
+  }
+
+  errDNA = getIDs(dna, ids_cpy);
+  if(errDNA != DNA_NIL) { return DNA_FAIL; }
+  if(strcmp(ids[0], ids_cpy[0])) { return DNA_FAIL; }
+  if(strcmp(ids[1], ids_cpy[1])) { return DNA_FAIL; }
+  if(strcmp(ids[2], ids_cpy[2])) { return DNA_FAIL; }
+
+  return DNA_PASS;
 }
 
-testResultDNA_t testIDsDNA() {
-  //errDNA_t getIDs(dna_t *dna, char ids[][36]);
-  return DNA_FAIL;
+testResultDNA_t testCrossoverNilDNA() {
+  int traits;
+  int child[5];
+
+  errDNA_t errDNA = crossover(NULL, "father", "mother", child, &traits);
+  return (errDNA != DNA_NIL_DNA) ?  DNA_FAIL : DNA_PASS;
 }
 
-testResultDNA_t testCrossoverDNA() {
-  //errDNA_t crossover(dna_t *dna, char *father, char *mother, int *child, int *traits);
-  return DNA_FAIL;
+testResultDNA_t testCrossoverNilFather() {
+  char *ids[3] = { "foo", "bar", "baz" };
+  dna_t *dna;
+
+  errDNA_t errDNA = makeDNA(&dna, ids, 3, 5);
+  if(errDNA != DNA_NIL) { return DNA_FAIL; }
+
+  int traits;
+  int child[5];
+
+  errDNA = crossover(dna, NULL, "mother", child, &traits);
+  return (errDNA != DNA_NIL_FATHER) ?  DNA_FAIL : DNA_PASS;
 }
 
-testResultDNA_t testMutateDNA() {
-  //errDNA_t mutate(dna_t *dna, char *id);
-  return DNA_FAIL;
+testResultDNA_t testCrossoverNilMother() {
+  char *ids[3] = { "foo", "bar", "baz" };
+  dna_t *dna;
+
+  errDNA_t errDNA = makeDNA(&dna, ids, 3, 5);
+  if(errDNA != DNA_NIL) { return DNA_FAIL; }
+
+  int traits;
+  int child[5];
+  
+  errDNA = crossover(dna, "father", NULL, child, &traits);
+  return (errDNA != DNA_NIL_MOTHER) ?  DNA_FAIL : DNA_PASS;
 }
 
-testResultDNA_t testNextGenDNA() {
-  //errDNA_t nextGeneration(dna_t *dna);
-  return DNA_FAIL;
+testResultDNA_t testCrossoverNilChild() {
+  char *ids[3] = { "foo", "bar", "baz" };
+  dna_t *dna;
+
+  errDNA_t errDNA = makeDNA(&dna, ids, 3, 5);
+  if(errDNA != DNA_NIL) { return DNA_FAIL; }
+
+  int traits;
+  
+  errDNA = crossover(dna, "father", "mother", NULL, &traits);
+  return (errDNA != DNA_NIL_CHILD) ?  DNA_FAIL : DNA_PASS;
+}
+
+testResultDNA_t testCrossoverNilTraits() {
+  char *ids[3] = { "foo", "bar", "baz" };
+  dna_t *dna;
+
+  errDNA_t errDNA = makeDNA(&dna, ids, 3, 5);
+  if(errDNA != DNA_NIL) { return DNA_FAIL; }
+
+  int child[5];
+  
+  errDNA = crossover(dna, "father", "mother", child, NULL);
+  return (errDNA != DNA_NIL_TRAITS) ?  DNA_FAIL : DNA_PASS;
+}
+
+testResultDNA_t testCrossoverInvalidID() {
+  char *ids[3] = { "foo", "bar", "baz" };
+  dna_t *dna;
+
+  errDNA_t errDNA = makeDNA(&dna, ids, 3, 5);
+  if(errDNA != DNA_NIL) { return DNA_FAIL; }
+
+  int traits;
+  int child[5];
+  
+  errDNA = crossover(dna, "father", "mother", child, &traits);
+  return (errDNA != DNA_INVALID_ID) ?  DNA_FAIL : DNA_PASS;
+}
+
+testResultDNA_t testCrossoverInvalidParents() {
+  char *ids[3] = { "foo", "bar", "baz" };
+  dna_t *dna;
+
+  errDNA_t errDNA = makeDNA(&dna, ids, 3, 5);
+  if(errDNA != DNA_NIL) { return DNA_FAIL; }
+
+  int traits;
+  int child[5];
+  
+  errDNA = crossover(dna, "foo", "foo", child, &traits);
+  return (errDNA != DNA_INVALID_PARENTS) ?  DNA_FAIL : DNA_PASS;
+}
+
+testResultDNA_t testCrossoverValid() {
+  char *ids[3] = { "foo", "bar", "baz" };
+  dna_t *dna;
+
+  errDNA_t errDNA = makeDNA(&dna, ids, 3, 15);
+  if(errDNA != DNA_NIL) { return DNA_FAIL; }
+
+  int strand1[15] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+  errDNA = setStrand(dna, "foo", strand1, 15);
+  if(errDNA != DNA_NIL) { return DNA_FAIL; }
+
+  int strand2[15] = {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1};
+  errDNA = setStrand(dna, "bar", strand2, 15);
+  if(errDNA != DNA_NIL) { return DNA_FAIL; }
+
+  int traits = 10;
+  int child[15];
+  
+  errDNA = crossover(dna, "foo", "bar", child, &traits);
+  if(errDNA != DNA_NIL || traits != 15) { return DNA_FAIL; }
+
+  int i, sum; 
+  for(i = sum = 0; i < traits; sum += child[i++]);
+  // NOTE: small chance of false failure here. basically want to make sure we
+  // got traits from both parents.
+  if(!sum || sum == 15) { return DNA_FAIL; }
+  
+  return DNA_PASS;
+}
+
+testResultDNA_t testMutateNilDNA() {
+  errDNA_t errDNA = mutate(NULL, "foo");
+  return (errDNA != DNA_NIL_DNA) ?  DNA_FAIL : DNA_PASS;
+}
+
+testResultDNA_t testMutateNilID() {
+  char *ids[3] = { "foo", "bar", "baz" };
+  dna_t *dna;
+
+  errDNA_t errDNA = makeDNA(&dna, ids, 3, 5);
+  if(errDNA != DNA_NIL) { return DNA_FAIL; }
+
+  errDNA = mutate(dna, NULL);
+  return (errDNA != DNA_NIL_ID) ?  DNA_FAIL : DNA_PASS;
+}
+
+testResultDNA_t testMutateInvalidID() {
+  char *ids[3] = { "foo", "bar", "baz" };
+  dna_t *dna;
+
+  errDNA_t errDNA = makeDNA(&dna, ids, 3, 5);
+  if(errDNA != DNA_NIL) { return DNA_FAIL; }
+
+  errDNA = mutate(dna, "foobarber");
+  return (errDNA != DNA_INVALID_ID) ?  DNA_FAIL : DNA_PASS;
+}
+
+testResultDNA_t testMutateValid() {
+  char *ids[3] = { "foo", "bar", "baz" };
+  dna_t *dna;
+
+  errDNA_t errDNA = makeDNA(&dna, ids, 3, 5);
+  if(errDNA != DNA_NIL) { return DNA_FAIL; }
+
+
+  errDNA = setMutation(dna, 1, 100, 100.0);
+  if(errDNA != DNA_NIL) { return DNA_FAIL; }
+
+  errDNA = mutate(dna, "foo");
+  if(errDNA != DNA_NIL) { return DNA_FAIL; }
+
+  int traits;
+  int strand[5];
+
+  errDNA = getStrand(dna, "foo", strand, &traits);
+  if(errDNA != DNA_NIL) { return DNA_FAIL; }
+
+  for(; traits; traits--) { if(!strand[traits-1]) { return DNA_FAIL; } }
+
+  return DNA_PASS;
+}
+
+testResultDNA_t testNextGenerationNilDNA() {
+  errDNA_t errDNA = nextGeneration(NULL);
+  return (errDNA != DNA_NIL_DNA) ?  DNA_FAIL : DNA_PASS;
+}
+
+testResultDNA_t testNextGenerationValid() {
+  char *ids[4] = { "foo", "bar", "baz", "jim" };
+  dna_t *dna;
+
+  errDNA_t errDNA = makeDNA(&dna, ids, 4, 5);
+  if(errDNA != DNA_NIL) { return DNA_FAIL; }
+
+  errDNA = setFitness(dna, testFitness);
+  if(errDNA != DNA_NIL) { return DNA_FAIL; }
+
+  errDNA = setMutation(dna, 1, 2, 100.0);
+  if(errDNA != DNA_NIL) { return DNA_FAIL; }
+
+  errDNA = setElitism(dna, 1, 25.0);
+  if(errDNA != DNA_NIL) { return DNA_FAIL; }
+
+  errDNA = nextGeneration(dna);
+  if(errDNA != DNA_NIL) { return DNA_FAIL; }
+  
+  int traits;
+  int foo[5];
+  int bar[5];
+  int baz[5];
+  int jim[5];
+
+  errDNA = getStrand(dna, "foo", foo, &traits);
+  if(errDNA != DNA_NIL || traits != 5) { return DNA_FAIL; }
+
+  errDNA = getStrand(dna, "bar", bar, &traits);
+  if(errDNA != DNA_NIL || traits != 5) { return DNA_FAIL; }
+
+  errDNA = getStrand(dna, "baz", baz, &traits);
+  if(errDNA != DNA_NIL || traits != 5) { return DNA_FAIL; }
+
+  errDNA = getStrand(dna, "jim", jim, &traits);
+  if(errDNA != DNA_NIL || traits != 5) { return DNA_FAIL; }
+
+  // 1 should be all 0's and 3, all 1's and 2's
+  int i, zeros;
+  zeros = 0;
+  if(foo[0]) {
+    for(i = 0; i < traits; i++) { if(!foo[i]) { return DNA_FAIL; } }
+  } else {
+    for(i = 0; i < traits; i++) { if(foo[i]) { return DNA_FAIL; } }
+    zeros++;
+  }
+  if(bar[0]) {
+    for(i = 0; i < traits; i++) { if(!bar[i]) { return DNA_FAIL; } }
+  } else {
+    for(i = 0; i < traits; i++) { if(bar[i]) { return DNA_FAIL; } }
+    zeros++;
+  }
+  if(baz[0]) {
+    for(i = 0; i < traits; i++) { if(!baz[i]) { return DNA_FAIL; } }
+  } else {
+    for(i = 0; i < traits; i++) { if(baz[i]) { return DNA_FAIL; } }
+    zeros++;
+  }
+  if(jim[0]) {
+    for(i = 0; i < traits; i++) { if(!jim[i]) { return DNA_FAIL; } }
+  } else {
+    for(i = 0; i < traits; i++) { if(jim[i]) { return DNA_FAIL; } }
+    zeros++;
+  }
+
+  if(zeros != 1) { return DNA_FAIL; }
+
+  return DNA_PASS;
 }
 
 /******************************************************************************
@@ -254,7 +997,7 @@ void *TESTS[TOTAL_TESTS][2] = {
   { testStrErrDNA_INVALID_RATE,        "testStrErrDNA_INVALID_RATE"           },
   { testStrErrDNA_INVALID_BOUNDS,      "testStrErrDNA_INVALID_BOUNDS"         },
   { testStrErrDNA_INVALID_ID,          "testStrErrDNA_INVALID_ID"             },
-  { testStrErrDNA_INVALID_IDS,         "testStrErrDNA_INVALID_IDS"            },
+  { testStrErrDNA_INVALID_PARENTS,     "testStrErrDNA_INVALID_PARENTS"        },
   { testStrErrDNA_NIL_ELITISM,         "testStrErrDNA_NIL_ELITISM"            },
   { testStrErrDNA_NIL_PERCENT,         "testStrErrDNA_NIL_PERCENT"            },
   { testStrErrDNA_NIL_TRAITS,          "testStrErrDNA_NIL_TRAITS"             },
@@ -272,22 +1015,77 @@ void *TESTS[TOTAL_TESTS][2] = {
   { testStrErrDNA_NIL_UBOUND,          "testStrErrDNA_NIL_UBOUND"             },
   { testStrErrDNA_NIL_RATE,            "testStrErrDNA_NIL_RATE"               },
   { testStrErrDNA_NIL,                 "testStrErrDNA_NIL"                    },
-  { testMakeDNA,                       "testMakeDNA"                          },
-  { testMakeNilDNA,                    "testMakeNilDNA"                       },
-  { testFreeNilDNA,                    "testFreeNilDNA"                       },
-  { testFreeDNA,                       "testFreeDNA"                          },
-  { testFitnessDNA,                    "testFitnessDNA"                       },
-  { testMutationDNA,                   "testMutationDNA"                      },
-  { testElitismDNA,                    "testElitismDNA"                       },
-  { testStrandDNA,                     "testStrandDNA"                        },
-  { testChromosomesDNA,                "testChromosomesDNA"                   },
-  { testIDsDNA,                        "testIDsDNA"                           },
-  { testCrossoverDNA,                  "testCrossoverDNA"                     },
-  { testMutateDNA,                     "testMutateDNA"                        },
-  { testNextGenDNA,                    "testNextGenDNA"                       },
+  { testMakeDNANilDna,                 "testMakeDNANilDna"                    }, 
+  { testMakeDNANilIDs,                 "testMakeDNANilIDs"                    }, 
+  { testMakeDNAInvalidStrands,         "testMakeDNAInvalidStrands"            }, 
+  { testMakeDNAInvalidTraits,          "testMakeDNAInvalidTraits"             }, 
+  { testMakeDNAValid,                  "testMakeDNAValid"                     }, 
+  { testFreeDNANilDNA,                 "testFreeDNANilDNA"                    }, 
+  { testFreeDNAValid,                  "testFreeDNAValid"                     }, 
+  { testSetFitnessNilFitness,          "testSetFitnessNilFitness"             }, 
+  { testSetFitnessNilDNA,              "testSetFitnessNilDNA"                 }, 
+  { testSetFitnessValid,               "testSetFitnessValid"                  }, 
+  { testGetFitnessNilDNA,              "testGetFitnessNilDNA"                 }, 
+  { testGetFitnessNilId,               "testGetFitnessNilId"                  }, 
+  { testGetFitnessNilFitnessDest,      "testGetFitnessNilFitnessDest"         }, 
+  { testGetFitnessNilFitness,          "testGetFitnessNilFitness"             }, 
+  { testGetFitnessInvalidId,           "testGetFitnessInvalidId"              }, 
+  { testGetFitnessValid,               "testGetFitnessValid"                  }, 
+  { testSetMutationNilDNA,             "testSetMutationNilDNA"                },
+  { testSetMutationInvalidBounds,      "testSetMutationInvalidBounds"         },
+  { testSetMutationInvalidRate,        "testSetMutationInvalidRate"           },
+  { testSetMutationValid,              "testSetMutationValid"                 },
+  { testGetMutationNilDNA,             "testGetMutationNilDNA"                },
+  { testGetMutationNilLowerBound,      "testGetMutationNilLowerBound"         },
+  { testGetMutationNilUpperBound,      "testGetMutationNilUpperBound"         },
+  { testGetMutationNilRate,            "testGetMutationNilRate"               },
+  { testGetMutationValid,              "testGetMutationValid"                 },
+  { testSetElitismNilDNA,              "testSetElitismNilDNA"                 },
+  { testSetElitismInvalidElitism,      "testSetElitismInvalidElitism"         },
+  { testSetElitismInvalidPercent,      "testSetElitismInvalidPercent"         },
+  { testSetElitismValid,               "testSetElitismValid"                  },
+  { testGetElitismNilDNA,              "testGetElitismNilDNA"                 },
+  { testGetElitismNilElitism,          "testGetElitismNilElitism"             },
+  { testGetElitismNilPercent,          "testGetElitismNilPercent"             },
+  { testGetElitismValid,               "testGetElitismValid"                  },
+  { testSetStrandNilDNA,               "testSetStrandNilDNA"                  },
+  { testSetStrandNilID,                "testSetStrandNilID"                   },
+  { testSetStrandNilStrand,            "testSetStrandNilStrand"               },
+  { testSetStrandInvalidTraits,        "testSetStrandInvalidTraits"           },
+  { testSetStrandInvalidID,            "testSetStrandInvalidID"               },
+  { testSetStrandValid,                "testSetStrandValid"                   },
+  { testGetStrandNilDNA,               "testGetStrandNilDNA"                  },
+  { testGetStrandNilID,                "testGetStrandNilID"                   },
+  { testGetStrandNilStrand,            "testGetStrandNilStrand"               },
+  { testGetStrandNilTraits,            "testGetStrandNilTraits"               },
+  { testGetStrandInvalidId,            "testGetStrandInvalidId"               },
+  { testGetStrandValid,                "testGetStrandValid"                   },
+  { testGetChromosomesNilDNA,          "testGetChromosomesNilDNA"             },
+  { testGetChromosomesNilStrand,       "testGetChromosomesNilStrand"          },
+  { testGetChromosomesNilTraits,       "testGetChromosomesNilTraits"          },
+  { testGetChromosomesValid,           "testGetChromosomesValid"              },
+  { testGetIDsNilDNA,                  "testGetIDsNilDNA"                     },
+  { testGetIDsNilIDs,                  "testGetIDsNilIDs"                     },
+  { testGetIDsValid,                   "testGetIDsValid"                      },
+  { testCrossoverNilDNA,               "testCrossoverNilDNA"                  },
+  { testCrossoverNilFather,            "testCrossoverNilFather"               },
+  { testCrossoverNilMother,            "testCrossoverNilMother"               },
+  { testCrossoverNilChild,             "testCrossoverNilChild"                },
+  { testCrossoverNilTraits,            "testCrossoverNilTraits"               },
+  { testCrossoverInvalidID,            "testCrossoverInvalidID"               },
+  { testCrossoverInvalidParents,       "testCrossoverInvalidParents"          },
+  { testCrossoverValid,                "testCrossoverValid"                   },
+  { testMutateNilDNA,                  "testMutateNilDNA"                     },
+  { testMutateNilID,                   "testMutateNilID"                      },
+  { testMutateInvalidID,               "testMutateInvalidID"                  },
+  { testMutateValid,                   "testMutateValid"                      },
+  { testNextGenerationNilDNA,          "testNextGenerationNilDNA"             },
+  { testNextGenerationValid,           "testNextGenerationValid"              }
 };
 
 int main() {
+
+  srand(time(NULL));
 
   testResultDNA_t result;
   int test, passes, fails;
@@ -300,6 +1098,7 @@ int main() {
       fprintf(stdout, "FAIL: %s\n", (char *)TESTS[test][1]);
       fails++;
     }
+    fflush(stdout); // so if segfault/crash we know last successful test
   }
 
   fprintf(stdout, "\n--------------------\n"
