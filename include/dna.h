@@ -9,7 +9,7 @@
  *          generations if desired. It follows the policies for elitism and   *
  *          mutations set out by the user, but crossover is fixed. Other high *
  *          level API's are also exposed to allow custom implementations of   *
- *          constructing successive genearations. This presents a versatile   *
+ *          constructing successive generations. This presents a versatile    *
  *          interface to the user allowing both low level and/or high level   *
  *          control, whichever is desired. The exposed library API's also     *
  *          follow a uniform interface where only errors are returned from    *
@@ -54,7 +54,7 @@ typedef enum errDNA { /* All possible errors produced by this library. */
  * -------- -----------                                                       *
  * errDNA   the error to stringify                                            *
  *                                                                            *
- * RETURNS: A string representation of the error.                             *
+ * RETURNS: A string representation of the error                              *
  *                                                                            *
  ******************************************************************************/
 const char *strErrDNA(errDNA_t errDNA);
@@ -65,8 +65,8 @@ const char *strErrDNA(errDNA_t errDNA);
  *          state. An internal representation of all chromosomes will be      *
  *          generated and initialized to 0. Also, all ids will be copied for  *
  *          internal use as well as being paired with the corresponding       *
- *          chromosomes. If any problem is encounted during initialization    *
- *          all memeory will be freed, an error will be returned, and the     *
+ *          chromosomes. If any problem is encountered during initialization  *
+ *          all memory will be freed, an error will be returned, and the      *
  *          value stored at dna will be NULL.                                 *
  *                                                                            *
  * ARGUMENT DESCRIPTION                                                       *
