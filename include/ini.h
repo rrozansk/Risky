@@ -2,12 +2,13 @@
  * FILE:    ini.h                                                             *
  * AUTHOR:  Ryan Rozanski                                                     *
  * CREATED: 3/27/17                                                           *
- * EDITED:  6/17/17                                                           *
+ * EDITED:  6/27/17                                                           *
  * INFO:    A ini configuration file library. Allows the static reading from  *
- *          and output to a file, as well as dynamic CRUD operations. The     *
- *          library API is designed to return errors, which should be checked *
- *          and handled immediately. In the case of success INI_NIL error is  *
- *          returned. Below is the grammar accepted and output by the library.*
+ *          and dynamic output to a file, as well as dynamic CRUD operations. *
+ *          The exposed library API's follow a uniform interface where only   *
+ *          errors are returned from functions, if any, and all getters take  *
+ *          ptr's to destinations in which to set the requested information.  * 
+ *          Below is the grammar accepted and output by the library.          *
  *                                                                            *
  *                ::BNF GRAMMAR::                                             *
  *                                                                            *
@@ -58,11 +59,11 @@
  ******************************************************************************/
 typedef struct ini ini_t; /* INI configuration files. */
 
-typedef enum errINI { /* All the possible errors returned from the library. */
-  INI_CLOSE_FAILURE, INI_OPEN_FAILURE, INI_INVALID_KEY, INI_INVALID_SECTION,
-  INI_INVALID_VAL, INI_OUT_OF_MEMORY, INI_NIL_KEY, INI_NIL_VAL, INI_NIL,
-  INI_NIL_SECTION, INI_NIL_INI, INI_NIL_FNAME, INI_INVALID_CONF,
-  INI_NIL_LEN, INI_TYPE_MISMATCH, INI_UNKNOWN_TYPE, INI_NOT_FOUND, INI_INVALID_LEN,
+typedef enum errINI { /* All the possible errors produced by this library. */
+  INI_UNKNOWN_TYPE, INI_OPEN_FAILURE, INI_CLOSE_FAILURE, INI_OUT_OF_MEMORY,
+  INI_NOT_FOUND, INI_TYPE_MISMATCH, INI_INVALID_CONF, INI_INVALID_KEY,
+  INI_INVALID_VAL, INI_INVALID_SECTION, INI_INVALID_LEN, INI_NIL_FNAME,
+  INI_NIL_INI, INI_NIL_KEY, INI_NIL_VAL, INI_NIL_LEN, INI_NIL_SECTION, INI_NIL,
 } errINI_t;
 
 /******************************************************************************
@@ -73,70 +74,79 @@ typedef enum errINI { /* All the possible errors returned from the library. */
 
 /******************************************************************************
  *                                                                            *
- * PURPOSE: Return a string representation of any possible error returned by  *
+ * PURPOSE: Returns a string representation of any possible error returned by *
  *          the library.                                                      *
  *                                                                            *
  * ARGUMENT DESCRIPTION                                                       *
  * -------- -----------                                                       *
- * errINI   the error to strigify                                             *
+ * errDNA   the error to stringify                                            *
  *                                                                            *
- * RETURNS: string rep                                                        *
+ * RETURNS: A string representation of the error                              *
  *                                                                            *
  ******************************************************************************/
 const char *strErrINI(errINI_t errINI);
 
 /******************************************************************************
  *                                                                            *
- * PURPOSE: Create an new ini conf.                                           *
+ * PURPOSE: Attempts to create an new ini configuration object. If any        *
+ *          problem is encounted during initialization all memory will be     *
+ *          freed, an error will be returned, and the value stored at ini     *
+ *          will be NULL.                                                     *
  *                                                                            *
  * ARGUMENT DESCRIPTION                                                       *
  * -------- -----------                                                       *
- * ini      a pointer which to set with the address of the conf read in       *
+ * ini      an address to a ptr in which to set the newly created object      *
  *                                                                            *
- * RETURNS: INI_NULL_INI, INI_OUT_OF_MEMORY, or INI_NIL if no error.          *
+ * RETURNS: INI_NULL_INI if ini is NULL                                       *
+ *          INI_OUT_OF_MEMORY if allocation of the ini configuration fails    *
+ *          INI_NIL if no error                                               *
  *                                                                            *
  ******************************************************************************/
 errINI_t makeINI(ini_t **ini);
 
 /******************************************************************************
  *                                                                            *
- * PURPOSE: Free the ini conf.                                                *
+ * PURPOSE: To free any ini object created through the ini constructor.       *
  *                                                                            *
  * ARGUMENT DESCRIPTION                                                       *
  * -------- -----------                                                       *
- * ini      the ini conf to free                                              *
+ * ini      the ptr to the ini construct in which to free                     *
  *                                                                            *
- * RETURNS: INI_NULL_INI, or INI_NIL if no error.                             *
+ * RETURNS: INI_NIL                                                           *
  *                                                                            *
  ******************************************************************************/
 errINI_t freeINI(ini_t *ini);
 
 /******************************************************************************
  *                                                                            *
- * PURPOSE: Read in and create an ini conf given a file name.                 *
+ * PURPOSE: Read in and create an ini configuration given a file name which   *
+ *          corresponds to a specified ini configuration in a file adhereing  *
+ *          to the library grammar.
  *                                                                            *
  * ARGUMENT DESCRIPTION                                                       *
  * -------- -----------                                                       *
  * ini      a pointer which to set with the address of the conf read in       *
  * fname    the name of the file to read from                                 *
  *                                                                            *
- * RETURNS: INI_NULL_INI, INI_NULL_FNAME, INI_OPEN_FAILURE, INI_OUT_OF_MEMORY,*
- *          INI_CLOSE_FAILURE, INI_INVALID_CONF, INI_INVALID_SECTION,         *
+ * RETURNS: 
  *                                                                            *
  ******************************************************************************/
-errINI_t readINI(ini_t **ini, char *fname);
+errINI_t readINI(ini_t **ini, char *fname); // TODO
 
 /******************************************************************************
  *                                                                            *
- * PURPOSE: Output the ini conf to a file with the specified name.            *
+ * PURPOSE: Output the ini configuration to a file with the specified name.   *
  *                                                                            *
  * ARGUMENT DESCRIPTION                                                       *
  * -------- -----------                                                       *
- * ini      the error to strigify                                             *
- * fname    the name of the file to write out the conf to                     *
+ * ini      the ini configuration to output                                   *
+ * fname    the name of the file to [over]write                               *
  *                                                                            *
- * RETURNS: INI_NULL_INI, INI_NULL_FNAME, INI_OPEN_FAILURE, INI_CLOSE_FAILURE,*
- *          or INI_NIL if no error.                                           *
+ * RETURNS: INI_NIL_INI if ini is NULL                                        *
+ *          INI_NIL_FNAME if fname is NULL                                    *
+ *          INI_OPEN_FAILURE if creating/opening the file failed              *
+ *          INI_CLOSE_FAILURE if closing the file failed                      *
+ *          INI_NIL if no error                                               *
  *                                                                            *
  ******************************************************************************/
 errINI_t writeINI(ini_t *ini, char *fname);
@@ -147,17 +157,15 @@ errINI_t writeINI(ini_t *ini, char *fname);
  *                                                                            *
  * ARGUMENT DESCRIPTION                                                       *
  * -------- -----------                                                       *
- * ini      the ini conf to use                                               *
- * section  the section to make a new setting under                           *
- * key      the key of the new setting                                        *
+ * ini      the ini configuration object to manipulate                        *
+ * section  the section under which the key is located                        *
+ * key      the key of the setting to remove                                  *
  * val      the val of the new setting                                        *
  *                                                                            *
- * RETURNS: INI_NULL_INI, INI_NULL_SECTION, INI_NULL_KEY, INI_NULL_VAL,       * 
- *          INI_INVALID_SECTION, INI_INVALID_KEY, INI_INVALID_VAL,            *
- *          INI_NULL_VAL, or INI_NIL if no error.                             *
+ * RETURNS: 
  *                                                                            *
  ******************************************************************************/
-errINI_t setIntINI(ini_t *ini, char *section, char *key, int val);
+errINI_t setIntINI(ini_t *ini, char *section, char *key, int val); // TODO
 
 /******************************************************************************
  *                                                                            *
@@ -170,11 +178,10 @@ errINI_t setIntINI(ini_t *ini, char *section, char *key, int val);
  * key      the key of the setting to get                                     *
  * val      a pointer which to set with the val of the setting found, if any  *
  *                                                                            *
- * RETURNS: INI_NULL_INI, INI_NULL_SECTION, INI_NULL_KEY, INI_NULL_VAL,       *
- *          INI_INVALID_SECTION, INI_INVALID_KEY, or INI_NIL if no error.     *
+ * RETURNS: 
  *                                                                            *
  ******************************************************************************/
-errINI_t getIntINI(ini_t *ini, char *section, char *key, int *val);
+errINI_t getIntINI(ini_t *ini, char *section, char *key, int *val); // TODO
 
 /******************************************************************************
  *                                                                            *
@@ -182,7 +189,7 @@ errINI_t getIntINI(ini_t *ini, char *section, char *key, int *val);
  *                                                                            *
  * ARGUMENT DESCRIPTION                                                       *
  * -------- -----------                                                       *
- * ini      the ini conf to use                                               *
+ * ini      the ini configuration object to manipulate                        *
  * section  the section to make a new setting under                           *
  * key      the key of the new setting                                        *
  * val      the val of the new setting                                        *
@@ -190,7 +197,7 @@ errINI_t getIntINI(ini_t *ini, char *section, char *key, int *val);
  * RETURNS: 
  *                                                                            *
  ******************************************************************************/
-errINI_t setFloatINI(ini_t *ini, char *section, char *key, double val);
+errINI_t setFloatINI(ini_t *ini, char *section, char *key, double val); // TODO
 
 /******************************************************************************
  *                                                                            *
@@ -206,7 +213,7 @@ errINI_t setFloatINI(ini_t *ini, char *section, char *key, double val);
  * RETURNS: 
  *                                                                            *
  ******************************************************************************/
-errINI_t getFloatINI(ini_t *ini, char *section, char *key, double *val);
+errINI_t getFloatINI(ini_t *ini, char *section, char *key, double *val); // TODO
 
 /******************************************************************************
  *                                                                            *
@@ -214,7 +221,7 @@ errINI_t getFloatINI(ini_t *ini, char *section, char *key, double *val);
  *                                                                            *
  * ARGUMENT DESCRIPTION                                                       *
  * -------- -----------                                                       *
- * ini      the ini conf to use                                               *
+ * ini      the ini configuration object to manipulate                        *
  * section  the section to make a new setting under                           *
  * key      the key of the new setting                                        *
  * val      the val of the new setting                                        *
@@ -222,7 +229,7 @@ errINI_t getFloatINI(ini_t *ini, char *section, char *key, double *val);
  * RETURNS: 
  *                                                                            *
  ******************************************************************************/
-errINI_t setBoolINI(ini_t *ini, char *section, char *key, int val);
+errINI_t setBoolINI(ini_t *ini, char *section, char *key, int val); // TODO
 
 /******************************************************************************
  *                                                                            *
@@ -238,7 +245,7 @@ errINI_t setBoolINI(ini_t *ini, char *section, char *key, int val);
  * RETURNS: 
  *                                                                            *
  ******************************************************************************/
-errINI_t getBoolINI(ini_t *ini, char *section, char *key, int *val);
+errINI_t getBoolINI(ini_t *ini, char *section, char *key, int *val); // TODO
 
 /******************************************************************************
  *                                                                            *
@@ -246,7 +253,7 @@ errINI_t getBoolINI(ini_t *ini, char *section, char *key, int *val);
  *                                                                            *
  * ARGUMENT DESCRIPTION                                                       *
  * -------- -----------                                                       *
- * ini      the ini conf to use                                               *
+ * ini      the ini configuration object to manipulate                        *
  * section  the section to make a new setting under                           *
  * key      the key of the new setting                                        *
  * val      the val of the new setting                                        *
@@ -254,7 +261,7 @@ errINI_t getBoolINI(ini_t *ini, char *section, char *key, int *val);
  * RETURNS: 
  *                                                                            *
  ******************************************************************************/
-errINI_t setCharINI(ini_t *ini, char *section, char *key, char val);
+errINI_t setCharINI(ini_t *ini, char *section, char *key, char val); // TODO
 
 /******************************************************************************
  *                                                                            *
@@ -270,7 +277,7 @@ errINI_t setCharINI(ini_t *ini, char *section, char *key, char val);
  * RETURNS: 
  *                                                                            *
  ******************************************************************************/
-errINI_t getCharINI(ini_t *ini, char *section, char *key, char *val);
+errINI_t getCharINI(ini_t *ini, char *section, char *key, char *val); // TODO
 
 /******************************************************************************
  *                                                                            *
@@ -278,7 +285,7 @@ errINI_t getCharINI(ini_t *ini, char *section, char *key, char *val);
  *                                                                            *
  * ARGUMENT DESCRIPTION                                                       *
  * -------- -----------                                                       *
- * ini      the ini conf to use                                               *
+ * ini      the ini configuration object to manipulate                        *
  * section  the section to make a new setting under                           *
  * key      the key of the new setting                                        *
  * val      the val of the new setting                                        *
@@ -286,7 +293,7 @@ errINI_t getCharINI(ini_t *ini, char *section, char *key, char *val);
  * RETURNS: 
  *                                                                            *
  ******************************************************************************/
-errINI_t setStrINI(ini_t *ini, char *section, char *key, char *val);
+errINI_t setStrINI(ini_t *ini, char *section, char *key, char *val); // TODO
 
 /******************************************************************************
  *                                                                            *
@@ -302,7 +309,7 @@ errINI_t setStrINI(ini_t *ini, char *section, char *key, char *val);
  * RETURNS: 
  *                                                                            *
  ******************************************************************************/
-errINI_t getStrINI(ini_t *ini, char *section, char *key, char **val);
+errINI_t getStrINI(ini_t *ini, char *section, char *key, char **val); // TODO
 
 /******************************************************************************
  *                                                                            *
@@ -310,7 +317,7 @@ errINI_t getStrINI(ini_t *ini, char *section, char *key, char **val);
  *                                                                            *
  * ARGUMENT DESCRIPTION                                                       *
  * -------- -----------                                                       *
- * ini      the ini conf to use                                               *
+ * ini      the ini configuration object to manipulate                        *
  * section  the section to make a new setting under                           *
  * key      the key of the new setting                                        *
  * val      the val of the new setting                                        *
@@ -319,7 +326,7 @@ errINI_t getStrINI(ini_t *ini, char *section, char *key, char **val);
  * RETURNS: 
  *                                                                            *
  ******************************************************************************/
-errINI_t setIntArrINI(ini_t *ini, char *section, char *key, int *val, int n);
+errINI_t setIntArrINI(ini_t *ini, char *section, char *key, int *val, int n); // TODO
 
 /******************************************************************************
  *                                                                            *
@@ -336,7 +343,7 @@ errINI_t setIntArrINI(ini_t *ini, char *section, char *key, int *val, int n);
  * RETURNS: 
  *                                                                            *
  ******************************************************************************/
-errINI_t getIntArrINI(ini_t *ini, char *section, char *key, int **val, int *n);
+errINI_t getIntArrINI(ini_t *ini, char *section, char *key, int **val, int *n); // TODO
 
 /******************************************************************************
  *                                                                            *
@@ -344,7 +351,7 @@ errINI_t getIntArrINI(ini_t *ini, char *section, char *key, int **val, int *n);
  *                                                                            *
  * ARGUMENT DESCRIPTION                                                       *
  * -------- -----------                                                       *
- * ini      the ini conf to use                                               *
+ * ini      the ini configuration object to manipulate                        *
  * section  the section to make a new setting under                           *
  * key      the key of the new setting                                        *
  * val      the val of the new setting                                        *
@@ -353,7 +360,7 @@ errINI_t getIntArrINI(ini_t *ini, char *section, char *key, int **val, int *n);
  * RETURNS: 
  *                                                                            *
  ******************************************************************************/
-errINI_t setFloatArrINI(ini_t *ini, char *section, char *key, double *val, int n);
+errINI_t setFloatArrINI(ini_t *ini, char *section, char *key, double *val, int n); // TODO
 
 /******************************************************************************
  *                                                                            *
@@ -370,7 +377,7 @@ errINI_t setFloatArrINI(ini_t *ini, char *section, char *key, double *val, int n
  * RETURNS: 
  *                                                                            *
  ******************************************************************************/
-errINI_t getFloatArrINI(ini_t *ini, char *section, char *key, double **val, int *n);
+errINI_t getFloatArrINI(ini_t *ini, char *section, char *key, double **val, int *n); // TODO
 
 /******************************************************************************
  *                                                                            *
@@ -378,7 +385,7 @@ errINI_t getFloatArrINI(ini_t *ini, char *section, char *key, double **val, int 
  *                                                                            *
  * ARGUMENT DESCRIPTION                                                       *
  * -------- -----------                                                       *
- * ini      the ini conf to use                                               *
+ * ini      the ini configuration object to manipulate                        *
  * section  the section to make a new setting under                           *
  * key      the key of the new setting                                        *
  * val      the val of the new setting                                        *
@@ -387,7 +394,7 @@ errINI_t getFloatArrINI(ini_t *ini, char *section, char *key, double **val, int 
  * RETURNS: 
  *                                                                            *
  ******************************************************************************/
-errINI_t setBoolArrINI(ini_t *ini, char *section, char *key, int *val, int n);
+errINI_t setBoolArrINI(ini_t *ini, char *section, char *key, int *val, int n); // TODO
 
 /******************************************************************************
  *                                                                            *
@@ -404,7 +411,7 @@ errINI_t setBoolArrINI(ini_t *ini, char *section, char *key, int *val, int n);
  * RETURNS: 
  *                                                                            *
  ******************************************************************************/
-errINI_t getBoolArrINI(ini_t *ini, char *section, char *key, int **val, int *n);
+errINI_t getBoolArrINI(ini_t *ini, char *section, char *key, int **val, int *n); // TODO
 
 /******************************************************************************
  *                                                                            *
@@ -412,7 +419,7 @@ errINI_t getBoolArrINI(ini_t *ini, char *section, char *key, int **val, int *n);
  *                                                                            *
  * ARGUMENT DESCRIPTION                                                       *
  * -------- -----------                                                       *
- * ini      the ini conf to use                                               *
+ * ini      the ini configuration object to manipulate                        *
  * section  the section to make a new setting under                           *
  * key      the key of the new setting                                        *
  * val      the val of the new setting                                        *
@@ -421,7 +428,7 @@ errINI_t getBoolArrINI(ini_t *ini, char *section, char *key, int **val, int *n);
  * RETURNS: 
  *                                                                            *
  ******************************************************************************/
-errINI_t setCharArrINI(ini_t *ini, char *section, char *key, char *val, int n);
+errINI_t setCharArrINI(ini_t *ini, char *section, char *key, char *val, int n); // TODO
 
 /******************************************************************************
  *                                                                            *
@@ -438,7 +445,7 @@ errINI_t setCharArrINI(ini_t *ini, char *section, char *key, char *val, int n);
  * RETURNS: 
  *                                                                            *
  ******************************************************************************/
-errINI_t getCharArrINI(ini_t *ini, char *section, char *key, char **val, int *n);
+errINI_t getCharArrINI(ini_t *ini, char *section, char *key, char **val, int *n); // TODO
 
 /******************************************************************************
  *                                                                            *
@@ -446,7 +453,7 @@ errINI_t getCharArrINI(ini_t *ini, char *section, char *key, char **val, int *n)
  *                                                                            *
  * ARGUMENT DESCRIPTION                                                       *
  * -------- -----------                                                       *
- * ini      the ini conf to use                                               *
+ * ini      the ini configuration object to manipulate                        *
  * section  the section to make a new setting under                           *
  * key      the key of the new setting                                        *
  * val      the val of the new setting                                        *
@@ -455,7 +462,7 @@ errINI_t getCharArrINI(ini_t *ini, char *section, char *key, char **val, int *n)
  * RETURNS: 
  *                                                                            *
  ******************************************************************************/
-errINI_t setStrArrINI(ini_t *ini, char *section, char *key, char **val, int n);
+errINI_t setStrArrINI(ini_t *ini, char *section, char *key, char **val, int n); // TODO
 
 /******************************************************************************
  *                                                                            *
@@ -463,8 +470,8 @@ errINI_t setStrArrINI(ini_t *ini, char *section, char *key, char **val, int n);
  *                                                                            *
  * ARGUMENT DESCRIPTION                                                       *
  * -------- -----------                                                       *
- * ini      the ini conf to use                                               *
- * section  the section to look under                                         *
+ * ini      the ini configuration object to use                               *
+ * section  the section under which the key is located                        *
  * key      the key of the setting to get                                     *
  * val      a pointer which to set with the val of the setting found, if any  *
  * n        the size of the array of the var val                              *
@@ -472,20 +479,27 @@ errINI_t setStrArrINI(ini_t *ini, char *section, char *key, char **val, int n);
  * RETURNS: 
  *                                                                            *
  ******************************************************************************/
-errINI_t getStrArrINI(ini_t *ini, char *section, char *key, char ***val, int *n);
+errINI_t getStrArrINI(ini_t *ini, char *section, char *key, char ***val, int *n); // TODO
 
 /******************************************************************************
  *                                                                            *
- * PURPOSE: Delete the key value pair under the specified section.            *
+ * PURPOSE: To delete the key/value association located under the specified   *
+ *          section if it exists. Requests to remove non-present keys will be * 
+ *          ignored. If the deleted association was the last in the given     *
+ *          section then the section will also be removed.                    *
  *                                                                            *
  * ARGUMENT DESCRIPTION                                                       *
  * -------- -----------                                                       *
- * ini      the ini conf to use                                               *
- * section  the section to look under                                         *
- * key      the key of the setting to delete                                  *
+ * ini      the ini configuration object to manipulate                        *
+ * section  the section under which the key is located                        *
+ * key      the key of the setting to remove                                  *
  *                                                                            *
- * RETURNS: INI_NULL_INI, INI_NULL_SECTION, INI_NULL_KEY, INI_INVALID_SECTION,*
- *          INI_INVALID_KEY, or INI_NIL if no error.                          *
+ * RETURNS: INI_NIL_INI if ini is NULL                                        *
+ *          INI_NIL_SECTION if section is NULL                                *
+ *          INI_NIL_KEY if key is NULL                                        *
+ *          INI_INVALID_SECTION if section does not adhere to library grammar *
+ *          INI_INVALID_KEY if key does not adhere to library grammar         *
+ *          INI_NIL if no error                                               *
  *                                                                            *
  ******************************************************************************/
 errINI_t deleteINI(ini_t *ini, char *section, char *key);

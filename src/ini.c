@@ -2,7 +2,7 @@
  * FILE:    ini.c                                                             *
  * AUTHOR:  Ryan Rozanski                                                     *
  * CREATED: 3/27/17                                                           *
- * EDITED:  5/29/17                                                           *
+ * EDITED:  6/27/17                                                           *
  * INFO:    Implementation of the interface located in ini.h.                 *
  *                                                                            *
  ******************************************************************************/
@@ -14,8 +14,8 @@
  ******************************************************************************/
 #include <ini.h>
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
 #include <ctype.h>
 
 /******************************************************************************
@@ -128,6 +128,10 @@ static int isValidKey(char *key) { return isValidTerm(key); }
 
 static int isValidHeader(char *section) { return isValidTerm(section); }
 
+// FIXME: do getStrLengthINI() and getArrLengthINI() so we never have to
+// allocate memeory for getters, only for setters. this allows the library
+// to persist the information however it wants.
+
 //static errINI_t getINI(ini_t *ini, char *section, char *key, void *value, int *len, typeINI_t typeINI) {
 static errINI_t getINI(ini_t *ini, char *section, char *key, void *value, int **len, typeINI_t typeINI) {
   if(!ini) { return INI_NIL_INI; }
@@ -216,8 +220,6 @@ static errINI_t getINI(ini_t *ini, char *section, char *key, void *value, int **
               }
               **(int **)len = setting->len;
               return INI_NIL;
-            default:
-              return INI_UNKNOWN_TYPE;
           }
           return INI_OUT_OF_MEMORY;
         }
@@ -273,8 +275,7 @@ static errINI_t setINI(ini_t *ini, char *section, char *key, void *value, int le
             case BOOL_ARR:
             case CHAR_ARR:
             case STR_ARR:
-            default:
-              return INI_UNKNOWN_TYPE;
+              break;
           }
         }
       }
@@ -369,8 +370,6 @@ errINI_t freeINI(ini_t *ini) {
           }
           free(setting->val.sarr);
           break;
-        default:
-          return INI_UNKNOWN_TYPE;
       }
       free(setting->key);
       free(setting);
@@ -556,7 +555,6 @@ errINI_t writeINI(ini_t *ini, char *fname) {
           }
           fprintf(fp, "}\n");
           break;
-        default: return INI_UNKNOWN_TYPE;
       }
     }
     fprintf(fp, "\n");
@@ -690,8 +688,6 @@ errINI_t deleteINI(ini_t *ini, char *section, char *key) {
               }
               free(setting->val.sarr);
               break;
-            default:
-              return INI_UNKNOWN_TYPE;
           }
           free(setting->key);
           free(setting);
