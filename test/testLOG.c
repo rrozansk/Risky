@@ -2,7 +2,7 @@
  * FILE:    testLOG.c                                                         *
  * AUTHOR:  Ryan Rozanski                                                     *
  * CREATED: 6/3/17                                                            *
- * EDITED:  6/17/17                                                           *
+ * EDITED:  7/2/17                                                            *
  * INFO:    Test file for implementation of the interface located in log.h.   *
  *                                                                            *
  ******************************************************************************/
@@ -12,10 +12,10 @@
  *   I N C L U D E S                                                          *
  *                                                                            *
  ******************************************************************************/
-#include <time.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <log.h> 
 
 /******************************************************************************
@@ -23,9 +23,7 @@
  *   C O N S T A N T S                                                        *
  *                                                                            *
  ******************************************************************************/
-#define columns 120
-#define directory "logger_tests"
-#define TOTAL_TESTS 43
+#define TOTAL_TESTS 107
 
 /******************************************************************************
  *                                                                            *
@@ -33,13 +31,6 @@
  *                                                                            *
  ******************************************************************************/
 typedef enum testResultLOG { LOG_PASS, LOG_FAIL } testResultLOG_t;
-
-/******************************************************************************
- *                                                                            *
- *   G L O B A L S                                                            *
- *                                                                            *
- ******************************************************************************/
-log_t *logger;
 
 /******************************************************************************
  *                                                                            *
@@ -134,281 +125,926 @@ testResultLOG_t testStrErrLOG_NIL() {
   return (!strcmp(strErrLOG(LOG_NIL), "")) ? LOG_PASS : LOG_FAIL;
 }
 
-testResultLOG_t testMakeLOG() {
-  fprintf(stdout, "FAIL: testMakeLOG\n");
-  return LOG_FAIL;
-/*
-  time_t t = time(NULL);
-  struct tm *date = localtime(&t);
-  char name[80];
-  strftime(name, 80, "%Y_%B_%d_%A_%X", date); // yr_mo_day_weekday_time
+testResultLOG_t testMakeLOGNilLog() {
+  errLOG_t errLOG = makeLOG(NULL, 80, "logs", "log");
+  return (errLOG == LOG_NIL_LOG) ? LOG_PASS : LOG_FAIL;
+}
 
-  char fname[80];
-  sprintf(fname, "_LOGGER_TEST.txt", name);
+testResultLOG_t testMakeLOGNilDir() {
+  log_t *log;
 
-  log_t *logger;
-  errLOG_t errLOG;
-  if((errLOG = makeLOG(&logger, columns, directory, fname)) != LOG_NIL) {
-    fprintf(stderr, "error! failure to make log\nirritant: %s\nexiting...\n", strErrLOG(errLOG));
-    exit(EXIT_FAILURE);
+  errLOG_t errLOG = makeLOG(&log, 80, NULL, "log");
+  return (errLOG == LOG_NIL_DIR) ? LOG_PASS : LOG_FAIL;
+}
+
+testResultLOG_t testMakeLOGNilName() {
+  log_t *log;
+
+  errLOG_t errLOG = makeLOG(&log, 80, "logs", NULL);
+  return (errLOG == LOG_NIL_NAME) ? LOG_PASS : LOG_FAIL;
+}
+
+testResultLOG_t testMakeLOGInvalidWidth() {
+  log_t *log;
+
+  errLOG_t errLOG = makeLOG(&log, 0, "logs", "log");
+  return (errLOG == LOG_INVALID_WIDTH) ? LOG_PASS : LOG_FAIL;
+}
+
+testResultLOG_t testMakeLOGInvalidDir() {
+  char *dir = "someReallySuperExtremelyLongDirectoryName"
+              "someReallySuperExtremelyLongDirectoryName"
+              "someReallySuperExtremelyLongDirectoryName"
+              "someReallySuperExtremelyLongDirectoryName"
+              "someReallySuperExtremelyLongDirectoryName";
+  char *f = "anotherReallySuperExtremelyLongTextFileName"
+            "anotherReallySuperExtremelyLongTextFileName"
+            "anotherReallySuperExtremelyLongTextFileName"
+            "anotherReallySuperExtremelyLongTextFileName"
+            "anotherReallySuperExtremelyLongTextFileName.txt";
+  log_t *log;
+
+  errLOG_t errLOG = makeLOG(&log, 80, dir, f);
+  return (errLOG == LOG_INVALID_DIR) ? LOG_PASS : LOG_FAIL;
+}
+
+//testResultLOG_t testMakeLOGDirCreationFail() {  } // LOG_DIR_CREATION_FAIL
+
+//testResultLOG_t testMakeLOGOutOFMemory() {  } // LOG_OUT_OF_MEMORY
+
+//testResultLOG_t testMakeLOGOpenFail() {  } // LOG_OPEN_FAIL
+
+testResultLOG_t testMakeLOGValid() {
+  log_t *log;
+
+  errLOG_t errLOG = makeLOG(&log, 80, "logs", "log.txt");
+  if(errLOG != LOG_NIL) { return LOG_FAIL; }
+
+  remove("logs/log.txt");
+  remove("logs");
+
+  return LOG_PASS;
+}
+
+//testResultLOG_t testFreeLOGCloseFail() { } // LOG_CLOSE_FAIL
+
+testResultLOG_t testFreeLOGNilLog() {
+  errLOG_t errLOG = freeLOG(NULL);
+  return (errLOG == LOG_NIL) ? LOG_PASS : LOG_FAIL;
+}
+
+testResultLOG_t testFreeLOGValid() {
+  log_t *log;
+
+  errLOG_t errLOG = makeLOG(&log, 80, "logs", "log.txt");
+  if(errLOG != LOG_NIL) { return LOG_FAIL; }
+
+  errLOG = freeLOG(log);
+
+  remove("logs/log.txt");
+  remove("logs");
+
+  return (errLOG == LOG_NIL) ? LOG_PASS : LOG_FAIL;
+}
+
+testResultLOG_t testLogTitleNilLog() {
+  errLOG_t errLOG = logTitle(NULL, "TITLE");
+  return (errLOG == LOG_NIL_LOG) ? LOG_PASS : LOG_FAIL;
+}
+
+testResultLOG_t testLogTitleNilTitle() {
+  log_t *log;
+
+  errLOG_t errLOG = makeLOG(&log, 80, "logs", "log.txt");
+  if(errLOG != LOG_NIL) { return LOG_FAIL; }
+
+  errLOG = logTitle(log,  NULL);
+
+  remove("logs/log.txt");
+  remove("logs");
+
+  return (errLOG == LOG_NIL_TITLE) ? LOG_PASS : LOG_FAIL;
+}
+
+// TODO
+testResultLOG_t testLogTitleValid() {
+  log_t *log;
+
+  errLOG_t errLOG = makeLOG(&log, 80, "logs", "log.txt");
+  if(errLOG != LOG_NIL) { return LOG_FAIL; }
+
+  errLOG = logTitle(log, "TITLE");
+  if(errLOG != LOG_NIL) {
+    remove("logs/log.txt");
+    remove("logs");
+    return LOG_FAIL;
   }
 
-  if((errLOG = logTitle(logger, fname)) != LOG_NIL) {
-    fprintf(stderr, "error! failure to log title\nirritant: %s\nexiting...\n", strErrLOG(errLOG));
-    exit(EXIT_FAILURE);
-  }
+  errLOG = LOG_NIL_LOG;
 
-  logHeader(logger, "testing");
-
-  logSection(logger, "testing integer logging");
-  testInt(logger);
-
-  int r, c;
-  fprintf(stdout, "rows: ");
-  scanf("%i", &r);
-  fprintf(stdout, "cols: ");
-  scanf("%i", &c);
-
-  logSection(logger, "testing float logging");
-  testFloat(logger, 1, 1);
-
-  logSection(logger, "testing boolean logging");
-  testBool(logger, 1, 1);
-
-  logSection(logger, "testing character logging");
-  testChar(logger, 1, 1);
-
-  logSection(logger, "testing string logging");
-  testStr(logger, 1, 1);
-
-  return 0;  
-  */
+  return (errLOG == LOG_NIL) ? LOG_PASS : LOG_FAIL;
 }
 
-testResultLOG_t testFreeLOG() {
-  //freeLOG(log_t *log)
-  return LOG_FAIL;
+testResultLOG_t testLogHeaderNilLog() {
+  errLOG_t errLOG = logHeader(NULL, "HEADER");
+  return (errLOG == LOG_NIL_LOG) ? LOG_PASS : LOG_FAIL;
 }
 
-testResultLOG_t testLogTitle() {
-  //logTitle(log_t *log, char *title)
-  return LOG_FAIL;
+testResultLOG_t testLogHeaderNilHeader() {
+  log_t *log;
+
+  errLOG_t errLOG = makeLOG(&log, 80, "logs", "log.txt");
+  if(errLOG != LOG_NIL) { return LOG_FAIL; }
+
+  errLOG = logHeader(log, NULL);
+
+  remove("logs/log.txt");
+  remove("logs");
+
+  return (errLOG == LOG_NIL_HEADER) ? LOG_PASS : LOG_FAIL;
 }
 
-testResultLOG_t testLogHeader() {
-  //logHeader(log_t *log, char *header)
-  return LOG_FAIL;
+//logHeader(log_t *log, char *header); TODO
+testResultLOG_t testLogHeaderValid() {
+  errLOG_t errLOG = LOG_NIL_LOG;
+  return (errLOG == LOG_NIL) ? LOG_PASS : LOG_FAIL;
 }
 
-testResultLOG_t testLogSection() {
-  //logSection(log_t *log, char *section)
-  return LOG_FAIL;
+testResultLOG_t testLogSectionNilLog() {
+  errLOG_t errLOG = logSection(NULL, "SECTION");
+  return (errLOG == LOG_NIL_LOG) ? LOG_PASS : LOG_FAIL;
 }
 
-testResultLOG_t testLogEvent() {
-  //logEvent(log_t *log, int timestamp, char *event)
-  return LOG_FAIL;
+testResultLOG_t testLogSectionNilSection() {
+  log_t *log;
+
+  errLOG_t errLOG = makeLOG(&log, 80, "logs", "log.txt");
+  if(errLOG != LOG_NIL) { return LOG_FAIL; }
+
+  errLOG = logSection(log, NULL);
+
+  remove("logs/log.txt");
+  remove("logs");
+
+  return (errLOG == LOG_NIL_SECTION) ? LOG_PASS : LOG_FAIL;
 }
 
-testResultLOG_t testLogIntSetting() {
-  //logIntSetting(log_t *log, char *key, int val)
-  return LOG_FAIL;
+//logSection(log_t *log, char *section); TODO
+testResultLOG_t testLogSectionValid() {
+  errLOG_t errLOG = LOG_NIL_LOG;
+  return (errLOG == LOG_NIL) ? LOG_PASS : LOG_FAIL;
 }
 
-testResultLOG_t testLogIntArr() {
-  //logIntArr(log_t *log, int *arr, int size)
-  return LOG_FAIL;
+testResultLOG_t testLogEventNilLog() {
+  errLOG_t errLOG = logEvent(NULL, 0, "EVENT");
+  return (errLOG == LOG_NIL_LOG) ? LOG_PASS : LOG_FAIL;
 }
 
-testResultLOG_t testLogIntMatrix() {
-  //logIntMatrix(log_t *log, int *matrix, int r, int c)
-  return LOG_FAIL;
+testResultLOG_t testLogEventInvalidTimestamp() {
+  log_t *log;
+
+  errLOG_t errLOG = makeLOG(&log, 80, "logs", "log.txt");
+  if(errLOG != LOG_NIL) { return LOG_FAIL; }
+
+  errLOG = logEvent(log, 2, "EVENT");
+
+  remove("logs/log.txt");
+  remove("logs");
+
+  return (errLOG == LOG_INVALID_TIMESTAMP) ? LOG_PASS : LOG_FAIL;
 }
 
-testResultLOG_t testLogFloatSetting() {
-  //logFloatSetting(log_t *log, char *key, double val)
-  return LOG_FAIL;
+//logEvent(log_t *log, int timestamp, char *event); TODO
+testResultLOG_t testLogEventValid() {
+  errLOG_t errLOG = LOG_NIL_LOG;
+  return (errLOG == LOG_NIL) ? LOG_PASS : LOG_FAIL;
 }
 
-testResultLOG_t testLogFloatArr() {
-  //logFloatArr(log_t *log, double *arr, int size)
-  return LOG_FAIL;
+testResultLOG_t testIntSettingNilLog() {
+  errLOG_t errLOG = logIntSetting(NULL, "KEY", 0);
+  return (errLOG == LOG_NIL_LOG) ? LOG_PASS : LOG_FAIL;
 }
 
-testResultLOG_t testLogFloatMatrix() {
-  //logFloatMatrix(log_t *log, double **matrix, int r, int c)
-  return LOG_FAIL;
+testResultLOG_t testIntSettingNilKey() {
+  log_t *log;
+
+  errLOG_t errLOG = makeLOG(&log, 80, "logs", "log.txt");
+  if(errLOG != LOG_NIL) { return LOG_FAIL; }
+
+  errLOG = logIntSetting(log, NULL, 0);
+
+  remove("logs/log.txt");
+  remove("logs");
+
+  return (errLOG == LOG_NIL_KEY) ? LOG_PASS : LOG_FAIL;
 }
 
-testResultLOG_t testLogBoolSetting() {
-  //logBoolSetting(log_t *log, char *key, int val)
-  return LOG_FAIL;
+testResultLOG_t testIntSettingInvalidKey() {
+  log_t *log;
+
+  errLOG_t errLOG = makeLOG(&log, 80, "logs", "log.txt");
+  if(errLOG != LOG_NIL) { return LOG_FAIL; }
+
+  char *key = "someReallySuperExtremelyLongKeyName"
+              "someReallySuperExtremelyLongKeyName"
+              "someReallySuperExtremelyLongKeyName";
+
+  errLOG = logIntSetting(log, key, 0);
+
+  remove("logs/log.txt");
+  remove("logs");
+
+  return (errLOG == LOG_INVALID_KEY) ? LOG_PASS : LOG_FAIL;
 }
 
-testResultLOG_t testLogBoolArr() {
-  //logBoolArr(log_t *log, int *arr, int size)
-  return LOG_FAIL;
+//logIntSetting(log_t *log, char *key, int val); TODO
+testResultLOG_t testIntSettingValid() {
+  errLOG_t errLOG = LOG_NIL_LOG;
+  return (errLOG == LOG_NIL) ? LOG_PASS : LOG_FAIL;
 }
 
-testResultLOG_t testLogBoolMatrix() {
-  //logBoolMatrix(log_t *log, int **matrix, int r, int c)
-  return LOG_FAIL;
+testResultLOG_t testIntArrayNilLog() {
+  int arr[1] = { 8 };
+
+  errLOG_t errLOG = logIntArr(NULL, arr, 1);
+  return (errLOG == LOG_NIL_LOG) ? LOG_PASS : LOG_FAIL;
 }
 
-testResultLOG_t testLogCharSetting() {
-  //logCharSetting(log_t *log, char *key, char val)
-  return LOG_FAIL;
+testResultLOG_t testIntArrayNilArray() {
+  log_t *log;
+
+  errLOG_t errLOG = makeLOG(&log, 80, "logs", "log.txt");
+  if(errLOG != LOG_NIL) { return LOG_FAIL; }
+
+  errLOG = logIntArr(log, NULL, 1);
+
+  remove("logs/log.txt");
+  remove("logs");
+
+  return (errLOG == LOG_NIL_ARR) ? LOG_PASS : LOG_FAIL;
 }
 
-testResultLOG_t testLogCharArr() {
-  //logCharArr(log_t *log, char *arr, int size)
-  return LOG_FAIL;
+testResultLOG_t testIntArrayInvalidSize() {
+  log_t *log;
+
+  errLOG_t errLOG = makeLOG(&log, 80, "logs", "log.txt");
+  if(errLOG != LOG_NIL) { return LOG_FAIL; }
+
+  int arr[1] = { 8 };
+
+  errLOG = logIntArr(log, arr, 0);
+
+  remove("logs/log.txt");
+  remove("logs");
+
+  return (errLOG == LOG_INVALID_ARR_SIZE) ? LOG_PASS : LOG_FAIL;
 }
 
-testResultLOG_t testLogCharMatrix() {
-  //logCharMatrix(log_t *log, char **matrix, int r, int c)
-  return LOG_FAIL;
+//logIntArr(log_t *log, int *arr, int size); TODO
+testResultLOG_t testIntArrayValid() {
+  errLOG_t errLOG = LOG_NIL_LOG;
+  return (errLOG == LOG_NIL) ? LOG_PASS : LOG_FAIL;
 }
 
-testResultLOG_t testLogStrSetting() {
-  //logStrSetting(log_t *log, char *key, char *val)
-  return LOG_FAIL;
+testResultLOG_t testIntMatrixNilLog() {
+  int matrix[1][1] = { { 9 } };
+
+  errLOG_t errLOG = logIntMatrix(NULL, (int *)matrix, 1, 1);
+  return (errLOG == LOG_NIL_LOG) ? LOG_PASS : LOG_FAIL;
 }
 
-testResultLOG_t testLogStrArr() {
-  //logStrArr(log_t *log, char **arr, int size)
-  return LOG_FAIL;
+testResultLOG_t testIntMatrixNilMatrix() {
+  log_t *log;
+
+  errLOG_t errLOG = makeLOG(&log, 80, "logs", "log.txt");
+  if(errLOG != LOG_NIL) { return LOG_FAIL; }
+
+  errLOG = logIntMatrix(log, NULL, 1, 1);
+
+  remove("logs/log.txt");
+  remove("logs");
+
+  return (errLOG == LOG_NIL_MATRIX) ? LOG_PASS : LOG_FAIL;
 }
 
-testResultLOG_t testLogStrMatrix() {
-  //logStrMatrix(log_t *log, char ***matrix, int r, int c)
-  return LOG_FAIL;
+testResultLOG_t testIntMatrixInvalidRowSize() {
+  log_t *log;
+
+  errLOG_t errLOG = makeLOG(&log, 80, "logs", "log.txt");
+  if(errLOG != LOG_NIL) { return LOG_FAIL; }
+
+  int matrix[1][1] = { { 9 } };
+
+  errLOG = logIntMatrix(log, (int *)matrix, 0, 1);
+
+  remove("logs/log.txt");
+  remove("logs");
+
+  return (errLOG == LOG_INVALID_ROW_SIZE) ? LOG_PASS : LOG_FAIL;
 }
 
-/*
-void testInt(log_t *logger) {
-  logEvent(logger, 0, "testing logger int abilities\n");
-  logEvent(logger, 0, "static setting");
-  logIntSetting(logger, "int test", 5);
-  logEvent(logger, 0, "dynamic setting on stk");
-  int i = 5;
-  logIntSetting(logger, "int test", i);
-  logEvent(logger, 0, "dynamic setting on heap");
-  int *k = malloc(sizeof(int));
-  *k = 6;
-  logIntSetting(logger, "int test", *k);
-  free(k);
-  int ia[5] = { 0, 1, 2, 3, 4 };
-  int ial[20] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19 };
-  int im[2][5]  = { { 0, 9, 8, 7, 6 }, { 1, 2, 3, 4, 5 } };
-  int j = 20;
-  int *iml[i = 10];
-  for(; i; i--) {
-    int arr[j];
-    iml[i-1] = arr;
-    for(; j; j--) {
-      iml[i-1][j-1] = j;
-    }
-  }
-  int imls[3][20]  = {
-    { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19 },
-    { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19 },
-    { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19 }
-  };
-  //logEvent(logger, 0, "dynamic array on stk");   // arr[N]
-  //logEvent(logger, 0, "dynamic array on heap");  // malloc(N * sizeof(int))
-  logEvent(logger, 0, "static array");           // arr[#]
-  logIntArr(logger, ia, 5);
-  logIntArr(logger, ial, 20);
-  logEvent(logger, 0, "static matrix");           // arr[#]
-  //logIntMatrix(logger, im, 2, 5);
-  logEvent(logger, 0, "dynamic matrix on stk");   // arr[N]
-  //logIntMatrix(logger, iml, 10, 20);
-  //logEvent(logger, 0, "dynamic matrix on heap");  // malloc(N * sizeof(int))
-  logEvent(logger, 0, "\n");
+testResultLOG_t testIntMatrixInvalidColumnSize() {
+  log_t *log;
+
+  errLOG_t errLOG = makeLOG(&log, 80, "logs", "log.txt");
+  if(errLOG != LOG_NIL) { return LOG_FAIL; }
+
+  int matrix[1][1] = { { 9 } };
+
+  errLOG = logIntMatrix(log, (int *)matrix, 1, 0);
+
+  remove("logs/log.txt");
+  remove("logs");
+
+  return (errLOG == LOG_INVALID_COL_SIZE) ? LOG_PASS : LOG_FAIL;
 }
 
-void testFloat(log_t *logger, int m, int n) {
-  // floats
-  double f = 5.23;
-  double fa[5] = { 0.9, 1.8, 2.7, 3.6, 4.5 };
-  double fal[20] = { 0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0 };
-  double fm[2][5]  = { { 0.9, 1.8, 2.7, 3.6, 4.5 }, { 0.9, 1.8, 2.7, 3.6, 4.5 } };
-  double fml[3][20] = {
-    { 0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0 },
-    { 0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0 },
-    { 0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0 }
-  };
-
-  logEvent(logger, 0, "testing logger float abilities");
-  logFloatSetting(logger, "float test", f);
-  logFloatArr(logger, fa, 15);
-  logFloatArr(logger, fal, 20);
-  //logFloatMatrix(logger, fm, 2, 5);
-  //logFloatMatrix(logger, fml, 10, 20);
-  logEvent(logger, 0, "\n");
+//logIntMatrix(log_t *log, int *matrix, int r, int c); TODO
+testResultLOG_t testIntMatrixValid() {
+  errLOG_t errLOG = LOG_NIL_LOG;
+  return (errLOG == LOG_NIL) ? LOG_PASS : LOG_FAIL;
 }
 
-void testBool(log_t *logger, int m, int n) {
-  // bools
-  int b = 1;
-  int ba[5] = { 0, 1, 0, 0, 1 };
-  int bal[20] = { 0, 0, 1, 0, 1, 1, 1, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 1, 0 };
-  int bm[2][5]  = { { 0, 1, 0, 0, 1 }, { 1, 0, 1, 1, 0 } };
-  int bml[3][20] = {
-    { 0, 0, 1, 0, 1, 1, 1, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 1, 0 },
-    { 0, 0, 1, 0, 1, 1, 1, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 1, 0 },
-    { 0, 0, 1, 0, 1, 1, 1, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 1, 0 }
-  };
-  logEvent(logger, 0, "testing logger bool abilities");
-  logBoolSetting(logger, "bool test", b);
-  logBoolArr(logger, ba, 5);
-  logBoolArr(logger, bal, 20);
-  //logBoolMatrix(logger, bm, 2, 5);
-  //logBoolMatrix(logger, bml, 10, 20);
-  logEvent(logger, 0, "\n");
+testResultLOG_t testFloatSettingNilLog() {
+  errLOG_t errLOG = logFloatSetting(NULL, "KEY", 0.0);
+  return (errLOG == LOG_NIL_LOG) ? LOG_PASS : LOG_FAIL;
 }
 
-void testChar(log_t *logger, int m, int n) {
-  // chars
-  char c = 'h';
-  char ca[5] = { 'h', 'e', 'l', 'l', 'o' };
-  char cal[30] = { 'h', 'e', 'l', 'l', 'o', 'w', 'o', 'r', 'l', 'd', 'h', 'e', 'l', 'l', 'o', 'w', 'o', 'r', 'l', 'd', 'h', 'e', 'l', 'l', 'o', 'w', 'o', 'r', 'l', 'd' };
-  char cm[2][5] = { { 'h', 'e', 'l', 'l', 'o' }, { 'w', 'o', 'r', 'l', 'd' } };
-  char cml[3][30] = {
-    { 'h', 'e', 'l', 'l', 'o', 'w', 'o', 'r', 'l', 'd', 'h', 'e', 'l', 'l', 'o', 'w', 'o', 'r', 'l', 'd', 'h', 'e', 'l', 'l', 'o', 'w', 'o', 'r', 'l', 'd' },
-    { 'h', 'e', 'l', 'l', 'o', 'w', 'o', 'r', 'l', 'd', 'h', 'e', 'l', 'l', 'o', 'w', 'o', 'r', 'l', 'd', 'h', 'e', 'l', 'l', 'o', 'w', 'o', 'r', 'l', 'd' },
-    { 'h', 'e', 'l', 'l', 'o', 'w', 'o', 'r', 'l', 'd', 'h', 'e', 'l', 'l', 'o', 'w', 'o', 'r', 'l', 'd', 'h', 'e', 'l', 'l', 'o', 'w', 'o', 'r', 'l', 'd' }
-  };
-  logEvent(logger, 0, "testing logger char abilities");
-  logCharSetting(logger, "char test", c);
-  logCharArr(logger, ca, 5);
-  logCharArr(logger, cal, 30);
-  //logCharMatrix(logger, cm, 2, 5);
-  //logCharMatrix(logger, cml, 10, 30);
-  logEvent(logger, 0, "\n");
+testResultLOG_t testFloatSettingNilKey() {
+  log_t *log;
+
+  errLOG_t errLOG = makeLOG(&log, 80, "logs", "log.txt");
+  if(errLOG != LOG_NIL) { return LOG_FAIL; }
+
+  errLOG = logFloatSetting(log, NULL, 0.0);
+
+  remove("logs/log.txt");
+  remove("logs");
+
+  return (errLOG == LOG_NIL_KEY) ? LOG_PASS : LOG_FAIL;
 }
 
-void testStr(log_t *logger, int m, int n) {
- // strings
-  char *s = "sup!";
-  char *sa[5] = { "hello", "there", "small", "world", ":-)" };
-  char *sal[20] = { "hello", "there", "small", "world", ":-)", "hello", "there", "small", "world", ":-)", "hello", "there", "small", "world", ":-)", "hello", "there", "small", "world", ":-)" };
-  char *sm[2][5] = { { "hello", "there", "small", "world", ":-)" }, { "hello", "there", "small", "world", ":-)" } };
-  char *sml[3][20] = {
-    { "hello", "there", "small", "world", ":-)", "hello", "there", "small", "world", ":-)", "hello", "there", "small", "world", ":-)", "hello", "there", "small", "world", ":-)" },
-    { "hello", "there", "small", "world", ":-)", "hello", "there", "small", "world", ":-)", "hello", "there", "small", "world", ":-)", "hello", "there", "small", "world", ":-)" },
-    { "hello", "there", "small", "world", ":-)", "hello", "there", "small", "world", ":-)", "hello", "there", "small", "world", ":-)", "hello", "there", "small", "world", ":-)" }
-  }; 
+testResultLOG_t testFloatSettingInvalidKey() {
+  log_t *log;
 
-  logStrSetting(logger, "str test", s);
-  logStrArr(logger, sa, 5);
-  logStrArr(logger, sal, 20);
-  //logStrMatrix(logger, sm, 2, 5);
-  //logStrMatrix(logger, sml, 10, 20);
-  logEvent(logger, 0, "\n");
+  errLOG_t errLOG = makeLOG(&log, 80, "logs", "log.txt");
+  if(errLOG != LOG_NIL) { return LOG_FAIL; }
+
+  char *key = "someReallySuperExtremelyLongKeyName"
+              "someReallySuperExtremelyLongKeyName"
+              "someReallySuperExtremelyLongKeyName";
+
+  errLOG = logFloatSetting(log, key, 0.0);
+
+  remove("logs/log.txt");
+  remove("logs");
+
+  return (errLOG == LOG_INVALID_KEY) ? LOG_PASS : LOG_FAIL;
 }
-*/
+
+//logFloatSetting(log_t *log, char *key, double val); TODO
+testResultLOG_t testFloatSettingValid() {
+  errLOG_t errLOG = LOG_NIL_LOG;
+  return (errLOG == LOG_NIL) ? LOG_PASS : LOG_FAIL;
+}
+
+testResultLOG_t testFloatArrayNilLog() {
+  float arr[1] = { 8.0 };
+
+  errLOG_t errLOG = logFloatArr(NULL, arr, 1);
+  return (errLOG == LOG_NIL_LOG) ? LOG_PASS : LOG_FAIL;
+}
+
+testResultLOG_t testFloatArrayNilArray() {
+  log_t *log;
+
+  errLOG_t errLOG = makeLOG(&log, 80, "logs", "log.txt");
+  if(errLOG != LOG_NIL) { return LOG_FAIL; }
+
+  errLOG = logFloatArr(log, NULL, 1);
+
+  remove("logs/log.txt");
+  remove("logs");
+
+  return (errLOG == LOG_NIL_ARR) ? LOG_PASS : LOG_FAIL;
+}
+
+testResultLOG_t testFloatArrayInvalidSize() {
+  log_t *log;
+
+  errLOG_t errLOG = makeLOG(&log, 80, "logs", "log.txt");
+  if(errLOG != LOG_NIL) { return LOG_FAIL; }
+
+  float arr[1] = { 8.0 };
+
+  errLOG = logFloatArr(log, arr, 0);
+
+  remove("logs/log.txt");
+  remove("logs");
+
+  return (errLOG == LOG_INVALID_ARR_SIZE) ? LOG_PASS : LOG_FAIL;
+}
+
+//logFloatArr(log_t *log, double *arr, int size); TODO
+testResultLOG_t testFloatArrayValid() {
+  errLOG_t errLOG = LOG_NIL_LOG;
+  return (errLOG == LOG_NIL) ? LOG_PASS : LOG_FAIL;
+}
+
+testResultLOG_t testFloatMatrixNilLog() {
+  float matrix[1][1] = { { 9.0 } };
+
+  errLOG_t errLOG = logFloatMatrix(NULL, (float **)matrix, 1, 1);
+  return (errLOG == LOG_NIL_LOG) ? LOG_PASS : LOG_FAIL;
+}
+
+testResultLOG_t testFloatMatrixNilMatrix() {
+  log_t *log;
+
+  errLOG_t errLOG = makeLOG(&log, 80, "logs", "log.txt");
+  if(errLOG != LOG_NIL) { return LOG_FAIL; }
+
+  errLOG = logFloatMatrix(log, NULL, 1, 1);
+
+  remove("logs/log.txt");
+  remove("logs");
+
+  return (errLOG == LOG_NIL_MATRIX) ? LOG_PASS : LOG_FAIL;
+}
+
+testResultLOG_t testFloatMatrixInvalidRowSize() {
+  log_t *log;
+
+  errLOG_t errLOG = makeLOG(&log, 80, "logs", "log.txt");
+  if(errLOG != LOG_NIL) { return LOG_FAIL; }
+
+  float matrix[1][1] = { { 9.0 } };
+
+  errLOG = logFloatMatrix(log, (float **)matrix, 0, 1);
+
+  remove("logs/log.txt");
+  remove("logs");
+
+  return (errLOG == LOG_INVALID_ROW_SIZE) ? LOG_PASS : LOG_FAIL;
+}
+
+testResultLOG_t testFloatMatrixInvalidColumnSize() {
+  log_t *log;
+
+  errLOG_t errLOG = makeLOG(&log, 80, "logs", "log.txt");
+  if(errLOG != LOG_NIL) { return LOG_FAIL; }
+
+
+  float matrix[1][1] = { { 9.0 } };
+
+  errLOG = logFloatMatrix(log, (float **)matrix, 1, 0);
+
+  remove("logs/log.txt");
+  remove("logs");
+
+  return (errLOG == LOG_INVALID_COL_SIZE) ? LOG_PASS : LOG_FAIL;
+}
+
+//logFloatMatrix(log_t *log, double **matrix, int r, int c); TODO
+testResultLOG_t testFloatMatrixValid() {
+  errLOG_t errLOG = LOG_NIL_LOG;
+  return (errLOG == LOG_NIL) ? LOG_PASS : LOG_FAIL;
+}
+
+testResultLOG_t testBoolSettingNilLog() {
+  errLOG_t errLOG = logBoolSetting(NULL, "KEY", 1);
+  return (errLOG == LOG_NIL_LOG) ? LOG_PASS : LOG_FAIL;
+}
+
+testResultLOG_t testBoolSettingNilKey() {
+  log_t *log;
+
+  errLOG_t errLOG = makeLOG(&log, 80, "logs", "log.txt");
+  if(errLOG != LOG_NIL) { return LOG_FAIL; }
+
+  errLOG = logBoolSetting(log, NULL, 1);
+
+  remove("logs/log.txt");
+  remove("logs");
+
+  return (errLOG == LOG_NIL_KEY) ? LOG_PASS : LOG_FAIL;
+}
+
+testResultLOG_t testBoolSettingInvalidKey() {
+  log_t *log;
+
+  errLOG_t errLOG = makeLOG(&log, 80, "logs", "log.txt");
+  if(errLOG != LOG_NIL) { return LOG_FAIL; }
+
+  char *key = "someReallySuperExtremelyLongKeyName"
+              "someReallySuperExtremelyLongKeyName"
+              "someReallySuperExtremelyLongKeyName";
+
+  errLOG = logBoolSetting(log, key, 1);
+
+  remove("logs/log.txt");
+  remove("logs");
+
+  return (errLOG == LOG_INVALID_KEY) ? LOG_PASS : LOG_FAIL;
+}
+
+//logBoolSetting(log_t *log, char *key, int val); TODO
+testResultLOG_t testBoolSettingValid() {
+  errLOG_t errLOG = LOG_NIL_LOG;
+  return (errLOG == LOG_NIL) ? LOG_PASS : LOG_FAIL;
+}
+
+testResultLOG_t testBoolArrayNilLog() {
+  int arr[1] = { 1 };
+
+  errLOG_t errLOG = logBoolArr(NULL, arr, 1);
+  return (errLOG == LOG_NIL_LOG) ? LOG_PASS : LOG_FAIL;
+}
+
+testResultLOG_t testBoolArrayNilArray() {
+  log_t *log;
+
+  errLOG_t errLOG = makeLOG(&log, 80, "logs", "log.txt");
+  if(errLOG != LOG_NIL) { return LOG_FAIL; }
+
+  errLOG = logBoolArr(log, NULL, 1);
+
+  remove("logs/log.txt");
+  remove("logs");
+
+  return (errLOG == LOG_NIL_ARR) ? LOG_PASS : LOG_FAIL;
+}
+
+testResultLOG_t testBoolArrayInvalidSize() {
+  log_t *log;
+
+  errLOG_t errLOG = makeLOG(&log, 80, "logs", "log.txt");
+  if(errLOG != LOG_NIL) { return LOG_FAIL; }
+
+  int arr[1] = { 1 };
+
+  errLOG = logBoolArr(log, arr, 0);
+
+  remove("logs/log.txt");
+  remove("logs");
+
+  return (errLOG == LOG_INVALID_ARR_SIZE) ? LOG_PASS : LOG_FAIL;
+}
+
+//logBoolArr(log_t *log, int *arr, int size); TODO
+testResultLOG_t testBoolArrayValid() {
+  errLOG_t errLOG = LOG_NIL_LOG;
+  return (errLOG == LOG_NIL) ? LOG_PASS : LOG_FAIL;
+}
+
+testResultLOG_t testBoolMatrixNilLog() {
+  int matrix[1][1] = { { 0 } };
+
+  errLOG_t errLOG = logBoolMatrix(NULL, (int **)matrix, 1, 1);
+  return (errLOG == LOG_NIL_LOG) ? LOG_PASS : LOG_FAIL;
+}
+
+testResultLOG_t testBoolMatrixNilMatrix() {
+  log_t *log;
+
+  errLOG_t errLOG = makeLOG(&log, 80, "logs", "log.txt");
+  if(errLOG != LOG_NIL) { return LOG_FAIL; }
+
+  errLOG = logBoolMatrix(log, NULL, 1, 1);
+
+  remove("logs/log.txt");
+  remove("logs");
+
+  return (errLOG == LOG_NIL_MATRIX) ? LOG_PASS : LOG_FAIL;
+}
+
+testResultLOG_t testBoolMatrixInvalidRowSize() {
+  log_t *log;
+
+  errLOG_t errLOG = makeLOG(&log, 80, "logs", "log.txt");
+  if(errLOG != LOG_NIL) { return LOG_FAIL; }
+
+  int matrix[1][1] = { { 0 } };
+
+  errLOG = logBoolMatrix(log, (int **)matrix, 0, 1);
+
+  remove("logs/log.txt");
+  remove("logs");
+
+  return (errLOG == LOG_INVALID_ROW_SIZE) ? LOG_PASS : LOG_FAIL;
+}
+
+testResultLOG_t testBoolMatrixInvalidColumnSize() {
+  log_t *log;
+
+  errLOG_t errLOG = makeLOG(&log, 80, "logs", "log.txt");
+  if(errLOG != LOG_NIL) { return LOG_FAIL; }
+
+  int matrix[1][1] = { { 0 } };
+
+  errLOG = logBoolMatrix(log, (int **)matrix, 1, 0);
+
+  remove("logs/log.txt");
+  remove("logs");
+
+  return (errLOG == LOG_INVALID_COL_SIZE) ? LOG_PASS : LOG_FAIL;
+}
+
+//logBoolMatrix(log_t *log, int **matrix, int r, int c); TODO
+testResultLOG_t testBoolMatrixValid() {
+  errLOG_t errLOG = LOG_NIL_LOG;
+  return (errLOG == LOG_NIL) ? LOG_PASS : LOG_FAIL;
+}
+
+testResultLOG_t testCharSettingNilLog() {
+  errLOG_t errLOG = logCharSetting(NULL, "KEY", 'c');
+  return (errLOG == LOG_NIL_LOG) ? LOG_PASS : LOG_FAIL;
+}
+
+testResultLOG_t testCharSettingNilKey() {
+  log_t *log;
+
+  errLOG_t errLOG = makeLOG(&log, 80, "logs", "log.txt");
+  if(errLOG != LOG_NIL) { return LOG_FAIL; }
+
+  errLOG = logCharSetting(log, NULL, 'c');
+
+  remove("logs/log.txt");
+  remove("logs");
+
+  return (errLOG == LOG_NIL_KEY) ? LOG_PASS : LOG_FAIL;
+}
+
+testResultLOG_t testCharSettingInvalidKey() {
+  log_t *log;
+
+  errLOG_t errLOG = makeLOG(&log, 80, "logs", "log.txt");
+  if(errLOG != LOG_NIL) { return LOG_FAIL; }
+
+  char *key = "someReallySuperExtremelyLongKeyName"
+              "someReallySuperExtremelyLongKeyName"
+              "someReallySuperExtremelyLongKeyName";
+
+  errLOG = logCharSetting(log, key, 'c');
+
+  remove("logs/log.txt");
+  remove("logs");
+
+  return (errLOG == LOG_INVALID_KEY) ? LOG_PASS : LOG_FAIL;
+}
+
+//logCharSetting(log_t *log, char *key, char val); TODO
+testResultLOG_t testCharSettingValid() {
+  errLOG_t errLOG = LOG_NIL_LOG;
+  return (errLOG == LOG_NIL) ? LOG_PASS : LOG_FAIL;
+}
+
+testResultLOG_t testCharArrayNilLog() {
+  char arr[1] = { 'c' };
+
+  errLOG_t errLOG = logCharArr(NULL, arr, 1);
+  return (errLOG == LOG_NIL_LOG) ? LOG_PASS : LOG_FAIL;
+}
+
+testResultLOG_t testCharArrayNilArray() {
+  log_t *log;
+
+  errLOG_t errLOG = makeLOG(&log, 80, "logs", "log.txt");
+  if(errLOG != LOG_NIL) { return LOG_FAIL; }
+
+  errLOG = logCharArr(log, NULL, 1);
+
+  remove("logs/log.txt");
+  remove("logs");
+
+  return (errLOG == LOG_NIL_ARR) ? LOG_PASS : LOG_FAIL;
+}
+
+testResultLOG_t testCharArrayInvalidSize() {
+  log_t *log;
+
+  errLOG_t errLOG = makeLOG(&log, 80, "logs", "log.txt");
+  if(errLOG != LOG_NIL) { return LOG_FAIL; }
+
+  char arr[1] = { 'c' };
+
+  errLOG = logCharArr(log, arr, 0);
+
+  remove("logs/log.txt");
+  remove("logs");
+
+  return (errLOG == LOG_INVALID_ARR_SIZE) ? LOG_PASS : LOG_FAIL;
+}
+
+//logCharArr(log_t *log, char *arr, int size); TODO
+testResultLOG_t testCharArrayValid() {
+  errLOG_t errLOG = LOG_NIL_LOG;
+  return (errLOG == LOG_NIL) ? LOG_PASS : LOG_FAIL;
+}
+
+testResultLOG_t testCharMatrixNilLog() {
+  char matrix[1][1] = { { 'c' } };
+
+  errLOG_t errLOG = logCharMatrix(NULL, (char **)matrix, 1, 1);
+  return (errLOG == LOG_NIL_LOG) ? LOG_PASS : LOG_FAIL;
+}
+
+testResultLOG_t testCharMatrixNilMatrix() {
+  log_t *log;
+
+  errLOG_t errLOG = makeLOG(&log, 80, "logs", "log.txt");
+  if(errLOG != LOG_NIL) { return LOG_FAIL; }
+
+  errLOG = logCharMatrix(log, NULL, 1, 1);
+
+  remove("logs/log.txt");
+  remove("logs");
+
+  return (errLOG == LOG_NIL_MATRIX) ? LOG_PASS : LOG_FAIL;
+}
+
+testResultLOG_t testCharMatrixInvalidRowSize() {
+  log_t *log;
+
+  errLOG_t errLOG = makeLOG(&log, 80, "logs", "log.txt");
+  if(errLOG != LOG_NIL) { return LOG_FAIL; }
+
+  char matrix[1][1] = { { 'c' } };
+
+  errLOG = logCharMatrix(log, (char **)matrix, 0, 1);
+
+  remove("logs/log.txt");
+  remove("logs");
+
+  return (errLOG == LOG_INVALID_ROW_SIZE) ? LOG_PASS : LOG_FAIL;
+}
+
+testResultLOG_t testCharMatrixInvalidColumnSize() {
+  log_t *log;
+
+  errLOG_t errLOG = makeLOG(&log, 80, "logs", "log.txt");
+  if(errLOG != LOG_NIL) { return LOG_FAIL; }
+
+  char matrix[1][1] = { { 'c' } };
+
+  errLOG = logCharMatrix(log, (char **)matrix, 1, 0);
+
+  remove("logs/log.txt");
+  remove("logs");
+
+  return (errLOG == LOG_INVALID_COL_SIZE) ? LOG_PASS : LOG_FAIL;
+}
+
+//logCharMatrix(log_t *log, char **matrix, int r, int c); TODO
+testResultLOG_t testCharMatrixValid() {
+  errLOG_t errLOG = LOG_NIL_LOG;
+  return (errLOG == LOG_NIL) ? LOG_PASS : LOG_FAIL;
+}
+
+testResultLOG_t testStringSettingNilLog() {
+  errLOG_t errLOG = logStrSetting(NULL, "KEY", "c");
+  return (errLOG == LOG_NIL_LOG) ? LOG_PASS : LOG_FAIL;
+}
+
+testResultLOG_t testStringSettingNilKey() {
+  log_t *log;
+
+  errLOG_t errLOG = makeLOG(&log, 80, "logs", "log.txt");
+  if(errLOG != LOG_NIL) { return LOG_FAIL; }
+
+  errLOG = logStrSetting(log, NULL, "c");
+
+  remove("logs/log.txt");
+  remove("logs");
+
+  return (errLOG == LOG_NIL_KEY) ? LOG_PASS : LOG_FAIL;
+}
+
+testResultLOG_t testStringSettingInvalidKey() {
+  log_t *log;
+
+  errLOG_t errLOG = makeLOG(&log, 80, "logs", "log.txt");
+  if(errLOG != LOG_NIL) { return LOG_FAIL; }
+
+  char *key = "someReallySuperExtremelyLongKeyName"
+              "someReallySuperExtremelyLongKeyName"
+              "someReallySuperExtremelyLongKeyName";
+
+  errLOG = logStrSetting(log, key, "c");
+
+  remove("logs/log.txt");
+  remove("logs");
+
+  return (errLOG == LOG_INVALID_KEY) ? LOG_PASS : LOG_FAIL;
+}
+
+//logStrSetting(log_t *log, char *key, char *val); TODO
+testResultLOG_t testStringSettingValid() {
+  errLOG_t errLOG = LOG_NIL_LOG;
+  return (errLOG == LOG_NIL) ? LOG_PASS : LOG_FAIL;
+}
+
+testResultLOG_t testStringArrayNilLog() {
+  char *arr[1] = { "c" };
+
+  errLOG_t errLOG = logStrArr(NULL, arr, 1);
+  return (errLOG == LOG_NIL_LOG) ? LOG_PASS : LOG_FAIL;
+}
+
+testResultLOG_t testStringArrayNilArray() {
+  log_t *log;
+
+  errLOG_t errLOG = makeLOG(&log, 80, "logs", "log.txt");
+  if(errLOG != LOG_NIL) { return LOG_FAIL; }
+
+  errLOG = logStrArr(log, NULL, 1);
+
+  remove("logs/log.txt");
+  remove("logs");
+
+  return (errLOG == LOG_NIL_ARR) ? LOG_PASS : LOG_FAIL;
+}
+
+testResultLOG_t testStringArrayInvalidSize() {
+  log_t *log;
+
+  errLOG_t errLOG = makeLOG(&log, 80, "logs", "log.txt");
+  if(errLOG != LOG_NIL) { return LOG_FAIL; }
+
+  char *arr[1] = { "c" };
+
+  errLOG = logStrArr(log, arr, 0);
+
+  remove("logs/log.txt");
+  remove("logs");
+
+  return (errLOG == LOG_INVALID_ARR_SIZE) ? LOG_PASS : LOG_FAIL;
+}
+
+//logStrArr(log_t *log, char **arr, int size); TODO
+testResultLOG_t testStringArrayValid() {
+  errLOG_t errLOG = LOG_NIL_LOG;
+  return (errLOG == LOG_NIL) ? LOG_PASS : LOG_FAIL;
+}
+
+testResultLOG_t testStringMatrixNilLog() {
+  char *matrix[1][1] = { { "c" } };
+
+  errLOG_t errLOG = logStrMatrix(NULL, (char ***)matrix, 1, 1);
+  return (errLOG == LOG_NIL_LOG) ? LOG_PASS : LOG_FAIL;
+}
+
+testResultLOG_t testStringMatrixNilMatrix() {
+  log_t *log;
+
+  errLOG_t errLOG = makeLOG(&log, 80, "logs", "log.txt");
+  if(errLOG != LOG_NIL) { return LOG_FAIL; }
+
+  errLOG = logStrMatrix(log, NULL, 1, 1);
+
+  remove("logs/log.txt");
+  remove("logs");
+
+  return (errLOG == LOG_NIL_MATRIX) ? LOG_PASS : LOG_FAIL;
+}
+
+testResultLOG_t testStringMatrixInvalidRowSize() {
+  log_t *log;
+
+  errLOG_t errLOG = makeLOG(&log, 80, "logs", "log.txt");
+  if(errLOG != LOG_NIL) { return LOG_FAIL; }
+
+  char *matrix[1][1] = { { "c" } };
+
+  errLOG = logStrMatrix(log, (char ***)matrix, 0, 1);
+
+  remove("logs/log.txt");
+  remove("logs");
+
+  return (errLOG == LOG_INVALID_ROW_SIZE) ? LOG_PASS : LOG_FAIL;
+}
+
+testResultLOG_t testStringMatrixInvalidColumnSize() {
+  log_t *log;
+
+  errLOG_t errLOG = makeLOG(&log, 80, "logs", "log.txt");
+  if(errLOG != LOG_NIL) { return LOG_FAIL; }
+
+  char *matrix[1][1] = { { "c" } };
+
+  errLOG = logStrMatrix(log, (char ***)matrix, 1, 0);
+
+  remove("logs/log.txt");
+  remove("logs");
+
+  return (errLOG == LOG_INVALID_COL_SIZE) ? LOG_PASS : LOG_FAIL;
+}
+
+//logStrMatrix(log_t *log, char ***matrix, int r, int c); TODO
+testResultLOG_t testStringMatrixValid() {
+  errLOG_t errLOG = LOG_NIL_LOG;
+  return (errLOG == LOG_NIL) ? LOG_PASS : LOG_FAIL;
+}
 
 /******************************************************************************
  *                                                                            *
@@ -438,27 +1074,95 @@ void *TESTS[TOTAL_TESTS][2] = {
   { testStrErrLOG_NIL_ARR,             "testStrErrLOG_NIL_ARR"               },
   { testStrErrLOG_NIL_MATRIX,          "testStrErrLOG_NIL_MATRIX"            },
   { testStrErrLOG_NIL,                 "testStrErrLOG_NIL"                   },
-  { testMakeLOG,                       "testMakeLOG"                         },
-  { testFreeLOG,                       "testFreeLOG"                         },
-  { testLogTitle,                      "testLogTitle"                        },
-  { testLogHeader,                     "testLogHeader"                       },
-  { testLogSection,                    "testLogSection"                      },
-  { testLogEvent,                      "testLogEvent"                        },
-  { testLogIntSetting,                 "testLogIntSetting"                   },
-  { testLogIntArr,                     "testLogIntArr"                       },
-  { testLogIntMatrix,                  "testLogIntMatrix"                    },
-  { testLogFloatSetting,               "testLogFloatSetting"                 },
-  { testLogFloatArr,                   "testLogFloatArr"                     },
-  { testLogFloatMatrix,                "testLogFloatMatrix"                  },
-  { testLogBoolSetting,                "testLogBoolSetting"                  },
-  { testLogBoolArr,                    "testLogBoolArr"                      },
-  { testLogBoolMatrix,                 "testLogBoolMatrix"                   },
-  { testLogCharSetting,                "testLogCharSetting"                  },
-  { testLogCharArr,                    "testLogCharArr"                      },
-  { testLogCharMatrix,                 "testLogCharMatrix"                   },
-  { testLogStrSetting,                 "testLogStrSetting"                   },
-  { testLogStrArr,                     "testLogStrArr"                       },
-  { testLogStrMatrix,                  "testLogStrMatrix"                    },
+  { testMakeLOGNilLog,                 "testMakeLOGNilLog"                   },
+  { testMakeLOGNilDir,                 "testMakeLOGNilDir"                   },
+  { testMakeLOGNilName,                "testMakeLOGNilName"                  },
+  { testMakeLOGInvalidWidth,           "testMakeLOGInvalidWidth"             },
+  { testMakeLOGInvalidDir,             "testMakeLOGInvalidDir"               },
+  //{ testMakeLOGDirCreationFail,        "testMakeLOGDirCreationFail"          },
+  //{ testMakeLOGOutOFMemory,            "testMakeLOGOutOFMemory"              },
+  //{ testMakeLOGOpenFail,               "testMakeLOGOpenFail"                 },
+  { testMakeLOGValid,                  "testMakeLOGValid"                    },
+  //{ testFreeLOGCloseFail,              "testFreeLOGCloseFail"                },
+  { testFreeLOGNilLog,                 "testFreeLOGNilLog"                   },
+  { testFreeLOGValid,                  "testFreeLOGValid"                    },
+  { testLogTitleNilLog,                "testLogTitleNilLog"                  },
+  { testLogTitleNilTitle,              "testLogTitleNilTitle"                },
+  { testLogTitleValid,                 "testLogTitleValid"                   },
+  { testLogHeaderNilLog,               "testLogHeaderNilLog"                 },
+  { testLogHeaderNilHeader,            "testLogHeaderNilHeader"              },
+  { testLogHeaderValid,                "testLogHeaderValid"                  },
+  { testLogSectionNilLog,              "testLogSectionNilLog"                },
+  { testLogSectionNilSection,          "testLogSectionNilSection"            },
+  { testLogSectionValid,               "testLogSectionValid"                 },
+  { testLogEventNilLog,                "testLogEventNilLog"                  },
+  { testLogEventInvalidTimestamp,      "testLogEventInvalidTimestamp"        },
+  { testLogEventValid,                 "testLogEventValid"                   },
+  { testIntSettingNilLog,              "testIntSettingNilLog"                },
+  { testIntSettingNilKey,              "testIntSettingNilKey"                },
+  { testIntSettingInvalidKey,          "testIntSettingInvalidKey"            },
+  { testIntSettingValid,               "testIntSettingValid"                 },
+  { testIntArrayNilLog,                "testIntArrayNilLog"                  },
+  { testIntArrayNilArray,              "testIntArrayNilArray"                },
+  { testIntArrayInvalidSize,           "testIntArrayInvalidSize"             },
+  { testIntArrayValid,                 "testIntArrayValid"                   },
+  { testIntMatrixNilLog,               "testIntMatrixNilLog"                 },
+  { testIntMatrixNilMatrix,            "testIntMatrixNilMatrix"              },
+  { testIntMatrixInvalidRowSize,       "testIntMatrixInvalidRowSize"         },
+  { testIntMatrixInvalidColumnSize,    "testIntMatrixInvalidColumnSize"      },
+  { testIntMatrixValid,                "testIntMatrixValid"                  },
+  { testFloatSettingNilLog,            "testFloatSettingNilLog"              },
+  { testFloatSettingNilKey,            "testFloatSettingNilKey"              },
+  { testFloatSettingInvalidKey,        "testFloatSettingInvalidKey"          },
+  { testFloatSettingValid,             "testFloatSettingValid"               },
+  { testFloatArrayNilLog,              "testFloatArrayNilLog"                },
+  { testFloatArrayNilArray,            "testFloatArrayNilArray"              },
+  { testFloatArrayInvalidSize,         "testFloatArrayInvalidSize"           },
+  { testFloatArrayValid,               "testFloatArrayValid"                 },
+  { testFloatMatrixNilLog,             "testFloatMatrixNilLog"               },
+  { testFloatMatrixNilMatrix,          "testFloatMatrixNilMatrix"            },
+  { testFloatMatrixInvalidRowSize,     "testFloatMatrixInvalidRowSize"       },
+  { testFloatMatrixInvalidColumnSize,  "testFloatMatrixInvalidColumnSize"    },
+  { testFloatMatrixValid,              "testFloatMatrixValid"                },
+  { testBoolSettingNilLog,             "testBoolSettingNilLog"               },
+  { testBoolSettingNilKey,             "testBoolSettingNilKey"               },
+  { testBoolSettingInvalidKey,         "testBoolSettingInvalidKey"           },
+  { testBoolSettingValid,              "testBoolSettingValid"                },
+  { testBoolArrayNilLog,               "testBoolArrayNilLog"                 },
+  { testBoolArrayNilArray,             "testBoolArrayNilArray"               },
+  { testBoolArrayInvalidSize,          "testBoolArrayInvalidSize"            },
+  { testBoolArrayValid,                "testBoolArrayValid"                  },
+  { testBoolMatrixNilLog,              "testBoolMatrixNilLog"                },
+  { testBoolMatrixNilMatrix,           "testBoolMatrixNilMatrix"             },
+  { testBoolMatrixInvalidRowSize,      "testBoolMatrixInvalidRowSize"        },
+  { testBoolMatrixInvalidColumnSize,   "testBoolMatrixInvalidColumnSize"     },
+  { testBoolMatrixValid,               "testBoolMatrixValid"                 },
+  { testCharSettingNilLog,             "testCharSettingNilLog"               },
+  { testCharSettingNilKey,             "testCharSettingNilKey"               },
+  { testCharSettingInvalidKey,         "testCharSettingInvalidKey"           },
+  { testCharSettingValid,              "testCharSettingValid"                },
+  { testCharArrayNilLog,               "testCharArrayNilLog"                 },
+  { testCharArrayNilArray,             "testCharArrayNilArray"               },
+  { testCharArrayInvalidSize,          "testCharArrayInvalidSize"            },
+  { testCharArrayValid,                "testCharArrayValid"                  },
+  { testCharMatrixNilLog,              "testCharMatrixNilLog"                },
+  { testCharMatrixNilMatrix,           "testCharMatrixNilMatrix"             },
+  { testCharMatrixInvalidRowSize,      "testCharMatrixInvalidRowSize"        },
+  { testCharMatrixInvalidColumnSize,   "testCharMatrixInvalidColumnSize"     },
+  { testCharMatrixValid,               "testCharMatrixValid"                 },
+  { testStringSettingNilLog,           "testStringSettingNilLog"             },
+  { testStringSettingNilKey,           "testStringSettingNilKey"             },
+  { testStringSettingInvalidKey,       "testStringSettingInvalidKey"         },
+  { testStringSettingValid,            "testStringSettingValid"              },
+  { testStringArrayNilLog,             "testStringArrayNilLog"               },
+  { testStringArrayNilArray,           "testStringArrayNilArray"             },
+  { testStringArrayInvalidSize,        "testStringArrayInvalidSize"          },
+  { testStringArrayValid,              "testStringArrayValid"                },
+  { testStringMatrixNilLog,            "testStringMatrixNilLog"              },
+  { testStringMatrixNilMatrix,         "testStringMatrixNilMatrix"           },
+  { testStringMatrixInvalidRowSize,    "testStringMatrixInvalidRowSize"      },
+  { testStringMatrixInvalidColumnSize, "testStringMatrixInvalidColumnSize"   },
+  { testStringMatrixValid,             "testStringMatrixValid"               },
 };
 
 int main() {
@@ -474,6 +1178,7 @@ int main() {
       fprintf(stdout, "FAIL: %s\n", (char *)TESTS[test][1]);
       fails++;
     }
+    fflush(stdout); // so if segfault/crash we know last successful test
   }
 
   fprintf(stdout, "\n--------------------\n"
