@@ -2,7 +2,7 @@
  * FILE:    main.c                                                            *
  * AUTHOR:  Ryan Rozanski                                                     *
  * CREATED: 4/4/17                                                            *
- * EDITED:  7/2/17                                                            *
+ * EDITED:  7/3/17                                                            *
  * INFO:    main.c assimilates the ini, log, dna, and risk libraries into an  *
  *          easily configurable command line version of a risk like game. The *
  *          game supports logging and artificial intellegence whose behavior  *
@@ -58,35 +58,40 @@ void printError(char *who, char *irritant) {
   exit(EXIT_FAILURE);
 }
 
-// Read in an integer, only accepting input between the bounds. Optionally prompt
-// user 'are you sure'. Handles all errors appropriately.
-void readInt(int lbound, int ubound, int *pick, int prompt) {
+// Read in an integer, only accepting input between the bounds. Optionally
+// prompt the user 'are you sure'. Handles all errors appropriately, and runs
+// until it gets valid input.
+void readInt(int lbound, int ubound, int *choice, int prompt) {
   if(lbound >= ubound) { printError("readInt()", "invalid range"); }
-  if(!pick) { printError("readInt()", "nil pick"); }
+  if(!choice) { printError("readInt()", "nil choice"); }
   if(!(prompt == 0 || prompt == 1)) { printError("readInt()", "prompt must be 0 or 1"); }
 
   char c;
   char buffer[80];
-  fprintf(stdout, "Enter pick (%i-%i): ", lbound, ubound);
-  while(fgets(buffer, 80, stdin)) {
-    if(!sscanf(buffer, "%d\n", pick) || *pick < lbound || *pick > ubound) {
-      fprintf(stdout, "invalid, input must be a single integer between %i-%i\n", lbound, ubound);
-    } else if(prompt) {
-      fprintf(stdout, "Entered choice: %i, are you sure (y/n)? ", *pick);
-      while(fgets(buffer, 80, stdin)) {
-        if(!sscanf(buffer, "%c\n", &c) || !(c == 'y' || c == 'n')) {
-          fprintf(stdout, "invalid input, only enter 'y'/'n': ");
-        }
-        else if(c == 'y') { return; }
-        else { break; } // c == 'n'
+  for(;;) {
+    fprintf(stdout, "Enter choice (%i-%i): ", lbound, ubound);
+    if(!fgets(buffer, 80, stdin) ||
+       !sscanf(buffer, "%d\n", choice) ||
+       *choice < lbound || *choice > ubound) {
+      fprintf(stdout, "invalid input\n");
+      continue;
+    }
+    if(!prompt) { return; }
+    for(;;) {
+      fprintf(stdout, "Entered choice: %i, are you sure (y/n)? ", *choice);
+      if(!fgets(buffer, 80, stdin) ||
+         !sscanf(buffer, "%c\n", &c) ||
+         !(c == 'y' || c == 'n')) {
+        fprintf(stdout, "invalid input\n");
+        continue;
       }
-    } else { return; }
-    fprintf(stdout, "Enter pick (%i-%i): ", lbound, ubound);
+      if(c == 'y') { return; }
+    }
   }
 }
 
-// print an array as an enumerated list
-void printChoices(char **elems, int size) {
+// print an array of strings as an enumerated list
+void printChoices(char *elems[], int size) {
   if(!elems) { printError("printChoices()", "nil elems"); }
   if(size < 1) { printError("printChoices()", "invalid size"); }
 
@@ -167,11 +172,11 @@ void setupLOGfromINI(ini_t *ini, log_t **logger) {
   sprintf(fname, "%s_SESSION_%i.txt", name, SESSION);
 
   if((errLOG = makeLOG(logger, log, dir, name)) != LOG_NIL) {
-    printError("makeLOG", (char *)strErrLOG(errLOG));
+    printError("makeLOG()", (char *)strErrLOG(errLOG));
   }
 
   if((errLOG = logTitle(*logger, fname)) != LOG_NIL) {
-    printError("logTitle", (char *)strErrLOG(errLOG));
+    printError("logTitle()", (char *)strErrLOG(errLOG));
   }
 }
 
@@ -237,10 +242,98 @@ void setupDNAfromINI(ini_t *ini, dna_t **dna) {
   }
 }
 
+// attempt to log the dna information
+void logDNA(dna_t *dna, log_t *logger) {
+  int i, j, chromosomes, traits;
+  float r;
+
+  if((errLOG = logHeader(logger, "DNA")) != LOG_NIL) {
+    printError("logHeader()", (char *)strErrLOG(errLOG));  
+  }
+
+  if((errLOG = logSection(logger, "Settings")) != LOG_NIL) {
+    printError("logSection()", (char *)strErrLOG(errLOG));  
+  }
+
+  if((errDNA = getMutation(dna, &i, &j, &r)) != DNA_NIL) {
+    printError("getMutation()", (char *)strErrDNA(errDNA));
+  }
+
+  if((errLOG = logFloatSetting(logger, "Mutation Rate", r)) != LOG_NIL) {
+    printError("logFloatSetting()", (char *)strErrLOG(errLOG));
+  }
+  
+  if((errLOG = logIntSetting(logger, "Lower Bound", i)) != LOG_NIL) {
+    printError("logIntSetting()", (char *)strErrLOG(errLOG));
+  }
+  
+  if((errLOG = logIntSetting(logger, "Upper Bound", j)) != LOG_NIL) {
+    printError("logIntSetting()", (char *)strErrLOG(errLOG));
+  }
+
+  if((errDNA = getElitism(dna, &i, &r)) != DNA_NIL) {
+    printError("getElitism()", (char *)strErrDNA(errDNA));
+  }
+  
+  if((errLOG = logIntSetting(logger, "Elitism", i)) != LOG_NIL) {
+    printError("logIntSetting()", (char *)strErrLOG(errLOG));
+  }
+  
+  if((errLOG = logFloatSetting(logger, "Percentile", r)) != LOG_NIL) {
+    printError("logFloatSetting()", (char *)strErrLOG(errLOG));
+  }
+  
+  char tmp[] = "";
+  
+  if((errLOG = logEvent(logger, 0, tmp)) != LOG_NIL) {
+    printError("logEvent()", (char *)strErrLOG(errLOG));
+  }
+
+  if((errDNA = getChromosomes(dna, &chromosomes, &traits)) != DNA_NIL) {
+    printError("getChromosomes()", (char *)strErrDNA(errDNA));
+  }
+  
+  char ids[chromosomes][36];
+  
+  if((errDNA = getIDs(dna, (char **)ids)) != DNA_NIL) {
+    printError("getIDs()", (char *)strErrDNA(errDNA));
+  }
+
+  int strand[traits];
+
+  if((errLOG = logSection(logger, "Chromosomes")) != LOG_NIL) {
+    printError("logSection()", (char *)strErrLOG(errLOG));
+  }
+  
+  for(; chromosomes; chromosomes--) {
+    if((errLOG = logSection(logger, ids[chromosomes-1])) != LOG_NIL) {
+      printError("logSection()", (char *)strErrLOG(errLOG));
+    }
+
+    if((errDNA = getStrand(dna, ids[chromosomes-1], strand, &j)) != DNA_NIL) {
+      printError("getStrand()", (char *)strErrDNA(errDNA));
+    }
+
+    if((errLOG = logIntArr(logger, strand, j)) != LOG_NIL) {
+      printError("logIntArray()", (char *)strErrLOG(errLOG));
+    }
+
+    if((errDNA = getFitness(dna, ids[chromosomes-1], &j)) != DNA_NIL) {
+      printError("getFitness()", (char *)strErrDNA(errDNA));
+    }
+
+    if((errLOG = logIntSetting(logger, "fitness", j)) != LOG_NIL) {
+      printError("logIntSetting(), key=fitness", (char *)strErrLOG(errLOG));
+    }
+  }
+}
+
+
+
+/*
 // attempt to set up the risk game from the INI conf file.
 void setupRISKfromINI(ini_t *ini, risk_t **game) { }
- /* int i, j, k, n;
-  int *iarr;
+  int i, j, k, n;
   char **sarr1, **sarr2, **sarr3;
 
   if((errRISK = makeRISK(game)) != RISK_NIL) {
@@ -270,19 +363,20 @@ void setupRISKfromINI(ini_t *ini, risk_t **game) { }
   if((errINI = getStrArrINI(ini, "Players", "humans", &sarr1, &i))!= INI_NIL) {
     printError("getStrArrINI(), section=Players, key=humans", (char *)strErrINI(errINI));
   }
+
   char *humans[i];
 
   if((errINI = getStrArrINI(ini, "Players", "computers", &sarr2, &j)) != INI_NIL) {
     printError("getStrArrINI(), section=Players, key=computers", (char *)strErrINI(errINI));
   }
+
   char *computers[j];
   char *players[i+j];
 
   k = 0;
   for(; i; i--) { sarr3[k++] = sarr1[i-1]; }
   for(; j; j--) { sarr3[k++] = sarr2[j-1]; }
-  free(sarr1);
-  free(sarr2);
+
   if((errRISK = setPlayers(*game, k, players)) != RISK_NIL) {
     printError("setPlayers()", (char *)strErrRISK(errRISK));
   }
@@ -306,20 +400,17 @@ void setupRISKfromINI(ini_t *ini, risk_t **game) { }
   }
 
   if((errINI = getIntINI(ini, "Cards", "incr", &n)) != INI_NIL) {
-    free(iarr);
     printError("getIntINI(), section=Cards, key=incr", (char *)strErrINI(errINI));
   }
 
   if((errRISK = setTrades(*game, iarr, k, n)) != RISK_NIL) {
-    free(iarr);
     printError("setTrades()", (char *)strErrRISK(errRISK));
   }
-
-  free(iarr);
 
   if((errINI = getStrArrINI(ini, "Map", "continents", &sarr2, &k)) != INI_NIL) {
     printError("getStrArrINI() section=Map, key=continents", (char *)strErrINI(errINI));
   }
+
   if((errRISK = setContinents(*game, sarr2, k)) != RISK_NIL) {
     printError("setContinents()", (char *)strErrRISK(errRISK));
   }
@@ -327,12 +418,10 @@ void setupRISKfromINI(ini_t *ini, risk_t **game) { }
   if((errINI = getIntArrINI(ini, "Map", "continents_bonus", &iarr, &n)) != INI_NIL) {
     printError("getIntArrINI(), section=Map, key=continents_bonus", (char *)strErrINI(errINI));
   }
+
   if((errRISK = setContinentBonuses(*game, iarr, n)) != RISK_NIL) {
-    free(iarr);
     printError("setContinentBonuses()", (char *)strErrRISK(errRISK));
   }
-
-  free(iarr);
 
   if((errINI = getBoolINI(ini, "Map", "random", &n)) != INI_NIL) {
     printError("getBoolINI(), section=Map, key=random", (char *)strErrINI(errINI));
@@ -341,21 +430,23 @@ void setupRISKfromINI(ini_t *ini, risk_t **game) { }
   if((errINI = getStrArrINI(ini, "Map", "countries", &sarr1, &k)) != INI_NIL) {
     printError("getBoolINI(), section=Map, key=countries", (char *)strErrINI(errINI));
   }
+
   if((errRISK = setCountries(*game, sarr1, k, n)) != RISK_NIL) {
     printError("setCountries()", (char *)strErrRISK(errRISK));
   }
+
   for(i = 0; i < k; i++) {
     if((errINI = getStrArrINI(ini, "Map", sarr1[i], &sarr2, &j)) != INI_NIL) {
       printError("getStrArrINI(), section=Map, key=??", (char *)strErrINI(errINI));
     }
+
     if((errRISK = setAdjacencies(*game, sarr1[i], sarr2, j)) != RISK_NIL) {
       printError("setAdjacencies()", (char *)strErrRISK(errRISK));
     }
   }
 }
-*/
 
-// log the game setup
+// log the game setup 
 void logRISK(risk_t *game, log_t *logger) {
   int i, j, k;
   char **names;
@@ -393,45 +484,7 @@ void logRISK(risk_t *game, log_t *logger) {
   //getNeighbors(game, char *country, char ***neighbors, int *size);
   //logIntArr2D(logger, game->board, game->numCountries, game->numCountries);
 }
-
-// log dna
-void logDNA(dna_t *dna, log_t *logger) {
-  int i, j, chromosomes, traits;
-  float r;
-
-  logHeader(logger, "DNA");
-
-  logSection(logger, "Settings");
-  getMutation(dna, &i, &j, &r);
-  logFloatSetting(logger, "Mutation Rate", r);
-  logIntSetting(logger, "Lower Bound", i);
-  logIntSetting(logger, "Upper Bound", j);
-
-  getElitism(dna, &i, &r);
-  logIntSetting(logger, "Elitism", i);
-  logFloatSetting(logger, "Percentile", r);
-  char tmp[] = "";
-  logEvent(logger, 0, tmp);
-
-  getChromosomes(dna, &chromosomes, &traits);
-  char ids[chromosomes][36];
-  getIDs(dna, (char **)ids);
-
-  int strand[traits];
-
-  errDNA_t errDNA;
-  logSection(logger, "Chromosomes");
-  for(; chromosomes; chromosomes--) {
-    logSection(logger, ids[chromosomes-1]);
-    if((errDNA = getStrand(dna, ids[chromosomes-1], strand, &j)) != DNA_NIL) {
-      fprintf(stdout, "err: %s\n", strErrDNA(errDNA));
-      fflush(stdout);
-    }
-    logIntArr(logger, strand, j);
-    getFitness(dna, ids[chromosomes-1], &j);
-    logIntSetting(logger, "fitness", j);
-  }
-}
+*/
 
 void logGameTime(log_t *logger, int seconds) {
   int minutes = seconds / 60;
@@ -441,12 +494,34 @@ void logGameTime(log_t *logger, int seconds) {
   char val[40];
   sprintf(val, "[%ih-%im-%is]", hours, minutes, seconds);
 
-  logHeader(logger, "T I M E");
-  logStrSetting(logger, "Elapsed game time", val);
+  if((errLOG = logHeader(logger, "T I M E")) != LOG_NIL) {
+    printError("logHeader()", (char *)strErrLOG(errLOG));  
+  }
+
+  if((errLOG = logStrSetting(logger, "Elapsed game time", val)) != LOG_NIL) {
+    printError("logHeader()", (char *)strErrLOG(errLOG));  
+  }
 }
 
-void printBoard(risk_t *game) { // TODO tabulation board??
+void printBoard(risk_t *game) { // TODO
   if(!game) { printError("printBoard()", "nil game parameter"); }
+
+  /*
+    |*******************************************************|
+    |  | country | owner | armies | continent | adjacencies |
+    |-------------------------------------------------------|
+    |0 |                                                    |
+    |-------------------------------------------------------|
+    |1 |                                                    |
+    |-------------------------------------------------------|
+    |2 |                                                    |
+    |-------------------------------------------------------|
+    |..|                                                    |
+    |-------------------------------------------------------|
+    |n |                                                    |
+    |-------------------------------------------------------|
+    |_______________________________________________________|
+  */
 
   printError("printBoard()", "NOT IMPLEMENTED");
 }
@@ -539,6 +614,8 @@ int getType(risk_t *game, dna_t *dna, char *player) { // TODO
   if(!player) { printError("getType()", "nil player"); }
 
   printError("getType()", "NOT IMPLEMENTED");
+
+  return 0;
 }
 
 // play the game, taking care to reset between games if training
@@ -551,7 +628,7 @@ void risky(risk_t *game, dna_t *dna, int games) {
     SESSION = games;
     setupLOGfromINI(ini, &logger);
     if(logger) {
-      logRISK(game, logger);
+      //logRISK(game, logger);
       logDNA(dna, logger);
     }
 
@@ -584,14 +661,20 @@ void risky(risk_t *game, dna_t *dna, int games) {
       //else { humanTurn(game, player, logger); }
     //}
     char tmp2[] = "ending game...\n";
-    logEvent(logger, 1, tmp2);
+    if((errLOG = logEvent(logger, 1, tmp2)) != LOG_NIL) {
+      printError("logEvent()", (char *)strErrLOG(errLOG));
+    }
+
     int seconds = (int)difftime(time(NULL), start);
 
     if(games) {
       if((errDNA = nextGeneration(dna)) != DNA_NIL) {
         printError("nextGeneration()", (char *)strErrDNA(errDNA));
       }
-      logHeader(logger, "N E W   G E N E R A T I O N");
+
+      if((errLOG = logHeader(logger, "N E W   G E N E R A T I O N")) != LOG_NIL) {
+        printError("logHeader()", (char *)strErrLOG(errLOG));
+      }
 
       int chromosomes, traits;
       if((errDNA = getChromosomes(dna, &chromosomes, &traits)) != DNA_NIL) {
@@ -609,6 +692,7 @@ void risky(risk_t *game, dna_t *dna, int games) {
         if(errDNA != DNA_NIL) {
           printError("getStrand()", (char *)strErrDNA(errDNA));
         }
+
         if((errLOG = logIntArr(logger, strand, traits)) != LOG_NIL) {
           printError("logIntArr()", (char *)strErrLOG(errLOG));
         }
@@ -652,7 +736,7 @@ int main(int argc, char *argv[]) {
 
   setupDNAfromINI(ini, &dna);
 
-  setupRISKfromINI(ini, &game);
+  //setupRISKfromINI(ini, &game);
   if((errRISK = isValid(game)) != RISK_NIL) {
     printError("isValid()", (char *)strErrRISK(errRISK));
   }
@@ -660,7 +744,7 @@ int main(int argc, char *argv[]) {
   srand(time(NULL)); // set random for risk and dna libs
   risky(game, dna, 1);
 
-  if(argc > 1) {
+  if(argc > 1) { // replace all chromosomes in conf once, when done training
     int strands, traits;
     if((errDNA = getChromosomes(dna, &strands, &traits)) != DNA_NIL) {
       printError("getChromosomes()", (char *)strErrDNA(errDNA));

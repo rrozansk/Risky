@@ -2,7 +2,7 @@
  * FILE:    testDNA.c                                                         *
  * AUTHOR:  Ryan Rozanski                                                     *
  * CREATED: 6/3/17                                                            *
- * EDITED:  6/25/17                                                           *
+ * EDITED:  7/3/17                                                            *
  * INFO:    Test file for implementation of the interface located in dna.h.   *
  *                                                                            *
  ******************************************************************************/
@@ -12,11 +12,11 @@
  *   I N C L U D E S                                                          *
  *                                                                            *
  ******************************************************************************/
-#include<stdio.h>
-#include<stdlib.h>
-#include<string.h>
-#include<time.h>
-#include<dna.h>
+#include <dna.h>
+#include <time.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 /******************************************************************************
  *                                                                            *
