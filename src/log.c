@@ -2,7 +2,7 @@
  * FILE:    log.c                                                             *
  * AUTHOR:  Ryan Rozanski                                                     *
  * CREATED: 4/30/17                                                           *
- * EDITED:  6/1/17                                                            *
+ * EDITED:  7/3/17                                                            *
  * INFO:    Implementation of the interface located in log.h.                 *
  *                                                                            *
  ******************************************************************************/
@@ -48,13 +48,15 @@ static errLOG_t logSetting(log_t *log, char *key, void *value, typeLOG_t typeLOG
   char buffer[log->columns];
   int vlen, klen, dots;
 
+  vlen = 0;
   klen = fprintf(log->fp, "%s", key);
   switch(typeLOG) {
     case LOG_INT:
       vlen = sprintf(buffer, "%i", *(int *)value);
       break;
     case LOG_FLOAT:
-      vlen = sprintf(buffer, "%f", *(double *)value);
+      // 2 digits after decimal, minimum 1 before (0's if none)
+      vlen = sprintf(buffer, "%01.2f", *(float *)value);
       break;
     case LOG_BOOL:
       vlen = sprintf(buffer,  *(int *)value ? "true" : "false");
@@ -65,8 +67,6 @@ static errLOG_t logSetting(log_t *log, char *key, void *value, typeLOG_t typeLOG
     case LOG_STR:
       vlen = sprintf(buffer, "\"%s\"", *(char **)value);
       break;
-    default:
-      return LOG_UNKNOWN_TYPE;
   }
   for(dots = log->columns - (klen + vlen); dots; dots--) { fprintf(log->fp, "."); }
   fprintf(log->fp, "%s\n", buffer);
@@ -89,7 +89,8 @@ static errLOG_t logArr(log_t *log, void *arr, int size, typeLOG_t typeLOG) {
         col += sprintf(buffer, "%i", ((int *)arr)[i]);
         break;
       case LOG_FLOAT:
-        col += sprintf(buffer, "%f", ((double *)arr)[i]);
+        // 2 digits after decimal, minimum 1 before (0's if none)
+        col += sprintf(buffer, "%01.2f", ((float *)arr)[i]);
         break;
       case LOG_BOOL:
         col += sprintf(buffer, ((int *)arr)[i] ? "true" : "false");
@@ -100,8 +101,6 @@ static errLOG_t logArr(log_t *log, void *arr, int size, typeLOG_t typeLOG) {
       case LOG_STR:
         col += sprintf(buffer, "\"%s\"", ((char **)arr)[i]);
         break;
-      default:
-        return LOG_UNKNOWN_TYPE;
     }
     if(col > log->columns) {
       fprintf(log->fp, "\n ");
@@ -130,22 +129,21 @@ static errLOG_t logMatrix(log_t *log, void *matrix, int r, int c, typeLOG_t type
     for(j = 0; j < c; j++) {
       switch(typeLOG) {
         case LOG_INT:
-          col += sprintf(buffer, "%i", *(((int *)matrix + i * c) + j)); // matrix[r][c]
+          col += sprintf(buffer, "%i", ((int **)matrix)[i][j]);
           break;
         case LOG_FLOAT:
-          col += sprintf(buffer, "%f", ((double **)matrix)[r][c]);
+          // 2 digits after decimal, minimum 1 before (0's if none)
+          col += sprintf(buffer, "%01.2f", ((float **)matrix)[i][j]);
           break;
         case LOG_BOOL:
-          col += sprintf(buffer,  ((int **)matrix)[r][c] ? "true" : "false");
+          col += sprintf(buffer,  ((int **)matrix)[i][j] ? "true" : "false");
           break;
         case LOG_CHAR:
-          col += sprintf(buffer, "'%c'", ((char **)matrix)[r][c]);
+          col += sprintf(buffer, "'%c'", ((char **)matrix)[i][j]);
           break;
         case LOG_STR:
-          col += sprintf(buffer, "\"%s\"", ((char ***)matrix)[r][c]);
+          col += sprintf(buffer, "\"%s\"", ((char ***)matrix)[i][j]);
           break;
-        default:
-          return LOG_UNKNOWN_TYPE;
       }
       if(col > log->columns) {
         fprintf(log->fp, "\n\t ");
@@ -174,7 +172,6 @@ const char *strErrLOG(errLOG_t errLOG) {
     case LOG_OPEN_FAIL: return "failed to open log";
     case LOG_CLOSE_FAIL: return "failed to close log";
     case LOG_DIR_CREATION_FAIL: return "failed to create log directory";
-    case LOG_UNKNOWN_TYPE: return "internal error in type representation";
     // invalid input errors
     case LOG_INVALID_ROW_SIZE: return "matrix row size must be > 0";
     case LOG_INVALID_COL_SIZE: return "matrix column size must be > 0";
@@ -241,7 +238,7 @@ errLOG_t freeLOG(log_t *log) {
   if(log->directory) { free(log->directory); }
 
   errLOG_t errLOG = LOG_NIL;
-  if(log->fp && !fclose(log->fp)) { errLOG = LOG_CLOSE_FAIL; }
+  if(log->fp && fclose(log->fp) == EOF) { errLOG = LOG_CLOSE_FAIL; }
 
   free(log);
 
@@ -338,19 +335,19 @@ errLOG_t logIntArr(log_t *log, int *arr, int size) {
   return logArr(log, arr, size, LOG_INT);
 }
 
-errLOG_t logIntMatrix(log_t *log, int *matrix, int r, int c) {
+errLOG_t logIntMatrix(log_t *log, int **matrix, int r, int c) {
   return logMatrix(log, matrix, r, c, LOG_INT);
 }
 
-errLOG_t logFloatSetting(log_t *log, char *key, double val) {
+errLOG_t logFloatSetting(log_t *log, char *key, float val) {
   return logSetting(log, key, &val, LOG_FLOAT);
 }
 
-errLOG_t logFloatArr(log_t *log, double *arr, int size) {
+errLOG_t logFloatArr(log_t *log, float *arr, int size) {
   return logArr(log, arr, size, LOG_FLOAT);
 }
 
-errLOG_t logFloatMatrix(log_t *log, double **matrix, int r, int c) {
+errLOG_t logFloatMatrix(log_t *log, float **matrix, int r, int c) {
   return logMatrix(log, matrix, r, c, LOG_FLOAT);
 }
 

@@ -2,7 +2,7 @@
  * FILE:    testLOG.c                                                         *
  * AUTHOR:  Ryan Rozanski                                                     *
  * CREATED: 6/3/17                                                            *
- * EDITED:  7/2/17                                                            *
+ * EDITED:  7/3/17                                                            *
  * INFO:    Test file for implementation of the interface located in log.h.   *
  *                                                                            *
  ******************************************************************************/
@@ -12,18 +12,18 @@
  *   I N C L U D E S                                                          *
  *                                                                            *
  ******************************************************************************/
+#include <log.h> 
+#include <time.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <time.h>
-#include <log.h> 
 
 /******************************************************************************
  *                                                                            *
  *   C O N S T A N T S                                                        *
  *                                                                            *
  ******************************************************************************/
-#define TOTAL_TESTS 107
+#define TOTAL_TESTS 106
 
 /******************************************************************************
  *                                                                            *
@@ -51,10 +51,6 @@ testResultLOG_t testStrErrLOG_CLOSE_FAIL() {
 
 testResultLOG_t testStrErrLOG_DIR_CREATION_FAIL() {
   return (strcmp(strErrLOG(LOG_DIR_CREATION_FAIL), "")) ? LOG_PASS : LOG_FAIL;
-}
-
-testResultLOG_t testStrErrLOG_UNKNOWN_TYPE() {
-  return (strcmp(strErrLOG(LOG_UNKNOWN_TYPE), "")) ? LOG_PASS : LOG_FAIL;
 }
 
 testResultLOG_t testStrErrLOG_INVALID_ROW_SIZE() {
@@ -153,15 +149,15 @@ testResultLOG_t testMakeLOGInvalidWidth() {
 
 testResultLOG_t testMakeLOGInvalidDir() {
   char *dir = "someReallySuperExtremelyLongDirectoryName"
-              "someReallySuperExtremelyLongDirectoryName"
-              "someReallySuperExtremelyLongDirectoryName"
-              "someReallySuperExtremelyLongDirectoryName"
-              "someReallySuperExtremelyLongDirectoryName";
+    "someReallySuperExtremelyLongDirectoryName"
+    "someReallySuperExtremelyLongDirectoryName"
+    "someReallySuperExtremelyLongDirectoryName"
+    "someReallySuperExtremelyLongDirectoryName";
   char *f = "anotherReallySuperExtremelyLongTextFileName"
-            "anotherReallySuperExtremelyLongTextFileName"
-            "anotherReallySuperExtremelyLongTextFileName"
-            "anotherReallySuperExtremelyLongTextFileName"
-            "anotherReallySuperExtremelyLongTextFileName.txt";
+    "anotherReallySuperExtremelyLongTextFileName"
+    "anotherReallySuperExtremelyLongTextFileName"
+    "anotherReallySuperExtremelyLongTextFileName"
+    "anotherReallySuperExtremelyLongTextFileName.txt";
   log_t *log;
 
   errLOG_t errLOG = makeLOG(&log, 80, dir, f);
@@ -226,23 +222,53 @@ testResultLOG_t testLogTitleNilTitle() {
   return (errLOG == LOG_NIL_TITLE) ? LOG_PASS : LOG_FAIL;
 }
 
-// TODO
 testResultLOG_t testLogTitleValid() {
   log_t *log;
+  FILE *fp = NULL;
 
-  errLOG_t errLOG = makeLOG(&log, 80, "logs", "log.txt");
+  errLOG_t errLOG = makeLOG(&log, 80, "logs", "logtitle.txt");
   if(errLOG != LOG_NIL) { return LOG_FAIL; }
 
-  errLOG = logTitle(log, "TITLE");
-  if(errLOG != LOG_NIL) {
-    remove("logs/log.txt");
-    remove("logs");
-    return LOG_FAIL;
-  }
+  if((errLOG = logTitle(log, "TITLES")) != LOG_NIL) { goto FAIL; }
 
-  errLOG = LOG_NIL_LOG;
+  if(!(fp = fopen("logs/logtitle.txt", "r"))) { goto FAIL; }
 
-  return (errLOG == LOG_NIL) ? LOG_PASS : LOG_FAIL;
+  int i;
+  for(i = 0; i < 80; i++) { if(fgetc(fp) != '#') { goto FAIL; } }
+  if(fgetc(fp) != '\n') { goto FAIL; }
+
+  if(fgetc(fp) != '#') { goto FAIL; }
+  for(i = 0; i < 78; i++) { if(fgetc(fp) != ' ') { goto FAIL; } }
+  if(fgetc(fp) != '#') { goto FAIL; }
+  if(fgetc(fp) != '\n') { goto FAIL; }
+
+  if(fgetc(fp) != '#') { goto FAIL; }
+  for(i = 0; i < 36; i++) { if(fgetc(fp) != ' ') { goto FAIL; } }
+  char title[6];
+  for(i = 0; i < 6; i++) { title[i] = fgetc(fp); }
+  if(strncmp(title, "TITLES", 6)) { goto FAIL; }
+  for(i = 0; i < 36; i++) { if(fgetc(fp) != ' ') { goto FAIL; } }
+  if(fgetc(fp) != '#') { goto FAIL; }
+  if(fgetc(fp) != '\n') { goto FAIL; }
+
+  if(fgetc(fp) != '#') { goto FAIL; }
+  for(i = 0; i < 78; i++) { if(fgetc(fp) != ' ') { goto FAIL; } }
+  if(fgetc(fp) != '#') { goto FAIL; }
+  if(fgetc(fp) != '\n') { goto FAIL; }
+
+  for(i = 0; i < 80; i++) { if(fgetc(fp) != '#') { goto FAIL; } }
+  if(fgetc(fp) != '\n') { goto FAIL; }
+
+  remove("logs/logtitle.txt");
+  remove("logs");
+  fclose(fp);
+  return LOG_PASS;
+
+FAIL:
+  remove("logs/logtitle.txt");
+  remove("logs");
+  fclose(fp);
+  return LOG_FAIL;
 }
 
 testResultLOG_t testLogHeaderNilLog() {
@@ -264,10 +290,43 @@ testResultLOG_t testLogHeaderNilHeader() {
   return (errLOG == LOG_NIL_HEADER) ? LOG_PASS : LOG_FAIL;
 }
 
-//logHeader(log_t *log, char *header); TODO
 testResultLOG_t testLogHeaderValid() {
-  errLOG_t errLOG = LOG_NIL_LOG;
-  return (errLOG == LOG_NIL) ? LOG_PASS : LOG_FAIL;
+  log_t *log;
+  FILE *fp = NULL;
+
+  errLOG_t errLOG = makeLOG(&log, 80, "logs", "logheader.txt");
+  if(errLOG != LOG_NIL) { return LOG_FAIL; }
+
+  if((errLOG = logHeader(log, "HEADER")) != LOG_NIL) { goto FAIL; }
+
+  if(!(fp = fopen("logs/logheader.txt", "r"))) { goto FAIL; }
+
+  int i;
+  for(i = 0; i < 80; i++) { if(fgetc(fp) != '*') { goto FAIL; } }
+  if(fgetc(fp) != '\n') { goto FAIL; }
+
+  if(fgetc(fp) != '*') { goto FAIL; }
+  for(i = 0; i < 36; i++) { if(fgetc(fp) != ' ') { goto FAIL; } }
+  char header[6];
+  for(i = 0; i < 6; i++) { header[i] = fgetc(fp); }
+  if(strncmp(header, "HEADER", 6)) { goto FAIL; }
+  for(i = 0; i < 36; i++) { if(fgetc(fp) != ' ') { goto FAIL; } }
+  if(fgetc(fp) != '*') { goto FAIL; }
+  if(fgetc(fp) != '\n') { goto FAIL; }
+
+  for(i = 0; i < 80; i++) { if(fgetc(fp) != '*') { goto FAIL; } }
+  if(fgetc(fp) != '\n') { goto FAIL; }
+
+  remove("logs/logheader.txt");
+  remove("logs");
+  fclose(fp);
+  return LOG_PASS;
+
+FAIL:
+  remove("logs/logheader.txt");
+  remove("logs");
+  fclose(fp);
+  return LOG_FAIL;
 }
 
 testResultLOG_t testLogSectionNilLog() {
@@ -289,10 +348,35 @@ testResultLOG_t testLogSectionNilSection() {
   return (errLOG == LOG_NIL_SECTION) ? LOG_PASS : LOG_FAIL;
 }
 
-//logSection(log_t *log, char *section); TODO
 testResultLOG_t testLogSectionValid() {
-  errLOG_t errLOG = LOG_NIL_LOG;
-  return (errLOG == LOG_NIL) ? LOG_PASS : LOG_FAIL;
+  log_t *log;
+  FILE *fp = NULL;
+
+  errLOG_t errLOG = makeLOG(&log, 80, "logs", "logsection.txt");
+  if(errLOG != LOG_NIL) { return LOG_FAIL; }
+
+  if((errLOG = logSection(log, "FOOBAR")) != LOG_NIL) { goto FAIL; }
+
+  if(!(fp = fopen("logs/logsection.txt", "r"))) { goto FAIL; }
+
+  int i;
+  for(i = 0; i < 37; i++) { if(fgetc(fp) != '=') { goto FAIL; } }
+  char section[6];
+  for(i = 0; i < 6; i++) { section[i] = fgetc(fp); }
+  if(strncmp(section, "FOOBAR", 6)) { goto FAIL; }
+  for(i = 0; i < 37; i++) { if(fgetc(fp) != '=') { goto FAIL; } }
+  if(fgetc(fp) != '\n') { goto FAIL; }
+
+  remove("logs/logsection.txt");
+  remove("logs");
+  fclose(fp);
+  return LOG_PASS;
+
+FAIL:
+  remove("logs/logsection.txt");
+  remove("logs");
+  fclose(fp);
+  return LOG_FAIL;
 }
 
 testResultLOG_t testLogEventNilLog() {
@@ -314,10 +398,34 @@ testResultLOG_t testLogEventInvalidTimestamp() {
   return (errLOG == LOG_INVALID_TIMESTAMP) ? LOG_PASS : LOG_FAIL;
 }
 
-//logEvent(log_t *log, int timestamp, char *event); TODO
 testResultLOG_t testLogEventValid() {
-  errLOG_t errLOG = LOG_NIL_LOG;
-  return (errLOG == LOG_NIL) ? LOG_PASS : LOG_FAIL;
+  log_t *log;
+  FILE *fp = NULL;
+
+  errLOG_t errLOG = makeLOG(&log, 80, "logs", "logevent.txt");
+  if(errLOG != LOG_NIL) { return LOG_FAIL; }
+
+  if((errLOG = logEvent(log, 0, "some event ...FOOBAR")) != LOG_NIL) { goto FAIL; }
+
+  if(!(fp = fopen("logs/logevent.txt", "r"))) { goto FAIL; }
+
+  char event[21];
+
+  int i;
+  for(i = 0; i < 21; i++) { event[i] = fgetc(fp); }
+  if(strncmp(event, "some event ...FOOBAR ", 21)) { goto FAIL; } // space inserted after every word
+  if(fgetc(fp) != '\n') { goto FAIL; }
+
+  remove("logs/logevent.txt");
+  remove("logs");
+  fclose(fp);
+  return LOG_PASS;
+
+FAIL:
+  remove("logs/logevent.txt");
+  remove("logs");
+  fclose(fp);
+  return LOG_FAIL;
 }
 
 testResultLOG_t testIntSettingNilLog() {
@@ -357,10 +465,38 @@ testResultLOG_t testIntSettingInvalidKey() {
   return (errLOG == LOG_INVALID_KEY) ? LOG_PASS : LOG_FAIL;
 }
 
-//logIntSetting(log_t *log, char *key, int val); TODO
 testResultLOG_t testIntSettingValid() {
-  errLOG_t errLOG = LOG_NIL_LOG;
-  return (errLOG == LOG_NIL) ? LOG_PASS : LOG_FAIL;
+  log_t *log;
+  FILE *fp = NULL;
+
+  errLOG_t errLOG = makeLOG(&log, 80, "logs", "logintsetting.txt");
+  if(errLOG != LOG_NIL) { return LOG_FAIL; }
+
+  if((errLOG = logIntSetting(log, "intKey", 555)) != LOG_NIL) { goto FAIL; }
+
+  if(!(fp = fopen("logs/logintsetting.txt", "r"))) { goto FAIL; }
+
+  int i;
+  char key[6];
+  for(i = 0; i < 6; i++) { key[i] = fgetc(fp); }
+  if(strncmp(key, "intKey", 6)) { goto FAIL; }
+
+  for(i = 0; i < 71; i++) { if(fgetc(fp) != '.') { goto FAIL; } }
+
+  int val;
+  i = fscanf(fp, "%i", &val);
+  if(!i || val != 555) { goto FAIL; }
+
+  remove("logs/logintsetting.txt");
+  remove("logs");
+  fclose(fp);
+  return LOG_PASS;
+
+FAIL:
+  remove("logs/logintsetting.txt");
+  remove("logs");
+  fclose(fp);
+  return LOG_FAIL;
 }
 
 testResultLOG_t testIntArrayNilLog() {
@@ -400,16 +536,43 @@ testResultLOG_t testIntArrayInvalidSize() {
   return (errLOG == LOG_INVALID_ARR_SIZE) ? LOG_PASS : LOG_FAIL;
 }
 
-//logIntArr(log_t *log, int *arr, int size); TODO
 testResultLOG_t testIntArrayValid() {
-  errLOG_t errLOG = LOG_NIL_LOG;
-  return (errLOG == LOG_NIL) ? LOG_PASS : LOG_FAIL;
+  log_t *log;
+  FILE *fp = NULL;
+
+  errLOG_t errLOG = makeLOG(&log, 80, "logs", "logintarr.txt");
+  if(errLOG != LOG_NIL) { return LOG_FAIL; }
+
+  int arr[10] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+  int size = 10;
+  if((errLOG = logIntArr(log, arr, size)) != LOG_NIL) { goto FAIL; }
+
+  if(!(fp = fopen("logs/logintarr.txt", "r"))) { goto FAIL; }
+
+  if(fgetc(fp) != '{') { goto FAIL; }
+  int val, i;
+  for(i = 0; i < 10; i++) {
+    if(!fscanf(fp, "%i", &val) || val != arr[i]) { goto FAIL; }
+    if(i < 9) { if(fscanf(fp, ", ")) { goto FAIL; } }
+    else { if(fscanf(fp, "}\n")) { goto FAIL; } }
+  }
+
+  remove("logs/logintarr.txt");
+  remove("logs");
+  fclose(fp);
+  return LOG_PASS;
+
+FAIL:
+  remove("logs/logintarr.txt");
+  remove("logs");
+  fclose(fp);
+  return LOG_FAIL;
 }
 
 testResultLOG_t testIntMatrixNilLog() {
   int matrix[1][1] = { { 9 } };
 
-  errLOG_t errLOG = logIntMatrix(NULL, (int *)matrix, 1, 1);
+  errLOG_t errLOG = logIntMatrix(NULL, (int **)matrix, 1, 1);
   return (errLOG == LOG_NIL_LOG) ? LOG_PASS : LOG_FAIL;
 }
 
@@ -435,7 +598,7 @@ testResultLOG_t testIntMatrixInvalidRowSize() {
 
   int matrix[1][1] = { { 9 } };
 
-  errLOG = logIntMatrix(log, (int *)matrix, 0, 1);
+  errLOG = logIntMatrix(log, (int **)matrix, 0, 1);
 
   remove("logs/log.txt");
   remove("logs");
@@ -451,7 +614,7 @@ testResultLOG_t testIntMatrixInvalidColumnSize() {
 
   int matrix[1][1] = { { 9 } };
 
-  errLOG = logIntMatrix(log, (int *)matrix, 1, 0);
+  errLOG = logIntMatrix(log, (int **)matrix, 1, 0);
 
   remove("logs/log.txt");
   remove("logs");
@@ -459,10 +622,51 @@ testResultLOG_t testIntMatrixInvalidColumnSize() {
   return (errLOG == LOG_INVALID_COL_SIZE) ? LOG_PASS : LOG_FAIL;
 }
 
-//logIntMatrix(log_t *log, int *matrix, int r, int c); TODO
 testResultLOG_t testIntMatrixValid() {
-  errLOG_t errLOG = LOG_NIL_LOG;
-  return (errLOG == LOG_NIL) ? LOG_PASS : LOG_FAIL;
+  log_t *log;
+
+  errLOG_t errLOG = makeLOG(&log, 80, "logs", "logintmatrix.txt");
+  if(errLOG != LOG_NIL) { return LOG_FAIL; }
+
+  FILE *fp = NULL;
+  // for stk allocation instead
+  //int *matrix[2] = { NULL, NULL };
+  int **matrix = malloc(sizeof(int *) * 2);
+  int r, c;
+  for(r = 0; r < 2; r++) {
+    //int col[5] = { 0, 1, 2, 3, 4 };
+    //matrix[r] = col;
+    matrix[r] = malloc(sizeof(int) * 5);
+    for(c = 0; c < 5; c++) { matrix[r][c] = c*(r+1); }
+  }
+
+  if((errLOG = logIntMatrix(log, matrix, 2, 5)) != LOG_NIL) { goto FAIL; }
+  if(!(fp = fopen("logs/logintmatrix.txt", "r"))) { goto FAIL; }
+
+  int val;
+  if(fscanf(fp, "{\n")) { goto FAIL; }
+  for(r = 0; r < 2; r++) {
+    if(fscanf(fp, "\t{")) { goto FAIL; }
+    for(c = 0; c < 5; c++) {
+      if(!fscanf(fp, "%i", &val) || val != matrix[r][c]) { goto FAIL; }
+      if(c < 4) { if(fscanf(fp, ", ")) { goto FAIL; } }
+      else { if(fscanf(fp, "}")) { goto FAIL; } }
+    }
+    if(r < 1) { if(fscanf(fp, ",\n")) { goto FAIL; } }
+    else { if(fscanf(fp, "\n")) { goto FAIL; } }
+  }
+  if(fscanf(fp, "}\n")) { goto FAIL; }
+
+  remove("logs/logintmatrix.txt");
+  remove("logs");
+  fclose(fp);
+  return LOG_PASS;
+
+FAIL:
+  remove("logs/logintmatrix.txt");
+  remove("logs");
+  fclose(fp);
+  return LOG_FAIL;
 }
 
 testResultLOG_t testFloatSettingNilLog() {
@@ -502,10 +706,38 @@ testResultLOG_t testFloatSettingInvalidKey() {
   return (errLOG == LOG_INVALID_KEY) ? LOG_PASS : LOG_FAIL;
 }
 
-//logFloatSetting(log_t *log, char *key, double val); TODO
 testResultLOG_t testFloatSettingValid() {
-  errLOG_t errLOG = LOG_NIL_LOG;
-  return (errLOG == LOG_NIL) ? LOG_PASS : LOG_FAIL;
+  log_t *log;
+  FILE *fp = NULL;
+
+  errLOG_t errLOG = makeLOG(&log, 80, "logs", "logfloatsetting.txt");
+  if(errLOG != LOG_NIL) { return LOG_FAIL; }
+
+  if((errLOG = logFloatSetting(log, "floatKey", 555.5)) != LOG_NIL) { goto FAIL; }
+
+  if(!(fp = fopen("logs/logfloatsetting.txt", "r"))) { goto FAIL; }
+
+  int i;
+  char key[8];
+  for(i = 0; i < 8; i++) { key[i] = fgetc(fp); }
+  if(strncmp(key, "floatKey", 8)) { goto FAIL; }
+
+  for(i = 0; i < 66; i++) { if(fgetc(fp) != '.') { goto FAIL; } }
+
+  float val;
+  i = fscanf(fp, "%f", &val); // 555.50
+  if(!i || val != 555.5) { goto FAIL; }
+
+  remove("logs/logfloatsetting.txt");
+  remove("logs");
+  fclose(fp);
+  return LOG_PASS;
+
+FAIL:
+  remove("logs/logfloatsetting.txt");
+  remove("logs");
+  fclose(fp);
+  return LOG_FAIL;
 }
 
 testResultLOG_t testFloatArrayNilLog() {
@@ -545,10 +777,38 @@ testResultLOG_t testFloatArrayInvalidSize() {
   return (errLOG == LOG_INVALID_ARR_SIZE) ? LOG_PASS : LOG_FAIL;
 }
 
-//logFloatArr(log_t *log, double *arr, int size); TODO
 testResultLOG_t testFloatArrayValid() {
-  errLOG_t errLOG = LOG_NIL_LOG;
-  return (errLOG == LOG_NIL) ? LOG_PASS : LOG_FAIL;
+  log_t *log;
+  FILE *fp = NULL;
+
+  errLOG_t errLOG = makeLOG(&log, 80, "logs", "logfloatarr.txt");
+  if(errLOG != LOG_NIL) { return LOG_FAIL; }
+
+  float arr[10] = { 0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0 };
+  float size = 10;
+  if((errLOG = logFloatArr(log, arr, size)) != LOG_NIL) { goto FAIL; }
+
+  if(!(fp = fopen("logs/logfloatarr.txt", "r"))) { goto FAIL; }
+
+  if(fgetc(fp) != '{') { goto FAIL; }
+  float val;
+  int i;
+  for(i = 0; i < 10; i++) {
+    if(!fscanf(fp, "%f", &val) || val != arr[i]) { goto FAIL; }
+    if(i < 9) { if(fscanf(fp, ", ")) { goto FAIL; } }
+    else { if(fscanf(fp, "}\n")) { goto FAIL; } }
+  }
+
+  remove("logs/logfloatarr.txt");
+  remove("logs");
+  fclose(fp);
+  return LOG_PASS;
+
+FAIL:
+  remove("logs/logfloatarr.txt");
+  remove("logs");
+  fclose(fp);
+  return LOG_FAIL;
 }
 
 testResultLOG_t testFloatMatrixNilLog() {
@@ -605,10 +865,47 @@ testResultLOG_t testFloatMatrixInvalidColumnSize() {
   return (errLOG == LOG_INVALID_COL_SIZE) ? LOG_PASS : LOG_FAIL;
 }
 
-//logFloatMatrix(log_t *log, double **matrix, int r, int c); TODO
 testResultLOG_t testFloatMatrixValid() {
-  errLOG_t errLOG = LOG_NIL_LOG;
-  return (errLOG == LOG_NIL) ? LOG_PASS : LOG_FAIL;
+  log_t *log;
+
+  errLOG_t errLOG = makeLOG(&log, 80, "logs", "logfloatmatrix.txt");
+  if(errLOG != LOG_NIL) { return LOG_FAIL; }
+
+  FILE *fp = NULL;
+  float **matrix = malloc(sizeof(float *) * 2);
+  int r, c;
+  for(r = 0; r < 2; r++) {
+    matrix[r] = malloc(sizeof(float) * 5);
+    for(c = 0; c < 5; c++) { matrix[r][c] = c*(r+1); }
+  }
+
+  if((errLOG = logFloatMatrix(log, matrix, 2, 5)) != LOG_NIL) { goto FAIL; }
+  if(!(fp = fopen("logs/logfloatmatrix.txt", "r"))) { goto FAIL; }
+
+  float val;
+  if(fscanf(fp, "{\n")) { goto FAIL; }
+  for(r = 0; r < 2; r++) {
+    if(fscanf(fp, "\t{")) { goto FAIL; }
+    for(c = 0; c < 5; c++) {
+      if(!fscanf(fp, "%f", &val) || val != matrix[r][c]) { goto FAIL; }
+      if(c < 4) { if(fscanf(fp, ", ")) { goto FAIL; } }
+      else { if(fscanf(fp, "}")) { goto FAIL; } }
+    }
+    if(r < 1) { if(fscanf(fp, ",\n")) { goto FAIL; } }
+    else { if(fscanf(fp, "\n")) { goto FAIL; } }
+  }
+  if(fscanf(fp, "}\n")) { goto FAIL; }
+
+  remove("logs/logfloatmatrix.txt");
+  remove("logs");
+  fclose(fp);
+  return LOG_PASS;
+
+FAIL:
+  remove("logs/logfloatmatrix.txt");
+  remove("logs");
+  fclose(fp);
+  return LOG_FAIL;
 }
 
 testResultLOG_t testBoolSettingNilLog() {
@@ -648,10 +945,38 @@ testResultLOG_t testBoolSettingInvalidKey() {
   return (errLOG == LOG_INVALID_KEY) ? LOG_PASS : LOG_FAIL;
 }
 
-//logBoolSetting(log_t *log, char *key, int val); TODO
 testResultLOG_t testBoolSettingValid() {
-  errLOG_t errLOG = LOG_NIL_LOG;
-  return (errLOG == LOG_NIL) ? LOG_PASS : LOG_FAIL;
+  log_t *log;
+  FILE *fp = NULL;
+
+  errLOG_t errLOG = makeLOG(&log, 80, "logs", "logboolsetting.txt");
+  if(errLOG != LOG_NIL) { return LOG_FAIL; }
+
+  if((errLOG = logBoolSetting(log, "boolKey", 0)) != LOG_NIL) { goto FAIL; }
+
+  if(!(fp = fopen("logs/logboolsetting.txt", "r"))) { goto FAIL; }
+
+  int i;
+  char key[7];
+  for(i = 0; i < 7; i++) { key[i] = fgetc(fp); }
+  if(strncmp(key, "boolKey", 7)) { goto FAIL; }
+
+  for(i = 0; i < 68; i++) { if(fgetc(fp) != '.') { goto FAIL; } }
+
+  char val[5];
+  i = fscanf(fp, "%s", (char *)&val);
+  if(!i || strcmp(val, "false")) { goto FAIL; }
+
+  remove("logs/logboolsetting.txt");
+  remove("logs");
+  fclose(fp);
+  return LOG_PASS;
+
+FAIL:
+  remove("logs/logboolsetting.txt");
+  remove("logs");
+  fclose(fp);
+  return LOG_FAIL;
 }
 
 testResultLOG_t testBoolArrayNilLog() {
@@ -691,10 +1016,44 @@ testResultLOG_t testBoolArrayInvalidSize() {
   return (errLOG == LOG_INVALID_ARR_SIZE) ? LOG_PASS : LOG_FAIL;
 }
 
-//logBoolArr(log_t *log, int *arr, int size); TODO
 testResultLOG_t testBoolArrayValid() {
-  errLOG_t errLOG = LOG_NIL_LOG;
-  return (errLOG == LOG_NIL) ? LOG_PASS : LOG_FAIL;
+  log_t *log;
+  FILE *fp = NULL;
+
+  errLOG_t errLOG = makeLOG(&log, 80, "logs", "logboolarr.txt");
+  if(errLOG != LOG_NIL) { return LOG_FAIL; }
+
+  int arr[10] = { 0, 0, 1, 0, 1, 1, 0, 1, 0, 1 };
+  int size = 10;
+  if((errLOG = logBoolArr(log, arr, size)) != LOG_NIL) { goto FAIL; }
+
+  if(!(fp = fopen("logs/logboolarr.txt", "r"))) { goto FAIL; }
+
+  if(fgetc(fp) != '{') { goto FAIL; }
+  char val[6];
+  int i;
+  for(i = 0; i < 10; i++) {
+    if(arr[i]) {
+      if(!fscanf(fp, "%4s", (char *)&val)) { goto FAIL; }
+      if(strncmp(val, "true", 4)) { goto FAIL; }
+    } else  {
+      if(!fscanf(fp, "%5s", (char *)&val)) { goto FAIL; }
+      if(strncmp(val, "false", 5)) { goto FAIL; }
+    }
+    if(i < 9) { if(fscanf(fp, ", ")) { goto FAIL; } }
+    else { if(fscanf(fp, "}\n")) { goto FAIL; } }
+  }
+
+  remove("logs/logboolarr.txt");
+  remove("logs");
+  fclose(fp);
+  return LOG_PASS;
+
+FAIL:
+  remove("logs/logboolarr.txt");
+  remove("logs");
+  fclose(fp);
+  return LOG_FAIL;
 }
 
 testResultLOG_t testBoolMatrixNilLog() {
@@ -750,10 +1109,51 @@ testResultLOG_t testBoolMatrixInvalidColumnSize() {
   return (errLOG == LOG_INVALID_COL_SIZE) ? LOG_PASS : LOG_FAIL;
 }
 
-//logBoolMatrix(log_t *log, int **matrix, int r, int c); TODO
 testResultLOG_t testBoolMatrixValid() {
-  errLOG_t errLOG = LOG_NIL_LOG;
-  return (errLOG == LOG_NIL) ? LOG_PASS : LOG_FAIL;
+  log_t *log;
+
+  errLOG_t errLOG = makeLOG(&log, 80, "logs", "logboolmatrix.txt");
+  if(errLOG != LOG_NIL) { return LOG_FAIL; }
+
+  FILE *fp = NULL;
+  int **matrix = malloc(sizeof(int *) * 2);
+  int r, c;
+  for(r = 0; r < 2; r++) {
+    matrix[r] = malloc(sizeof(int) * 5);
+    for(c = 0; c < 5; c++) { matrix[r][c] = (c*(r+1))%2; }
+  }
+
+  if((errLOG = logBoolMatrix(log, matrix, 2, 5)) != LOG_NIL) { goto FAIL; }
+  if(!(fp = fopen("logs/logboolmatrix.txt", "r"))) { goto FAIL; }
+
+  char val[5];
+  if(fscanf(fp, "{\n")) { goto FAIL; }
+  for(r = 0; r < 2; r++) {
+    if(fscanf(fp, "\t{")) { goto FAIL; }
+    for(c = 0; c < 5; c++) {
+      if(matrix[r][c]) {
+        if(!fscanf(fp, "%4s", (char *)&val) || strncmp(val, "true", 4)) { goto FAIL; }
+      } else {
+        if(!fscanf(fp, "%5s", (char *)&val) || strncmp(val, "false", 5)) { goto FAIL; }
+      }
+      if(c < 4) { if(fscanf(fp, ", ")) { goto FAIL; } }
+      else { if(fscanf(fp, "}")) { goto FAIL; } }
+    }
+    if(r < 1) { if(fscanf(fp, ",\n")) { goto FAIL; } }
+    else { if(fscanf(fp, "\n")) { goto FAIL; } }
+  }
+  if(fscanf(fp, "}\n")) { goto FAIL; }
+
+  remove("logs/logboolmatrix.txt");
+  remove("logs");
+  fclose(fp);
+  return LOG_PASS;
+
+FAIL:
+  remove("logs/logboolmatrix.txt");
+  remove("logs");
+  fclose(fp);
+  return LOG_FAIL;
 }
 
 testResultLOG_t testCharSettingNilLog() {
@@ -793,10 +1193,38 @@ testResultLOG_t testCharSettingInvalidKey() {
   return (errLOG == LOG_INVALID_KEY) ? LOG_PASS : LOG_FAIL;
 }
 
-//logCharSetting(log_t *log, char *key, char val); TODO
 testResultLOG_t testCharSettingValid() {
-  errLOG_t errLOG = LOG_NIL_LOG;
-  return (errLOG == LOG_NIL) ? LOG_PASS : LOG_FAIL;
+  log_t *log;
+  FILE *fp = NULL;
+
+  errLOG_t errLOG = makeLOG(&log, 80, "logs", "logcharsetting.txt");
+  if(errLOG != LOG_NIL) { return LOG_FAIL; }
+
+  if((errLOG = logCharSetting(log, "charKey", 'c')) != LOG_NIL) { goto FAIL; }
+
+  if(!(fp = fopen("logs/logcharsetting.txt", "r"))) { goto FAIL; }
+
+  int i;
+  char key[7];
+  for(i = 0; i < 7; i++) { key[i] = fgetc(fp); }
+  if(strncmp(key, "charKey", 7)) { goto FAIL; }
+
+  for(i = 0; i < 70; i++) { if(fgetc(fp) != '.') { goto FAIL; } }
+
+  char val;
+  i = fscanf(fp, "'%c'", &val);
+  if(!i || val != 'c') { goto FAIL; }
+
+  remove("logs/logcharsetting.txt");
+  remove("logs");
+  fclose(fp);
+  return LOG_PASS;
+
+FAIL:
+  remove("logs/logcharsetting.txt");
+  remove("logs");
+  fclose(fp);
+  return LOG_FAIL;
 }
 
 testResultLOG_t testCharArrayNilLog() {
@@ -836,10 +1264,38 @@ testResultLOG_t testCharArrayInvalidSize() {
   return (errLOG == LOG_INVALID_ARR_SIZE) ? LOG_PASS : LOG_FAIL;
 }
 
-//logCharArr(log_t *log, char *arr, int size); TODO
 testResultLOG_t testCharArrayValid() {
-  errLOG_t errLOG = LOG_NIL_LOG;
-  return (errLOG == LOG_NIL) ? LOG_PASS : LOG_FAIL;
+  log_t *log;
+  FILE *fp = NULL;
+
+  errLOG_t errLOG = makeLOG(&log, 80, "logs", "logchararr.txt");
+  if(errLOG != LOG_NIL) { return LOG_FAIL; }
+
+  char arr[10] = { 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j' };
+  int size = 10;
+  if((errLOG = logCharArr(log, arr, size)) != LOG_NIL) { goto FAIL; }
+
+  if(!(fp = fopen("logs/logchararr.txt", "r"))) { goto FAIL; }
+
+  if(fgetc(fp) != '{') { goto FAIL; }
+  char val;
+  int i;
+  for(i = 0; i < 10; i++) {
+    if(!fscanf(fp, "'%c'", &val) || arr[i] != val) { goto FAIL; }
+    if(i < 9) { if(fscanf(fp, ", ")) { goto FAIL; } }
+    else { if(fscanf(fp, "}\n")) { goto FAIL; } }
+  }
+
+  remove("logs/logchararr.txt");
+  remove("logs");
+  fclose(fp);
+  return LOG_PASS;
+
+FAIL:
+  remove("logs/logchararr.txt");
+  remove("logs");
+  fclose(fp);
+  return LOG_FAIL;
 }
 
 testResultLOG_t testCharMatrixNilLog() {
@@ -895,10 +1351,47 @@ testResultLOG_t testCharMatrixInvalidColumnSize() {
   return (errLOG == LOG_INVALID_COL_SIZE) ? LOG_PASS : LOG_FAIL;
 }
 
-//logCharMatrix(log_t *log, char **matrix, int r, int c); TODO
 testResultLOG_t testCharMatrixValid() {
-  errLOG_t errLOG = LOG_NIL_LOG;
-  return (errLOG == LOG_NIL) ? LOG_PASS : LOG_FAIL;
+  log_t *log;
+
+  errLOG_t errLOG = makeLOG(&log, 80, "logs", "logcharmatrix.txt");
+  if(errLOG != LOG_NIL) { return LOG_FAIL; }
+
+  FILE *fp = NULL;
+  char **matrix = malloc(sizeof(char *) * 2);
+  int r, c;
+  for(r = 0; r < 2; r++) {
+    matrix[r] = malloc(sizeof(char) * 5);
+    for(c = 0; c < 5; c++) { matrix[r][c] = (char)(90+(c*(r+1))); }
+  }
+
+  if((errLOG = logCharMatrix(log, matrix, 2, 5)) != LOG_NIL) { goto FAIL; }
+  if(!(fp = fopen("logs/logcharmatrix.txt", "r"))) { goto FAIL; }
+
+  char val;
+  if(fscanf(fp, "{\n")) { goto FAIL; }
+  for(r = 0; r < 2; r++) {
+    if(fscanf(fp, "\t{")) { goto FAIL; }
+    for(c = 0; c < 5; c++) {
+      if(!fscanf(fp, "'%c'", &val) || val != matrix[r][c]) { goto FAIL; }
+      if(c < 4) { if(fscanf(fp, ", ")) { goto FAIL; } }
+      else { if(fscanf(fp, "}")) { goto FAIL; } }
+    }
+    if(r < 1) { if(fscanf(fp, ",\n")) { goto FAIL; } }
+    else { if(fscanf(fp, "\n")) { goto FAIL; } }
+  }
+  if(fscanf(fp, "}\n")) { goto FAIL; }
+
+  remove("logs/logcharmatrix.txt");
+  remove("logs");
+  fclose(fp);
+  return LOG_PASS;
+
+FAIL:
+  remove("logs/logcharmatrix.txt");
+  remove("logs");
+  fclose(fp);
+  return LOG_FAIL;
 }
 
 testResultLOG_t testStringSettingNilLog() {
@@ -938,10 +1431,38 @@ testResultLOG_t testStringSettingInvalidKey() {
   return (errLOG == LOG_INVALID_KEY) ? LOG_PASS : LOG_FAIL;
 }
 
-//logStrSetting(log_t *log, char *key, char *val); TODO
 testResultLOG_t testStringSettingValid() {
-  errLOG_t errLOG = LOG_NIL_LOG;
-  return (errLOG == LOG_NIL) ? LOG_PASS : LOG_FAIL;
+  log_t *log;
+  FILE *fp = NULL;
+
+  errLOG_t errLOG = makeLOG(&log, 80, "logs", "logstringsetting.txt");
+  if(errLOG != LOG_NIL) { return LOG_FAIL; }
+
+  if((errLOG = logStrSetting(log, "stringKey", "c")) != LOG_NIL) { goto FAIL; }
+
+  if(!(fp = fopen("logs/logstringsetting.txt", "r"))) { goto FAIL; }
+
+  int i;
+  char key[9];
+  for(i = 0; i < 9; i++) { key[i] = fgetc(fp); }
+  if(strncmp(key, "stringKey", 9)) { goto FAIL; }
+
+  for(i = 0; i < 68; i++) { if(fgetc(fp) != '.') { goto FAIL; } }
+
+  char val[3];
+  i = fscanf(fp, "%s", (char *)&val);
+  if(!i || strcmp(val, "\"c\"")) { goto FAIL; }
+
+  remove("logs/logstringsetting.txt");
+  remove("logs");
+  fclose(fp);
+  return LOG_PASS;
+
+FAIL:
+  remove("logs/logstringsetting.txt");
+  remove("logs");
+  fclose(fp);
+  return LOG_FAIL;
 }
 
 testResultLOG_t testStringArrayNilLog() {
@@ -981,10 +1502,38 @@ testResultLOG_t testStringArrayInvalidSize() {
   return (errLOG == LOG_INVALID_ARR_SIZE) ? LOG_PASS : LOG_FAIL;
 }
 
-//logStrArr(log_t *log, char **arr, int size); TODO
 testResultLOG_t testStringArrayValid() {
-  errLOG_t errLOG = LOG_NIL_LOG;
-  return (errLOG == LOG_NIL) ? LOG_PASS : LOG_FAIL;
+  log_t *log;
+  FILE *fp = NULL;
+
+  errLOG_t errLOG = makeLOG(&log, 80, "logs", "logstrarr.txt");
+  if(errLOG != LOG_NIL) { return LOG_FAIL; }
+
+  char *arr[10] = { "a", "b", "c", "d", "e", "f", "g", "h", "i", "j" };
+  int size = 10;
+  if((errLOG = logStrArr(log, arr, size)) != LOG_NIL) { goto FAIL; }
+
+  if(!(fp = fopen("logs/logstrarr.txt", "r"))) { goto FAIL; }
+
+  if(fgetc(fp) != '{') { goto FAIL; }
+  char val[5];
+  int i;
+  for(i = 0; i < 10; i++) {
+    if(!fscanf(fp, "\"%1s\"", (char *)&val) || strncmp(arr[i], val, 1)) { goto FAIL; }
+    if(i < 9) { if(fscanf(fp, ", ")) { goto FAIL; } }
+    else { if(fscanf(fp, "}\n")) { goto FAIL; } }
+  }
+
+  remove("logs/logstrarr.txt");
+  remove("logs");
+  fclose(fp);
+  return LOG_PASS;
+
+FAIL:
+  remove("logs/logstrarr.txt");
+  remove("logs");
+  fclose(fp);
+  return LOG_FAIL;
 }
 
 testResultLOG_t testStringMatrixNilLog() {
@@ -1040,10 +1589,47 @@ testResultLOG_t testStringMatrixInvalidColumnSize() {
   return (errLOG == LOG_INVALID_COL_SIZE) ? LOG_PASS : LOG_FAIL;
 }
 
-//logStrMatrix(log_t *log, char ***matrix, int r, int c); TODO
 testResultLOG_t testStringMatrixValid() {
-  errLOG_t errLOG = LOG_NIL_LOG;
-  return (errLOG == LOG_NIL) ? LOG_PASS : LOG_FAIL;
+  log_t *log;
+
+  errLOG_t errLOG = makeLOG(&log, 80, "logs", "logstrmatrix.txt");
+  if(errLOG != LOG_NIL) { return LOG_FAIL; }
+
+  FILE *fp = NULL;
+  char ***matrix = malloc(sizeof(char **) * 2);
+  int r, c;
+  for(r = 0; r < 2; r++) {
+    matrix[r] = malloc(sizeof(char *) * 5);
+    for(c = 0; c < 5; c++) { matrix[r][c] = "FOOBARBER"; }
+  }
+
+  if((errLOG = logStrMatrix(log, matrix, 2, 5)) != LOG_NIL) { goto FAIL; }
+  if(!(fp = fopen("logs/logstrmatrix.txt", "r"))) { goto FAIL; }
+
+  char val[10];
+  if(fscanf(fp, "{\n")) { goto FAIL; }
+  for(r = 0; r < 2; r++) {
+    if(fscanf(fp, "\t{")) { goto FAIL; }
+    for(c = 0; c < 5; c++) {
+      if(!fscanf(fp, "\"%9s\"", (char *)&val) || strcmp(val, matrix[r][c])) { goto FAIL; }
+      if(c < 4) { if(fscanf(fp, ", ")) { goto FAIL; } }
+      else { if(fscanf(fp, "}")) { goto FAIL; } }
+    }
+    if(r < 1) { if(fscanf(fp, ",\n")) { goto FAIL; } }
+    else { if(fscanf(fp, "\n")) { goto FAIL; } }
+  }
+  if(fscanf(fp, "}\n")) { goto FAIL; }
+
+  remove("logs/logstrmatrix.txt");
+  remove("logs");
+  fclose(fp);
+  return LOG_PASS;
+
+FAIL:
+  remove("logs/logstrmatrix.txt");
+  remove("logs");
+  fclose(fp);
+  return LOG_FAIL;
 }
 
 /******************************************************************************
@@ -1056,7 +1642,6 @@ void *TESTS[TOTAL_TESTS][2] = {
   { testStrErrLOG_OPEN_FAIL,           "testStrErrLOG_OPEN_FAIL"             },
   { testStrErrLOG_CLOSE_FAIL,          "testStrErrLOG_CLOSE_FAIL"            },
   { testStrErrLOG_DIR_CREATION_FAIL,   "testStrErrLOG_DIR_CREATION_FAIL"     },
-  { testStrErrLOG_UNKNOWN_TYPE,        "testStrErrLOG_UNKNOWN_TYPE"          },
   { testStrErrLOG_INVALID_ROW_SIZE,    "testStrErrLOG_INVALID_ROW_SIZE"      },
   { testStrErrLOG_INVALID_COL_SIZE,    "testStrErrLOG_INVALID_COL_SIZE"      },
   { testStrErrLOG_INVALID_ARR_SIZE,    "testStrErrLOG_INVALID_ARR_SIZE"      },
