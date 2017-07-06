@@ -2,7 +2,7 @@
  * FILE:    ini.h                                                             *
  * AUTHOR:  Ryan Rozanski                                                     *
  * CREATED: 3/27/17                                                           *
- * EDITED:  6/27/17                                                           *
+ * EDITED:  7/6/17                                                            *
  * INFO:    A ini configuration file library. Allows the static reading from  *
  *          and dynamic output to a file, as well as dynamic CRUD operations. *
  *          The exposed library API's follow a uniform interface where only   *
@@ -59,11 +59,21 @@
  ******************************************************************************/
 typedef struct ini ini_t; /* INI configuration files. */
 
+typedef struct setting setting_t; /* INI configuration settings. */
+
+typedef enum typeINI { /* INI setting value types */
+  INT, FLOAT, BOOL, CHAR, STRING, INT_ARRAY, FLOAT_ARRAY, BOOL_ARRAY,
+  CHAR_ARRAY, STRING_ARRAY, UNINITIALIZED
+} typeINI_t;
+
+typedef unsigned char option_t; /* INI configuration options */
+
 typedef enum errINI { /* All the possible errors produced by this library. */
-  INI_UNKNOWN_TYPE, INI_OPEN_FAILURE, INI_CLOSE_FAILURE, INI_OUT_OF_MEMORY,
-  INI_NOT_FOUND, INI_TYPE_MISMATCH, INI_INVALID_CONF, INI_INVALID_KEY,
-  INI_INVALID_VAL, INI_INVALID_SECTION, INI_INVALID_LEN, INI_NIL_FNAME,
-  INI_NIL_INI, INI_NIL_KEY, INI_NIL_VAL, INI_NIL_LEN, INI_NIL_SECTION, INI_NIL,
+  INI_OPEN_FAILURE, INI_CLOSE_FAILURE, INI_OUT_OF_MEMORY, INI_TYPE_MISMATCH,
+  INI_INVALID_CONF, INI_INVALID_KEY, INI_INVALID_VALUE, INI_INVALID_SECTION,
+  INI_INVALID_INDEX, INI_NIL_FNAME, INI_NIL_INI, INI_NIL_KEY, INI_NIL_VALUE,
+  INI_NIL_SECTION, INI_NIL_OPTIONS, INI_NIL_SETTING, INI_NIL_TYPE,
+  INI_NIL_LENGTH, INI_NIL,
 } errINI_t;
 
 /******************************************************************************
@@ -128,14 +138,15 @@ errINI_t freeINI(ini_t *ini);
  * ini      a pointer which to set with the address of the conf read in       *
  * fname    the name of the file to read from                                 *
  *                                                                            *
- * RETURNS: 
+ * RETURNS: TODO 
  *                                                                            *
  ******************************************************************************/
-errINI_t readINI(ini_t **ini, char *fname); // TODO
+errINI_t readINI(ini_t **ini, char *filename);
 
 /******************************************************************************
  *                                                                            *
- * PURPOSE: Output the ini configuration to a file with the specified name.   *
+ * PURPOSE: Output the ini configuration to a file with the specified name    *
+ *          using the set configuration options.                              *
  *                                                                            *
  * ARGUMENT DESCRIPTION                                                       *
  * -------- -----------                                                       *
@@ -149,344 +160,98 @@ errINI_t readINI(ini_t **ini, char *fname); // TODO
  *          INI_NIL if no error                                               *
  *                                                                            *
  ******************************************************************************/
-errINI_t writeINI(ini_t *ini, char *fname);
+errINI_t writeINI(ini_t *ini, char *filename);
 
 /******************************************************************************
  *                                                                            *
- * PURPOSE: Create/Update a new key value setting under the specified section.*
+ * PURPOSE: TODO
+ *                                                                            *
+ * ARGUMENT DESCRIPTION                                                       *
+ * -------- -----------                                                       *
+ * ini      the ini configuration to query                                    *
+ * options  a ptr to an allocated options type to store the gotten value      *
+ *                                                                            *
+ * RETURNS: INI_NIL_INI if ini is NULL                                        *
+ *          INI_NIL_OPTIONS if options is NULL                                *
+ *          INI_NIL if no error                                               *
+ *                                                                            *
+ ******************************************************************************/
+errINI_t getConfigurationINI(ini_t *ini, option_t *options);
+
+/******************************************************************************
+ *                                                                            *
+ * PURPOSE:  TODO
+ *          option SETTING_SEPERATOR_EQUAL   = 0b00000001;
+ *          option SETTING_SEPERATOR_COLON   = 0b00000010;
+ *          option SETTING_COMMENT_HASH      = 0b00000100;
+ *          option SETTING_COMMENT_SEMICOLON = 0b00001000;
+ *           | (bit or) wanted settings
+ *                                                                            *
+ * ARGUMENT DESCRIPTION                                                       *
+ * -------- -----------                                                       *
+ * ini      the ini configuration to query                                    *
+ * options  the settings for the configuration                                *
+ *                                                                            *
+ * RETURNS: INI_NIL_INI if ini is NULL                                        *
+ *          INI_INVALID_OPTIONS if options has conflicting bits set           *
+ *          INI_NIL if no error                                               *
+ *                                                                            *
+ ******************************************************************************/
+errINI_t setConfigurationINI(ini_t *ini, option_t options);
+
+/******************************************************************************
+ *                                                                            *
+ * PURPOSE: TODO
  *                                                                            *
  * ARGUMENT DESCRIPTION                                                       *
  * -------- -----------                                                       *
  * ini      the ini configuration object to manipulate                        *
- * section  the section under which the key is located                        *
- * key      the key of the setting to remove                                  *
- * val      the val of the new setting                                        *
+ * section  the section under which tp place key under                        *
+ * key      the key of the setting to create                                  *
+ * setting  a ptr to an allocated ptr to store a ptr of the created setting   *
  *                                                                            *
- * RETURNS: 
+ * RETURNS: INI_NIL_INI if ini is NULL                                        *
+ *          INI_NIL_SECTION if section is NULL                                *
+ *          INI_NIL_KEY if key is NULL                                        *
+ *          INI_OUT_OF_MEMORY if allocation of the new setting fails          *
+ *          INI_NIL_SETTING if setting is NULL                                *
+ *          INI_INVALID_SECTION if section does not adhere to library grammar *
+ *          INI_INVALID_KEY if key does not adhere to library grammar         *
+ *          INI_NIL if no error                                               *
  *                                                                            *
  ******************************************************************************/
-errINI_t setIntINI(ini_t *ini, char *section, char *key, int val); // TODO
+errINI_t createSetting(ini_t *ini, char *section, char *key, setting_t **setting);
 
 /******************************************************************************
  *                                                                            *
- * PURPOSE: Read a value from the conf given by section and key.              *
+ * PURPOSE: TODO
  *                                                                            *
  * ARGUMENT DESCRIPTION                                                       *
  * -------- -----------                                                       *
- * ini      the ini conf to use                                               *
- * section  the section to look under                                         *
- * key      the key of the setting to get                                     *
- * val      a pointer which to set with the val of the setting found, if any  *
- *                                                                            *
- * RETURNS: 
- *                                                                            *
- ******************************************************************************/
-errINI_t getIntINI(ini_t *ini, char *section, char *key, int *val); // TODO
-
-/******************************************************************************
- *                                                                            *
- * PURPOSE: Create/Update a new key value setting under the specified section.*
- *                                                                            *
- * ARGUMENT DESCRIPTION                                                       *
- * -------- -----------                                                       *
- * ini      the ini configuration object to manipulate                        *
- * section  the section to make a new setting under                           *
- * key      the key of the new setting                                        *
- * val      the val of the new setting                                        *
- *                                                                            *
- * RETURNS: 
- *                                                                            *
- ******************************************************************************/
-errINI_t setFloatINI(ini_t *ini, char *section, char *key, double val); // TODO
-
-/******************************************************************************
- *                                                                            *
- * PURPOSE: Read a value from the conf given by section and key.              *
- *                                                                            *
- * ARGUMENT DESCRIPTION                                                       *
- * -------- -----------                                                       *
- * ini      the ini conf to use                                               *
- * section  the section to look under                                         *
- * key      the key of the setting to get                                     *
- * val      a pointer which to set with the val of the setting found, if any  *
- *                                                                            *
- * RETURNS: 
- *                                                                            *
- ******************************************************************************/
-errINI_t getFloatINI(ini_t *ini, char *section, char *key, double *val); // TODO
-
-/******************************************************************************
- *                                                                            *
- * PURPOSE: Create/Update a new key value setting under the specified section.*
- *                                                                            *
- * ARGUMENT DESCRIPTION                                                       *
- * -------- -----------                                                       *
- * ini      the ini configuration object to manipulate                        *
- * section  the section to make a new setting under                           *
- * key      the key of the new setting                                        *
- * val      the val of the new setting                                        *
- *                                                                            *
- * RETURNS: 
- *                                                                            *
- ******************************************************************************/
-errINI_t setBoolINI(ini_t *ini, char *section, char *key, int val); // TODO
-
-/******************************************************************************
- *                                                                            *
- * PURPOSE: Read a value from the conf given by section and key.              *
- *                                                                            *
- * ARGUMENT DESCRIPTION                                                       *
- * -------- -----------                                                       *
- * ini      the ini conf to use                                               *
- * section  the section to look under                                         *
- * key      the key of the setting to get                                     *
- * val      a pointer which to set with the val of the setting found, if any  *
- *                                                                            *
- * RETURNS: 
- *                                                                            *
- ******************************************************************************/
-errINI_t getBoolINI(ini_t *ini, char *section, char *key, int *val); // TODO
-
-/******************************************************************************
- *                                                                            *
- * PURPOSE: Create/Update a new key value setting under the specified section.*
- *                                                                            *
- * ARGUMENT DESCRIPTION                                                       *
- * -------- -----------                                                       *
- * ini      the ini configuration object to manipulate                        *
- * section  the section to make a new setting under                           *
- * key      the key of the new setting                                        *
- * val      the val of the new setting                                        *
- *                                                                            *
- * RETURNS: 
- *                                                                            *
- ******************************************************************************/
-errINI_t setCharINI(ini_t *ini, char *section, char *key, char val); // TODO
-
-/******************************************************************************
- *                                                                            *
- * PURPOSE: Read a value from the conf given by section and key.              *
- *                                                                            *
- * ARGUMENT DESCRIPTION                                                       *
- * -------- -----------                                                       *
- * ini      the ini conf to use                                               *
- * section  the section to look under                                         *
- * key      the key of the setting to get                                     *
- * val      a pointer which to set with the val of the setting found, if any  *
- *                                                                            *
- * RETURNS: 
- *                                                                            *
- ******************************************************************************/
-errINI_t getCharINI(ini_t *ini, char *section, char *key, char *val); // TODO
-
-/******************************************************************************
- *                                                                            *
- * PURPOSE: Create/Update a new key value setting under the specified section.*
- *                                                                            *
- * ARGUMENT DESCRIPTION                                                       *
- * -------- -----------                                                       *
- * ini      the ini configuration object to manipulate                        *
- * section  the section to make a new setting under                           *
- * key      the key of the new setting                                        *
- * val      the val of the new setting                                        *
- *                                                                            *
- * RETURNS: 
- *                                                                            *
- ******************************************************************************/
-errINI_t setStrINI(ini_t *ini, char *section, char *key, char *val); // TODO
-
-/******************************************************************************
- *                                                                            *
- * PURPOSE: Read a value from the conf given by section and key.              *
- *                                                                            *
- * ARGUMENT DESCRIPTION                                                       *
- * -------- -----------                                                       *
- * ini      the ini conf to use                                               *
- * section  the section to look under                                         *
- * key      the key of the setting to get                                     *
- * val      a pointer which to set with the val of the setting found, if any  *
- *                                                                            *
- * RETURNS: 
- *                                                                            *
- ******************************************************************************/
-errINI_t getStrINI(ini_t *ini, char *section, char *key, char **val); // TODO
-
-/******************************************************************************
- *                                                                            *
- * PURPOSE: Create/Update a new key value setting under the specified section.*
- *                                                                            *
- * ARGUMENT DESCRIPTION                                                       *
- * -------- -----------                                                       *
- * ini      the ini configuration object to manipulate                        *
- * section  the section to make a new setting under                           *
- * key      the key of the new setting                                        *
- * val      the val of the new setting                                        *
- * n        the size of the array of the var val                              *
- *                                                                            *
- * RETURNS: 
- *                                                                            *
- ******************************************************************************/
-errINI_t setIntArrINI(ini_t *ini, char *section, char *key, int *val, int n); // TODO
-
-/******************************************************************************
- *                                                                            *
- * PURPOSE: Read a value from the conf given by section and key.              *
- *                                                                            *
- * ARGUMENT DESCRIPTION                                                       *
- * -------- -----------                                                       *
- * ini      the ini conf to use                                               *
- * section  the section to look under                                         *
- * key      the key of the setting to get                                     *
- * val      a pointer which to set with the val of the setting found, if any  *
- * n        the size of the array of the var val                              *
- *                                                                            *
- * RETURNS: 
- *                                                                            *
- ******************************************************************************/
-errINI_t getIntArrINI(ini_t *ini, char *section, char *key, int **val, int *n); // TODO
-
-/******************************************************************************
- *                                                                            *
- * PURPOSE: Create/Update a new key value setting under the specified section.*
- *                                                                            *
- * ARGUMENT DESCRIPTION                                                       *
- * -------- -----------                                                       *
- * ini      the ini configuration object to manipulate                        *
- * section  the section to make a new setting under                           *
- * key      the key of the new setting                                        *
- * val      the val of the new setting                                        *
- * n        the size of the array of the var val                              *
- *                                                                            *
- * RETURNS: 
- *                                                                            *
- ******************************************************************************/
-errINI_t setFloatArrINI(ini_t *ini, char *section, char *key, double *val, int n); // TODO
-
-/******************************************************************************
- *                                                                            *
- * PURPOSE: Read a value from the conf given by section and key.              *
- *                                                                            *
- * ARGUMENT DESCRIPTION                                                       *
- * -------- -----------                                                       *
- * ini      the ini conf to use                                               *
- * section  the section to look under                                         *
- * key      the key of the setting to get                                     *
- * val      a pointer which to set with the val of the setting found, if any  *
- * n        the size of the array of the var val                              *
- *                                                                            *
- * RETURNS: 
- *                                                                            *
- ******************************************************************************/
-errINI_t getFloatArrINI(ini_t *ini, char *section, char *key, double **val, int *n); // TODO
-
-/******************************************************************************
- *                                                                            *
- * PURPOSE: Create/Update a new key value setting under the specified section.*
- *                                                                            *
- * ARGUMENT DESCRIPTION                                                       *
- * -------- -----------                                                       *
- * ini      the ini configuration object to manipulate                        *
- * section  the section to make a new setting under                           *
- * key      the key of the new setting                                        *
- * val      the val of the new setting                                        *
- * n        the size of the array of the var val                              *
- *                                                                            *
- * RETURNS: 
- *                                                                            *
- ******************************************************************************/
-errINI_t setBoolArrINI(ini_t *ini, char *section, char *key, int *val, int n); // TODO
-
-/******************************************************************************
- *                                                                            *
- * PURPOSE: Read a value from the conf given by section and key.              *
- *                                                                            *
- * ARGUMENT DESCRIPTION                                                       *
- * -------- -----------                                                       *
- * ini      the ini conf to use                                               *
- * section  the section to look under                                         *
- * key      the key of the setting to get                                     *
- * val      a pointer which to set with the val of the setting found, if any  *
- * n        the size of the array of the var val                              *
- *                                                                            *
- * RETURNS: 
- *                                                                            *
- ******************************************************************************/
-errINI_t getBoolArrINI(ini_t *ini, char *section, char *key, int **val, int *n); // TODO
-
-/******************************************************************************
- *                                                                            *
- * PURPOSE: Create/Update a new key value setting under the specified section.*
- *                                                                            *
- * ARGUMENT DESCRIPTION                                                       *
- * -------- -----------                                                       *
- * ini      the ini configuration object to manipulate                        *
- * section  the section to make a new setting under                           *
- * key      the key of the new setting                                        *
- * val      the val of the new setting                                        *
- * n        the size of the array of the var val                              *
- *                                                                            *
- * RETURNS: 
- *                                                                            *
- ******************************************************************************/
-errINI_t setCharArrINI(ini_t *ini, char *section, char *key, char *val, int n); // TODO
-
-/******************************************************************************
- *                                                                            *
- * PURPOSE: Read a value from the conf given by section and key.              *
- *                                                                            *
- * ARGUMENT DESCRIPTION                                                       *
- * -------- -----------                                                       *
- * ini      the ini conf to use                                               *
- * section  the section to look under                                         *
- * key      the key of the setting to get                                     *
- * val      a pointer which to set with the val of the setting found, if any  *
- * n        the size of the array of the var val                              *
- *                                                                            *
- * RETURNS: 
- *                                                                            *
- ******************************************************************************/
-errINI_t getCharArrINI(ini_t *ini, char *section, char *key, char **val, int *n); // TODO
-
-/******************************************************************************
- *                                                                            *
- * PURPOSE: Create/Update a new key value setting under the specified section.*
- *                                                                            *
- * ARGUMENT DESCRIPTION                                                       *
- * -------- -----------                                                       *
- * ini      the ini configuration object to manipulate                        *
- * section  the section to make a new setting under                           *
- * key      the key of the new setting                                        *
- * val      the val of the new setting                                        *
- * n        the size of the array of the var val                              *
- *                                                                            *
- * RETURNS: 
- *                                                                            *
- ******************************************************************************/
-errINI_t setStrArrINI(ini_t *ini, char *section, char *key, char **val, int n); // TODO
-
-/******************************************************************************
- *                                                                            *
- * PURPOSE: Read a value from the conf given by section and key.              *
- *                                                                            *
- * ARGUMENT DESCRIPTION                                                       *
- * -------- -----------                                                       *
- * ini      the ini configuration object to use                               *
+ * ini      the ini configuration object to query                             *
  * section  the section under which the key is located                        *
  * key      the key of the setting to get                                     *
- * val      a pointer which to set with the val of the setting found, if any  *
- * n        the size of the array of the var val                              *
+ * setting  a ptr to an allocated ptr to store a ptr of the gotten setting    *
  *                                                                            *
- * RETURNS: 
+ * RETURNS: INI_NIL_INI if ini is NULL                                        *
+ *          INI_NIL_SECTION if section is NULL                                *
+ *          INI_NIL_KEY if key is NULL                                        *
+ *          INI_NIL_SETTING if setting is NULL                                *
+ *          INI_INVALID_SECTION if section does not adhere to library grammar *
+ *          INI_INVALID_KEY if key does not adhere to library grammar         *
+ *          INI_NIL if no error                                               *
  *                                                                            *
  ******************************************************************************/
-errINI_t getStrArrINI(ini_t *ini, char *section, char *key, char ***val, int *n); // TODO
+errINI_t lookupSetting(ini_t *ini, char *section, char *key, setting_t **setting);
 
 /******************************************************************************
  *                                                                            *
  * PURPOSE: To delete the key/value association located under the specified   *
  *          section if it exists. Requests to remove non-present keys will be * 
  *          ignored. If the deleted association was the last in the given     *
- *          section then the section will also be removed.                    *
+ *          section then the section will also be removed... automatically    *
+ *          takes 
+ *          TODO care to delete unused sections...                            *
  *                                                                            *
  * ARGUMENT DESCRIPTION                                                       *
  * -------- -----------                                                       *
@@ -502,6 +267,444 @@ errINI_t getStrArrINI(ini_t *ini, char *section, char *key, char ***val, int *n)
  *          INI_NIL if no error                                               *
  *                                                                            *
  ******************************************************************************/
-errINI_t deleteINI(ini_t *ini, char *section, char *key);
+errINI_t deleteSetting(ini_t *ini, char *section, char *key);
+
+/******************************************************************************
+ *                                                                            *
+ * PURPOSE: TODO
+ *                                                                            *
+ * ARGUMENT DESCRIPTION                                                       *
+ * -------- -----------                                                       *
+ * setting  the setting to query                                              *
+ * typeINI  a ptr to an allocated typeINI_t to store the gottne type at       *
+ *                                                                            *
+ * RETURNS: INI_NIL_SETTING if setting is NULL                                *
+ *          INI_NIL_TYPE if typeINI is NULL                                   *
+ *          INI_NIL if no error                                               *
+ *                                                                            *
+ ******************************************************************************/
+errINI_t settingType(setting_t *setting, typeINI_t *typeINI);
+
+/******************************************************************************
+ *                                                                            *
+ * PURPOSE: TODO immutable key
+ *                                                                            *
+ * ARGUMENT DESCRIPTION                                                       *
+ * -------- -----------                                                       *
+ * setting  the setting to query                                              *
+ * key      a ptr to an allocated ptr to store the key at                     *
+ *                                                                            *
+ * RETURNS: INI_NIL_SETTING if setting is NULL                                *
+ *          INI_NIL_KEY if key is NULL                                        *
+ *          INI_NIL if no error                                               *
+ *                                                                            *
+ ******************************************************************************/
+errINI_t settingKey(setting_t *setting, const char **key); 
+
+/******************************************************************************
+ *                                                                            *
+ * PURPOSE: TODO 0 for atoms, # for strings and arrays
+ *                                                                            *
+ * ARGUMENT DESCRIPTION                                                       *
+ * -------- -----------                                                       *
+ * setting  the setting to query                                              *
+ * length   a ptr to an allocated into to store the length gotten at          *
+ *                                                                            *
+ * RETURNS: INI_NIL_SETTING if setting is NULL                                *
+ *          INI_NIL_LENGTH if length is NULL                                  *
+ *          INI_NIL if no error                                               *
+ *                                                                            *
+ ******************************************************************************/
+errINI_t settingLength(setting_t *setting, int *length); 
+
+/******************************************************************************
+ *                                                                            *
+ * PURPOSE: TODO
+ *                                                                            *
+ * ARGUMENT DESCRIPTION                                                       *
+ * -------- -----------                                                       *
+ * setting  the setting to query                                              *
+ * index    the index of the item in the list to get, from 0 to len(setting)-1*
+ * length   a ptr to an allocated into to store the length gotten at          *
+ *                                                                            *
+ * RETURNS: INI_NIL_SETTING if setting is NULL                                *
+ *          INI_NIL_LENGTH if length is NULL                                  *
+ *          INI_TYPE_MISMATCH if setting is a non array type                  *
+ *          INI_INVALID_INDEX if index is out of range                        *
+ *          INI_NIL if no error                                               *
+ *                                                                            *
+ ******************************************************************************/
+errINI_t settingElemLength(setting_t *setting, int index, int *length);
+
+/******************************************************************************
+ *                                                                            *
+ * PURPOSE: TODO
+ *                                                                            *
+ * ARGUMENT DESCRIPTION                                                       *
+ * -------- -----------                                                       *
+ * setting  the setting to query                                              *
+ * value    a ptr to an allocated int to store the gotten value               *
+ *                                                                            *
+ * RETURNS: INI_NIL_SETTING if setting is NULL                                *
+ *          INI_TYPE_MISMATCH if stored value does not match getter type      *
+ *          INI_NIL_VALUE if value is NULL                                    *
+ *          INI_NIL if no error                                               *
+ *                                                                            *
+ ******************************************************************************/
+errINI_t settingGetInt(setting_t *setting, int *value);
+
+/******************************************************************************
+ *                                                                            *
+ * PURPOSE: TODO
+ *                                                                            *
+ * ARGUMENT DESCRIPTION                                                       *
+ * -------- -----------                                                       *
+ * setting  the setting to query                                              *
+ * value    a ptr to an allocated float to store the gotten value             *
+ *                                                                            *
+ * RETURNS: INI_NIL_SETTING if setting is NULL                                *
+ *          INI_TYPE_MISMATCH if stored value does not match getter type      *
+ *          INI_NIL_VALUE if value is NULL                                    *
+ *          INI_NIL if no error                                               *
+ *                                                                            *
+ ******************************************************************************/
+errINI_t settingGetFloat(setting_t *setting, float *value);
+
+/******************************************************************************
+ *                                                                            *
+ * PURPOSE: TODO
+ *                                                                            *
+ * ARGUMENT DESCRIPTION                                                       *
+ * -------- -----------                                                       *
+ * setting  the setting to query                                              *
+ * value    a ptr to an allocated int to store the gotten value               *
+ *                                                                            *
+ * RETURNS: INI_NIL_SETTING if setting is NULL                                *
+ *          INI_TYPE_MISMATCH if stored value does not match getter type      *
+ *          INI_NIL_VALUE if value is NULL                                    *
+ *          INI_NIL if no error                                               *
+ *                                                                            *
+ ******************************************************************************/
+errINI_t settingGetBool(setting_t *setting, int *value);
+
+/******************************************************************************
+ *                                                                            *
+ * PURPOSE: TODO
+ *                                                                            *
+ * ARGUMENT DESCRIPTION                                                       *
+ * -------- -----------                                                       *
+ * setting  the setting to query                                              *
+ * value    a ptr to an allocated char to store the gotten value              *
+ *                                                                            *
+ * RETURNS: INI_NIL_SETTING if setting is NULL                                *
+ *          INI_TYPE_MISMATCH if stored value does not match getter type      *
+ *          INI_NIL_VALUE if value is NULL                                    *
+ *          INI_NIL if no error                                               *
+ *                                                                            *
+ ******************************************************************************/
+errINI_t settingGetChar(setting_t *setting, char *value);
+
+/******************************************************************************
+ *                                                                            *
+ * PURPOSE: TODO
+ *                                                                            *
+ * ARGUMENT DESCRIPTION                                                       *
+ * -------- -----------                                                       *
+ * setting  the setting to query                                              *
+ * value    a ptr to an allocated char array to store the gotten value        *
+ *                                                                            *
+ * RETURNS: INI_NIL_SETTING if setting is NULL                                *
+ *          INI_TYPE_MISMATCH if stored value does not match getter type      *
+ *          INI_NIL_VALUE if value is NULL                                    *
+ *          INI_NIL if no error                                               *
+ *                                                                            *
+ ******************************************************************************/
+errINI_t settingGetString(setting_t *setting, char **value);
+
+/******************************************************************************
+ *                                                                            *
+ * PURPOSE: TODO
+ *                                                                            *
+ * ARGUMENT DESCRIPTION                                                       *
+ * -------- -----------                                                       *
+ * setting  the setting to query                                              *
+ * index    the index of the item in the list to get, from 0 to len(setting)) *
+ * elem     a ptr to an allocated int to store the gotten value               *
+ *                                                                            *
+ * RETURNS: INI_NIL_SETTING if setting is NULL                                *
+ *          INI_TYPE_MISMATCH if stored value does not match getter type      *
+ *          INI_INVALID_INDEX if index is out of range                        *
+ *          INI_NIL_VALUE if elem is NULL                                     *
+ *          INI_NIL if no error                                               *
+ *                                                                            *
+ ******************************************************************************/
+errINI_t settingGetIntElem(setting_t *setting, int index, int *elem);
+
+/******************************************************************************
+ *                                                                            *
+ * PURPOSE: TODO
+ *                                                                            *
+ * ARGUMENT DESCRIPTION                                                       *
+ * -------- -----------                                                       *
+ * setting  the setting to query                                              *
+ * index    the index of the item in the list to get, from 0 to len(setting)) *
+ * elem     a ptr to an allocated float to store the gotten value             *
+ *                                                                            *
+ * RETURNS: INI_NIL_SETTING if setting is NULL                                *
+ *          INI_TYPE_MISMATCH if stored value does not match getter type      *
+ *          INI_INVALID_INDEX if index is out of range                        *
+ *          INI_NIL_VALUE if elem is NULL                                     *
+ *          INI_NIL if no error                                               *
+ *                                                                            *
+ ******************************************************************************/
+errINI_t settingGetFloatElem(setting_t *setting, int index, float *elem);
+
+/******************************************************************************
+ *                                                                            *
+ * PURPOSE: TODO
+ *                                                                            *
+ * ARGUMENT DESCRIPTION                                                       *
+ * -------- -----------                                                       *
+ * setting  the setting to query                                              *
+ * index    the index of the item in the list to get, from 0 to len(setting)) *
+ * elem     a ptr to an allocated int to store the gotten value               *
+ *                                                                            *
+ * RETURNS: INI_NIL_SETTING if setting is NULL                                *
+ *          INI_TYPE_MISMATCH if stored value does not match getter type      *
+ *          INI_INVALID_INDEX if index is out of range                        *
+ *          INI_NIL_VALUE if elem is NULL                                     *
+ *          INI_NIL if no error                                               *
+ *                                                                            *
+ ******************************************************************************/
+errINI_t settingGetBoolElem(setting_t *setting, int index, int *elem);
+
+/******************************************************************************
+ *                                                                            *
+ * PURPOSE:  TODO
+ *                                                                            *
+ * ARGUMENT DESCRIPTION                                                       *
+ * -------- -----------                                                       *
+ * setting  the setting to query                                              *
+ * index    the index of the item in the list to get, from 0 to len(setting)) *
+ * elem     a ptr to an allocated char to store the gotten value              *
+ *                                                                            *
+ * RETURNS: INI_NIL_SETTING if setting is NULL                                *
+ *          INI_TYPE_MISMATCH if stored value does not match getter type      *
+ *          INI_INVALID_INDEX if index is out of range                        *
+ *          INI_NIL_VALUE if elem is NULL                                     *
+ *          INI_NIL if no error                                               *
+ *                                                                            *
+ ******************************************************************************/
+errINI_t settingGetCharElem(setting_t *setting, int index, char *elem);
+
+/******************************************************************************
+ *                                                                            *
+ * PURPOSE:  TODO
+ *                                                                            *
+ * ARGUMENT DESCRIPTION                                                       *
+ * -------- -----------                                                       *
+ * setting  the setting to query                                              *
+ * index    the index of the item in the list to get, from 0 to len(setting)) *
+ * elem     a ptr to an allocated char array to store the gotten value        *
+ *                                                                            *
+ * RETURNS: INI_NIL_SETTING if setting is NULL                                *
+ *          INI_TYPE_MISMATCH if stored value does not match getter type      *
+ *          INI_INVALID_INDEX if index is out of range                        *
+ *          INI_NIL_VALUE if elem is NULL                                     *
+ *          INI_NIL if no error                                               *
+ *                                                                            *
+ ******************************************************************************/
+errINI_t settingGetStringElem(setting_t *setting, int index, char **elem);
+ 
+/******************************************************************************
+ *                                                                            *
+ * PURPOSE:  enables programatic creation of conf files TODO                  *
+ *           will create/overwrite type/value appropriately                   *
+ *                                                                            *
+ * ARGUMENT DESCRIPTION                                                       *
+ * -------- -----------                                                       *
+ * setting  the setting to manipulate                                         *
+ * value    the int to store as the value of this setting                     *
+ *                                                                            *
+ * RETURNS: INI_NIL_SETTING if setting is NULL                                *
+ *          INI_TYPE_MISMATCH if stored value does not match getter type      *
+ *          INI_NIL_VALUE if value is NULL                                    *
+ *          INI_OUT_OF_MEMORY if allocation fails                             *
+ *          INI_NIL if no error                                               *
+ *                                                                            *
+ ******************************************************************************/
+errINI_t settingSetInt(setting_t *setting, int value); 
+
+/******************************************************************************
+ *                                                                            *
+ * PURPOSE: TODO
+ *                                                                            *
+ * ARGUMENT DESCRIPTION                                                       *
+ * -------- -----------                                                       *
+ * setting  the setting to manipulate                                         *
+ * value    the float to store as the value of this setting                   *
+ *                                                                            *
+ * RETURNS: INI_NIL_SETTING if setting is NULL                                *
+ *          INI_TYPE_MISMATCH if stored value does not match getter type      *
+ *          INI_NIL_VALUE if value is NULL                                    *
+ *          INI_OUT_OF_MEMORY if allocation fails                             *
+ *          INI_NIL if no error                                               *
+ *                                                                            *
+ ******************************************************************************/
+errINI_t settingSetFloat(setting_t *setting, float value);
+
+/******************************************************************************
+ *                                                                            *
+ * PURPOSE: TODO
+ *                                                                            *
+ * ARGUMENT DESCRIPTION                                                       *
+ * -------- -----------                                                       *
+ * setting  the setting to manipulate                                         *
+ * value    the bool to store as the value of this setting                    *
+ *                                                                            *
+ * RETURNS: INI_NIL_SETTING if setting is NULL                                *
+ *          INI_TYPE_MISMATCH if stored value does not match getter type      *
+ *          INI_NIL_VALUE if value is NULL                                    *
+ *          INI_OUT_OF_MEMORY if allocation fails                             *
+ *          INI_NIL if no error                                               *
+ *                                                                            *
+ ******************************************************************************/
+errINI_t settingSetBool(setting_t *setting, int value);
+
+/******************************************************************************
+ *                                                                            *
+ * PURPOSE: TODO
+ *                                                                            *
+ * ARGUMENT DESCRIPTION                                                       *
+ * -------- -----------                                                       *
+ * setting  the setting to manipulate                                         *
+ * value    the char to store as the value of this setting                    *
+ *                                                                            *
+ * RETURNS: INI_NIL_SETTING if setting is NULL                                *
+ *          INI_TYPE_MISMATCH if stored value does not match getter type      *
+ *          INI_NIL_VALUE if value is NULL                                    *
+ *          INI_OUT_OF_MEMORY if allocation fails                             *
+ *          INI_NIL if no error                                               *
+ *                                                                            *
+ ******************************************************************************/
+errINI_t settingSetChar(setting_t *setting, char value);
+
+/******************************************************************************
+ *                                                                            *
+ * PURPOSE: TODO
+ *                                                                            *
+ * ARGUMENT DESCRIPTION                                                       *
+ * -------- -----------                                                       *
+ * setting  the setting to manipulate                                         *
+ * value    the string to store as the value of this setting                  *
+ *                                                                            *
+ * RETURNS: INI_NIL_SETTING if setting is NULL                                *
+ *          INI_TYPE_MISMATCH if stored value does not match getter type      *
+ *          INI_NIL_VALUE if value is NULL                                    *
+ *          INI_OUT_OF_MEMORY if allocation fails                             *
+ *          INI_NIL if no error                                               *
+ *                                                                            *
+ ******************************************************************************/
+errINI_t settingSetString(setting_t *setting, char *value);
+
+/******************************************************************************
+ *                                                                            *
+ * PURPOSE: TODO
+ *                                                                            *
+ * ARGUMENT DESCRIPTION                                                       *
+ * -------- -----------                                                       *
+ * setting  the setting to manipulate                                         *
+ * index    the index of the item in the list to set, from 0 to len(setting)) *
+ * elem     the int to store as the elem of this setting                      *
+ *                                                                            *
+ * RETURNS: INI_NIL_SETTING if setting is NULL                                *
+ *          INI_TYPE_MISMATCH if stored value does not match getter type      *
+ *          INI_INVALID_INDEX if index is out of range                        *
+ *          INI_NIL_VALUE if elem is NULL                                     *
+ *          INI_OUT_OF_MEMORY if allocation fails                             *
+ *          INI_NIL if no error                                               *
+ *                                                                            *
+ ******************************************************************************/
+errINI_t settingSetIntElem(setting_t *setting, int index, int elem);
+
+/******************************************************************************
+ *                                                                            *
+ * PURPOSE: TODO   // elem [0-len]
+ *                                                                            *
+ * ARGUMENT DESCRIPTION                                                       *
+ * -------- -----------                                                       *
+ * setting  the setting to manipulate                                         *
+ * index    the index of the item in the list to set, from 0 to len(setting)) *
+ * elem     the float to store as the elem of this setting                    *
+ *                                                                            *
+ * RETURNS: INI_NIL_SETTING if setting is NULL                                *
+ *          INI_TYPE_MISMATCH if stored value does not match getter type      *
+ *          INI_INVALID_INDEX if index is out of range                        *
+ *          INI_NIL_VALUE if elem is NULL                                     *
+ *          INI_OUT_OF_MEMORY if allocation fails                             *
+ *          INI_NIL if no error                                               *
+ *                                                                            *
+ ******************************************************************************/
+errINI_t settingSetFloatElem(setting_t *setting, int index, float elem);
+
+/******************************************************************************
+ *                                                                            *
+ * PURPOSE: TODO
+ *                                                                            *
+ * ARGUMENT DESCRIPTION                                                       *
+ * -------- -----------                                                       *
+ * setting  the setting to manipulate                                         *
+ * index    the index of the item in the list to set, from 0 to len(setting)) *
+ * elem     the bool to store as the elem of this setting                     *
+ *                                                                            *
+ * RETURNS: INI_NIL_SETTING if setting is NULL                                *
+ *          INI_TYPE_MISMATCH if stored value does not match getter type      *
+ *          INI_INVALID_INDEX if index is out of range                        *
+ *          INI_NIL_VALUE if elem is NULL                                     *
+ *          INI_OUT_OF_MEMORY if allocation fails                             *
+ *          INI_NIL if no error                                               *
+ *                                                                            *
+ ******************************************************************************/
+errINI_t settingSetBoolElem(setting_t *setting, int index, int elem);
+
+/******************************************************************************
+ *                                                                            *
+ * PURPOSE: TODO
+ *                                                                            *
+ * ARGUMENT DESCRIPTION                                                       *
+ * -------- -----------                                                       *
+ * setting  the setting to manipulate                                         *
+ * index    the index of the item in the list to set, from 0 to len(setting)) *
+ * elem     the char to store as the elem of this setting                     *
+ *                                                                            *
+ * RETURNS: INI_NIL_SETTING if setting is NULL                                *
+ *          INI_TYPE_MISMATCH if stored value does not match getter type      *
+ *          INI_INVALID_INDEX if index is out of range                        *
+ *          INI_NIL_VALUE if elem is NULL                                     *
+ *          INI_OUT_OF_MEMORY if allocation fails                             *
+ *          INI_NIL if no error                                               *
+ *                                                                            *
+ ******************************************************************************/
+errINI_t settingSetCharElem(setting_t *setting, int index, char elem);
+
+/******************************************************************************
+ *                                                                            *
+ * PURPOSE: TODO
+ *                                                                            *
+ * ARGUMENT DESCRIPTION                                                       *
+ * -------- -----------                                                       *
+ * setting  the setting to manipulate                                         *
+ * index    the index of the item in the list to set, from 0 to len(setting)) *
+ * elem     the string to store as the elem of this setting                   *
+ *                                                                            *
+ * RETURNS: INI_NIL_SETTING if setting is NULL                                *
+ *          INI_TYPE_MISMATCH if stored value does not match getter type      *
+ *          INI_INVALID_INDEX if index is out of range                        *
+ *          INI_NIL_VALUE if elem is NULL                                     *
+ *          INI_OUT_OF_MEMORY if allocation fails                             *
+ *          INI_NIL if no error                                               *
+ *                                                                            *
+ ******************************************************************************/
+errINI_t settingSetStringElem(setting_t *setting, int index, char *elem);
 
 #endif
