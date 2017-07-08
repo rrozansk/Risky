@@ -2,7 +2,7 @@
  * FILE:    testINI.c                                                         *
  * AUTHOR:  Ryan Rozanski                                                     *
  * CREATED: 6/3/17                                                            *
- * EDITED:  6/29/17                                                           *
+ * EDITED:  7/8/17                                                            *
  * INFO:    Test file for implementation of the interface located in ini.h.   *
  *                                                                            *
  ******************************************************************************/
@@ -12,17 +12,17 @@
  *   I N C L U D E S                                                          *
  *                                                                            *
  ******************************************************************************/
-#include<stdio.h>
-#include<stdlib.h>
-#include<string.h>
-#include<ini.h>
+#include <ini.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 /******************************************************************************
  *                                                                            *
  *   C O N S T A N T S                                                        *
  *                                                                            *
  ******************************************************************************/
-#define TOTAL_TESTS 204
+#define TOTAL_TESTS 162
 
 /******************************************************************************
  *                                                                            *
@@ -36,10 +36,6 @@ typedef enum testResultINI { INI_PASS, INI_FAIL } testResultINI_t;
  *   T E S T S                                                                *
  *                                                                            *
  ******************************************************************************/   
-testResultINI_t testStrErrINI_UNKNOWN_TYPE() {
-  return (strcmp(strErrINI(INI_UNKNOWN_TYPE), "")) ? INI_PASS : INI_FAIL;
-}
-
 testResultINI_t testStrErrINI_OPEN_FAILURE() {
   return (strcmp(strErrINI(INI_OPEN_FAILURE), "")) ? INI_PASS : INI_FAIL;
 }
@@ -52,12 +48,12 @@ testResultINI_t testStrErrINI_OUT_OF_MEMORY() {
   return (strcmp(strErrINI(INI_OUT_OF_MEMORY), "")) ? INI_PASS : INI_FAIL;
 }
 
-testResultINI_t testStrErrINI_NOT_FOUND() {
-  return (strcmp(strErrINI(INI_NOT_FOUND), "")) ? INI_PASS : INI_FAIL;
-}
-
 testResultINI_t testStrErrINI_TYPE_MISMATCH() {
   return (strcmp(strErrINI(INI_TYPE_MISMATCH), "")) ? INI_PASS : INI_FAIL;
+}
+
+testResultINI_t testStrErrINI_DUPLICATE_SETTING() {
+  return (strcmp(strErrINI(INI_DUPLICATE_SETTING), "")) ? INI_PASS : INI_FAIL;
 }
 
 testResultINI_t testStrErrINI_INVALID_CONF() {
@@ -68,16 +64,20 @@ testResultINI_t testStrErrINI_INVALID_KEY() {
   return (strcmp(strErrINI(INI_INVALID_KEY), "")) ? INI_PASS : INI_FAIL;
 }
 
-testResultINI_t testStrErrINI_INVALID_VAL() {
-  return (strcmp(strErrINI(INI_INVALID_VAL), "")) ? INI_PASS : INI_FAIL;
+testResultINI_t testStrErrINI_INVALID_VALUE() {
+  return (strcmp(strErrINI(INI_INVALID_VALUE), "")) ? INI_PASS : INI_FAIL;
 }
 
 testResultINI_t testStrErrINI_INVALID_SECTION() {
   return (strcmp(strErrINI(INI_INVALID_SECTION), "")) ? INI_PASS : INI_FAIL;
 }
 
-testResultINI_t testStrErrINI_INVALID_LEN() {
-  return (strcmp(strErrINI(INI_INVALID_LEN), "")) ? INI_PASS : INI_FAIL;
+testResultINI_t testStrErrINI_INVALID_INDEX() {
+  return (strcmp(strErrINI(INI_INVALID_INDEX), "")) ? INI_PASS : INI_FAIL;
+}
+
+testResultINI_t testStrErrINI_INVALID_OPTIONS() {
+  return (strcmp(strErrINI(INI_INVALID_OPTIONS), "")) ? INI_PASS : INI_FAIL;
 }
 
 testResultINI_t testStrErrINI_NIL_FNAME() {
@@ -92,16 +92,28 @@ testResultINI_t testStrErrINI_NIL_KEY() {
   return (strcmp(strErrINI(INI_NIL_KEY), "")) ? INI_PASS : INI_FAIL;
 }
 
-testResultINI_t testStrErrINI_NIL_VAL() {
-  return (strcmp(strErrINI(INI_NIL_VAL), "")) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testStrErrINI_NIL_LEN() {
-  return (strcmp(strErrINI(INI_NIL_LEN), "")) ? INI_PASS : INI_FAIL;
+testResultINI_t testStrErrINI_NIL_VALUE() {
+  return (strcmp(strErrINI(INI_NIL_VALUE), "")) ? INI_PASS : INI_FAIL;
 }
 
 testResultINI_t testStrErrINI_NIL_SECTION() {
   return (strcmp(strErrINI(INI_NIL_SECTION), "")) ? INI_PASS : INI_FAIL;
+}
+
+testResultINI_t testStrErrINI_NIL_OPTIONS() {
+  return (strcmp(strErrINI(INI_NIL_OPTIONS), "")) ? INI_PASS : INI_FAIL;
+}
+
+testResultINI_t testStrErrINI_NIL_SETTING() {
+  return (strcmp(strErrINI(INI_NIL_SETTING), "")) ? INI_PASS : INI_FAIL;
+}
+
+testResultINI_t testStrErrINI_NIL_TYPE() {
+  return (strcmp(strErrINI(INI_NIL_TYPE), "")) ? INI_PASS : INI_FAIL;
+}
+
+testResultINI_t testStrErrINI_NIL_LENGTH() {
+  return (strcmp(strErrINI(INI_NIL_LENGTH), "")) ? INI_PASS : INI_FAIL;
 }
 
 testResultINI_t testStrErrINI_NIL() {
@@ -167,11 +179,6 @@ testResultINI_t testReadINIInvalidArrayType() { // TODO
   return INI_FAIL;  
 }
 
-testResultINI_t testReadINIInvalidArrayLenght() { // TODO
-  // cannot delcare empty array
-  return INI_FAIL;  
-}
-
 testResultINI_t testReadINIInvalidString() { // TODO
   // cannot delcare string without enclosing ""
   return INI_FAIL;  
@@ -220,1373 +227,865 @@ testResultINI_t testWriteINIValid() {
   return remove("testINI.txt") ? INI_FAIL : INI_PASS;
 }
 
-testResultINI_t testSetIntININilINI() {
-  errINI_t errINI = setIntINI(NULL, "section", "key", 0);
+testResultINI_t testGetConfigurationNilINI() {
+  option_t options;
+
+  errINI_t errINI = getConfigurationINI(NULL, &options);
   return (errINI == INI_NIL_INI) ? INI_PASS : INI_FAIL;
 }
 
-testResultINI_t testSetIntININilSection() {
+testResultINI_t testGetConfigurationNilOptions() {
   ini_t *ini;
 
   errINI_t errINI = makeINI(&ini);
   if(errINI != INI_NIL) { return INI_FAIL; }
 
-  errINI = setIntINI(ini, NULL, "key", 0);
-  return (errINI == INI_NIL_SECTION) ? INI_PASS : INI_FAIL;
+  errINI = getConfigurationINI(ini, NULL);
+  return (errINI == INI_NIL_OPTIONS) ? INI_PASS : INI_FAIL;
 }
 
-testResultINI_t testSetIntININilKey() {
+testResultINI_t testGetConfigurationValid() {
   ini_t *ini;
 
   errINI_t errINI = makeINI(&ini);
   if(errINI != INI_NIL) { return INI_FAIL; }
 
-  errINI = setIntINI(ini, "section", NULL, 0);
-  return (errINI == INI_NIL_KEY) ? INI_PASS : INI_FAIL;
-}
+  option_t options;
 
-testResultINI_t testSetIntINIInvalidGrammerSection() {
-  ini_t *ini;
-
-  errINI_t errINI = makeINI(&ini);
-  if(errINI != INI_NIL) { return INI_FAIL; }
-
-  errINI = setIntINI(ini, "sec tion", "key", 0);
-  return (errINI == INI_INVALID_SECTION) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testSetIntINIInvalidGrammerKey() {
-  ini_t *ini;
-
-  errINI_t errINI = makeINI(&ini);
-  if(errINI != INI_NIL) { return INI_FAIL; }
-
-  errINI = setIntINI(ini, "section", "k ey", 0);
-  return (errINI == INI_INVALID_KEY) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testSetIntINIValidSetting() {
-  ini_t *ini;
-
-  errINI_t errINI = makeINI(&ini);
-  if(errINI != INI_NIL) { return INI_FAIL; }
-
-  errINI = setIntINI(ini, "section", "key", 55);
+  errINI = getConfigurationINI(ini, &options);
   return (errINI == INI_NIL) ? INI_PASS : INI_FAIL;
 }
 
-testResultINI_t testSetIntINIValidOverwriteSetting() {
+testResultINI_t testSetConfigurationNilINI() {
+  errINI_t errINI = setConfigurationINI(NULL, SETTING_SEPERATOR);
+  return (errINI == INI_NIL_INI) ? INI_PASS : INI_FAIL;
+}
+
+testResultINI_t testSetConfigurationInvalidOptions() {
   ini_t *ini;
 
   errINI_t errINI = makeINI(&ini);
   if(errINI != INI_NIL) { return INI_FAIL; }
 
-  errINI = setIntINI(ini, "section", "key", 55);
+  option_t options = 0b10000001;
+
+  errINI = setConfigurationINI(ini, options);
+  return (errINI == INI_INVALID_OPTIONS) ? INI_PASS : INI_FAIL;
+}
+
+testResultINI_t testSetConfigurationValid() {
+  ini_t *ini;
+
+  errINI_t errINI = makeINI(&ini);
   if(errINI != INI_NIL) { return INI_FAIL; }
 
-  errINI = setIntINI(ini, "section", "key", 45);
+  option_t options = 0;
+
+  errINI = setConfigurationINI(ini, options);
   return (errINI == INI_NIL) ? INI_PASS : INI_FAIL;
 }
 
-testResultINI_t testGetIntININilINI() {
-  int value;
+testResultINI_t testCreateSettingNilINI() {
+  setting_t *setting;
 
-  errINI_t errINI = getIntINI(NULL, "section", "key", &value);
+  errINI_t errINI = createSetting(NULL, "section", "key", &setting);
   return (errINI == INI_NIL_INI) ? INI_PASS : INI_FAIL;
 }
 
-testResultINI_t testGetIntININilSection() {
+testResultINI_t testCreateSettingNilSection() {
   ini_t *ini;
 
   errINI_t errINI = makeINI(&ini);
   if(errINI != INI_NIL) { return INI_FAIL; }
 
-  int value;
+  setting_t *setting;
 
-  errINI = getIntINI(ini, NULL, "key", &value);
+  errINI = createSetting(ini, NULL, "key", &setting);
   return (errINI == INI_NIL_SECTION) ? INI_PASS : INI_FAIL;
 }
 
-testResultINI_t testGetIntININilKey() {
+testResultINI_t testCreateSettingNilKey() {
   ini_t *ini;
 
   errINI_t errINI = makeINI(&ini);
   if(errINI != INI_NIL) { return INI_FAIL; }
 
-  int value;
+  setting_t *setting;
 
-  errINI = getIntINI(ini, "section", NULL, &value);
+  errINI = createSetting(ini, "section", NULL, &setting);
   return (errINI == INI_NIL_KEY) ? INI_PASS : INI_FAIL;
 }
 
-testResultINI_t testGetIntININilValue() {
+testResultINI_t testCreateSettingNilSetting() {
   ini_t *ini;
 
   errINI_t errINI = makeINI(&ini);
   if(errINI != INI_NIL) { return INI_FAIL; }
 
-  errINI = getIntINI(ini, "section", "key", NULL);
-  return (errINI == INI_NIL_VAL) ? INI_PASS : INI_FAIL;
+  errINI = createSetting(ini, "section", "key", NULL);
+  return (errINI == INI_NIL_SETTING) ? INI_PASS : INI_FAIL;
 }
 
-testResultINI_t testGetIntINIInvalidGrammerSection() {
+testResultINI_t testCreateSettingInvalidSection() {
   ini_t *ini;
 
   errINI_t errINI = makeINI(&ini);
   if(errINI != INI_NIL) { return INI_FAIL; }
 
-  int value;
+  setting_t *setting;
 
-  errINI = getIntINI(ini, "sec tion", "key", &value);
+  errINI = createSetting(ini, "sec tion", "key", &setting);
   return (errINI == INI_INVALID_SECTION) ? INI_PASS : INI_FAIL;
 }
 
-testResultINI_t testGetIntINIInvalidGrammerKey() {
+testResultINI_t testCreateSettingInvalidKey() {
   ini_t *ini;
 
   errINI_t errINI = makeINI(&ini);
   if(errINI != INI_NIL) { return INI_FAIL; }
 
-  int value;
+  setting_t *setting;
 
-  errINI = getIntINI(ini, "section", "ke y", &value);
+  errINI = createSetting(ini, "section", "ke y", &setting);
   return (errINI == INI_INVALID_KEY) ? INI_PASS : INI_FAIL;
 }
 
-testResultINI_t testGetIntININonPresentKey() {
+testResultINI_t testCreateSettingDuplicateSetting() {
   ini_t *ini;
 
   errINI_t errINI = makeINI(&ini);
   if(errINI != INI_NIL) { return INI_FAIL; }
 
-  errINI = setIntINI(ini, "section", "foo", 55);
+  setting_t *setting;
+
+  errINI = createSetting(ini, "section", "key", &setting);
   if(errINI != INI_NIL) { return INI_FAIL; }
 
-  int value;
-
-  errINI = getIntINI(ini, "section", "key", &value);
-  return (errINI == INI_NOT_FOUND) ? INI_PASS : INI_FAIL;
+  errINI = createSetting(ini, "section", "key", &setting);
+  return (errINI == INI_DUPLICATE_SETTING) ? INI_PASS : INI_FAIL;
 }
 
-testResultINI_t testGetIntININonPresentSection() {
+//testResultINI_t testCreateSettingOutOfMemory() {}
+
+testResultINI_t testCreateSettingValid() {
   ini_t *ini;
 
   errINI_t errINI = makeINI(&ini);
   if(errINI != INI_NIL) { return INI_FAIL; }
 
-  int value;
+  setting_t *setting;
 
-  errINI = getIntINI(ini, "section", "key", &value);
-  return (errINI == INI_NOT_FOUND) ? INI_PASS : INI_FAIL;
+  errINI = createSetting(ini, "section", "key", &setting);
+  return (errINI == INI_NIL && setting) ? INI_PASS : INI_FAIL;
 }
 
-testResultINI_t testGetIntINIValid() {
-  ini_t *ini;
+testResultINI_t testLookupSettingNilINI() {
+  setting_t *setting;
 
-  errINI_t errINI = makeINI(&ini);
-  if(errINI != INI_NIL) { return INI_FAIL; }
-
-  errINI = setIntINI(ini, "section", "key", 55);
-  if(errINI != INI_NIL) { return INI_FAIL; }
-
-  int value;
-
-  errINI = getIntINI(ini, "section", "key", &value);
-  return (errINI == INI_NIL && value == 55) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testSetFloatININilINI() {
-  errINI_t errINI = setFloatINI(NULL, "section", "key", 0);
+  errINI_t errINI = lookupSetting(NULL, "section", "key", &setting);
   return (errINI == INI_NIL_INI) ? INI_PASS : INI_FAIL;
 }
 
-testResultINI_t testSetFloatININilSection() {
+testResultINI_t testLookupSettingNilSection() {
   ini_t *ini;
 
   errINI_t errINI = makeINI(&ini);
   if(errINI != INI_NIL) { return INI_FAIL; }
 
-  errINI = setFloatINI(ini, NULL, "key", 45.5);
+  setting_t *setting;
+
+  errINI = lookupSetting(ini, NULL, "key", &setting);
   return (errINI == INI_NIL_SECTION) ? INI_PASS : INI_FAIL;
 }
 
-testResultINI_t testSetFloatININilKey() {
+testResultINI_t testLookupSettingNilKey() {
   ini_t *ini;
 
   errINI_t errINI = makeINI(&ini);
   if(errINI != INI_NIL) { return INI_FAIL; }
 
-  errINI = setFloatINI(ini, "section", NULL, 0.34);
+  setting_t *setting;
+
+  errINI = lookupSetting(ini, "section", NULL, &setting);
   return (errINI == INI_NIL_KEY) ? INI_PASS : INI_FAIL;
 }
 
-testResultINI_t testSetFloatINIInvalidGrammerSection() {
+testResultINI_t testLookupSettingNilSetting() {
   ini_t *ini;
 
   errINI_t errINI = makeINI(&ini);
   if(errINI != INI_NIL) { return INI_FAIL; }
 
-  errINI = setFloatINI(ini, "sec tion", "key", 0.68);
+  errINI = lookupSetting(ini, "section", "key", NULL);
+  return (errINI == INI_NIL_SETTING) ? INI_PASS : INI_FAIL;
+}
+
+testResultINI_t testLookupSettingInvalidSection() {
+  ini_t *ini;
+
+  errINI_t errINI = makeINI(&ini);
+  if(errINI != INI_NIL) { return INI_FAIL; }
+
+  setting_t *setting;
+
+  errINI = lookupSetting(ini, "sec tion", "key", &setting);
   return (errINI == INI_INVALID_SECTION) ? INI_PASS : INI_FAIL;
 }
 
-testResultINI_t testSetFloatINIInvalidGrammerKey() {
+testResultINI_t testLookupSettingInvalidKey() {
   ini_t *ini;
 
   errINI_t errINI = makeINI(&ini);
   if(errINI != INI_NIL) { return INI_FAIL; }
 
-  errINI = setFloatINI(ini, "section", "k ey", 0.45);
+  setting_t *setting;
+
+  errINI = lookupSetting(ini, "section", "k ey", &setting);
   return (errINI == INI_INVALID_KEY) ? INI_PASS : INI_FAIL;
 }
 
-testResultINI_t testSetFloatINIValidSetting() {
+testResultINI_t testLookupNonPresentSetting() {
   ini_t *ini;
 
   errINI_t errINI = makeINI(&ini);
   if(errINI != INI_NIL) { return INI_FAIL; }
 
-  errINI = setFloatINI(ini, "section", "key", 55.4);
+  setting_t *setting;
+
+  errINI = lookupSetting(ini, "section", "key", &setting);
   return (errINI == INI_NIL) ? INI_PASS : INI_FAIL;
 }
 
-testResultINI_t testSetFloatINIValidOverwriteSetting() {
+testResultINI_t testLookupSettingValid() {
   ini_t *ini;
 
   errINI_t errINI = makeINI(&ini);
   if(errINI != INI_NIL) { return INI_FAIL; }
 
-  errINI = setFloatINI(ini, "section", "key", 55.3);
+  setting_t *setting;
+
+  errINI = createSetting(ini, "section", "key", &setting);
   if(errINI != INI_NIL) { return INI_FAIL; }
 
-  errINI = setFloatINI(ini, "section", "key", 45.6);
+  errINI = lookupSetting(ini, "section", "key", &setting);
   return (errINI == INI_NIL) ? INI_PASS : INI_FAIL;
 }
 
-testResultINI_t testGetFloatININilINI() {
-  double value;
-
-  errINI_t errINI = getFloatINI(NULL, "section", "key", &value);
-  return (errINI == INI_NIL_INI) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testGetFloatININilSection() {
-  ini_t *ini;
-
-  errINI_t errINI = makeINI(&ini);
-  if(errINI != INI_NIL) { return INI_FAIL; }
-
-  double value;
-
-  errINI = getFloatINI(ini, NULL, "key", &value);
-  return (errINI == INI_NIL_SECTION) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testGetFloatININilKey() {
-  ini_t *ini;
-
-  errINI_t errINI = makeINI(&ini);
-  if(errINI != INI_NIL) { return INI_FAIL; }
-
-  double value;
-
-  errINI = getFloatINI(ini, "section", NULL, &value);
-  return (errINI == INI_NIL_KEY) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testGetFloatININilValue() {
-  ini_t *ini;
-
-  errINI_t errINI = makeINI(&ini);
-  if(errINI != INI_NIL) { return INI_FAIL; }
-
-  errINI = getFloatINI(ini, "section", "key", NULL);
-  return (errINI == INI_NIL_VAL) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testGetFloatINIInvalidGrammerSection() {
-  ini_t *ini;
-
-  errINI_t errINI = makeINI(&ini);
-  if(errINI != INI_NIL) { return INI_FAIL; }
-
-  double value;
-
-  errINI = getFloatINI(ini, "sec tion", "key", &value);
-  return (errINI == INI_INVALID_SECTION) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testGetFloatINIInvalidGrammerKey() {
-  ini_t *ini;
-
-  errINI_t errINI = makeINI(&ini);
-  if(errINI != INI_NIL) { return INI_FAIL; }
-
-  double value;
-
-  errINI = getFloatINI(ini, "section", "ke y", &value);
-  return (errINI == INI_INVALID_KEY) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testGetFloatININonPresentKey() {
-  ini_t *ini;
-
-  errINI_t errINI = makeINI(&ini);
-  if(errINI != INI_NIL) { return INI_FAIL; }
-
-  errINI = setFloatINI(ini, "section", "foo", 55.3);
-  if(errINI != INI_NIL) { return INI_FAIL; }
-
-  double value;
-
-  errINI = getFloatINI(ini, "section", "key", &value);
-  return (errINI == INI_NOT_FOUND) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testGetFloatININonPresentSection() {
-  ini_t *ini;
-
-  errINI_t errINI = makeINI(&ini);
-  if(errINI != INI_NIL) { return INI_FAIL; }
-
-  double value;
-
-  errINI = getFloatINI(ini, "section", "key", &value);
-  return (errINI == INI_NOT_FOUND) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testGetFloatINIValid() {
-  ini_t *ini;
-
-  errINI_t errINI = makeINI(&ini);
-  if(errINI != INI_NIL) { return INI_FAIL; }
-
-  errINI = setFloatINI(ini, "section", "key", 55.3);
-  if(errINI != INI_NIL) { return INI_FAIL; }
-
-  double value;
-
-  errINI = getFloatINI(ini, "section", "key", &value);
-  return (errINI == INI_NIL && value == 55.3) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testSetBoolININilINI() {
-  errINI_t errINI = setBoolINI(NULL, "section", "key", 0);
-  return (errINI == INI_NIL_INI) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testSetBoolININilSection() {
-  ini_t *ini;
-
-  errINI_t errINI = makeINI(&ini);
-  if(errINI != INI_NIL) { return INI_FAIL; }
-
-  errINI = setBoolINI(ini, NULL, "key", 1);
-  return (errINI == INI_NIL_SECTION) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testSetBoolININilKey() {
-  ini_t *ini;
-
-  errINI_t errINI = makeINI(&ini);
-  if(errINI != INI_NIL) { return INI_FAIL; }
-
-  errINI = setBoolINI(ini, "section", NULL, 1);
-  return (errINI == INI_NIL_KEY) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testSetBoolINIInvalidGrammerSection() {
-  ini_t *ini;
-
-  errINI_t errINI = makeINI(&ini);
-  if(errINI != INI_NIL) { return INI_FAIL; }
-
-  errINI = setBoolINI(ini, "sec tion", "key", 0);
-  return (errINI == INI_INVALID_SECTION) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testSetBoolINIInvalidGrammerKey() {
-  ini_t *ini;
-
-  errINI_t errINI = makeINI(&ini);
-  if(errINI != INI_NIL) { return INI_FAIL; }
-
-  errINI = setBoolINI(ini, "section", "k ey", 0);
-  return (errINI == INI_INVALID_KEY) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testSetBoolINIValidSetting() {
-  ini_t *ini;
-
-  errINI_t errINI = makeINI(&ini);
-  if(errINI != INI_NIL) { return INI_FAIL; }
-
-  errINI = setBoolINI(ini, "section", "key", 1);
-  return (errINI == INI_NIL) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testSetBoolINIValidOverwriteSetting() {
-  ini_t *ini;
-
-  errINI_t errINI = makeINI(&ini);
-  if(errINI != INI_NIL) { return INI_FAIL; }
-
-  errINI = setBoolINI(ini, "section", "key", 0);
-  if(errINI != INI_NIL) { return INI_FAIL; }
-
-  errINI = setBoolINI(ini, "section", "key", 1);
-  return (errINI == INI_NIL) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testGetBoolININilINI() {
-  int value;
-
-  errINI_t errINI = getBoolINI(NULL, "section", "key", &value);
-  return (errINI == INI_NIL_INI) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testGetBoolININilSection() {
-  ini_t *ini;
-
-  errINI_t errINI = makeINI(&ini);
-  if(errINI != INI_NIL) { return INI_FAIL; }
-
-  int value;
-
-  errINI = getBoolINI(ini, NULL, "key", &value);
-  return (errINI == INI_NIL_SECTION) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testGetBoolININilKey() {
-  ini_t *ini;
-
-  errINI_t errINI = makeINI(&ini);
-  if(errINI != INI_NIL) { return INI_FAIL; }
-
-  int value;
-
-  errINI = getBoolINI(ini, "section", NULL, &value);
-  return (errINI == INI_NIL_KEY) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testGetBoolININilValue() {
-  ini_t *ini;
-
-  errINI_t errINI = makeINI(&ini);
-  if(errINI != INI_NIL) { return INI_FAIL; }
-
-  errINI = getBoolINI(ini, "section", "key", NULL);
-  return (errINI == INI_NIL_VAL) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testGetBoolINIInvalidGrammerSection() {
-  ini_t *ini;
-
-  errINI_t errINI = makeINI(&ini);
-  if(errINI != INI_NIL) { return INI_FAIL; }
-
-  int value;
-
-  errINI = getBoolINI(ini, "sec tion", "key", &value);
-  return (errINI == INI_INVALID_SECTION) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testGetBoolINIInvalidGrammerKey() {
-  ini_t *ini;
-
-  errINI_t errINI = makeINI(&ini);
-  if(errINI != INI_NIL) { return INI_FAIL; }
-
-  int value;
-
-  errINI = getBoolINI(ini, "section", "ke y", &value);
-  return (errINI == INI_INVALID_KEY) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testGetBoolININonPresentKey() {
-  ini_t *ini;
-
-  errINI_t errINI = makeINI(&ini);
-  if(errINI != INI_NIL) { return INI_FAIL; }
-
-  errINI = setBoolINI(ini, "section", "foo", 0);
-  if(errINI != INI_NIL) { return INI_FAIL; }
-
-  int value;
-
-  errINI = getBoolINI(ini, "section", "key", &value);
-  return (errINI == INI_NOT_FOUND) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testGetBoolININonPresentSection() {
-  ini_t *ini;
-
-  errINI_t errINI = makeINI(&ini);
-  if(errINI != INI_NIL) { return INI_FAIL; }
-
-  int value;
-
-  errINI = getBoolINI(ini, "section", "key", &value);
-  return (errINI == INI_NOT_FOUND) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testGetBoolINIValid() {
-  ini_t *ini;
-
-  errINI_t errINI = makeINI(&ini);
-  if(errINI != INI_NIL) { return INI_FAIL; }
-
-  errINI = setBoolINI(ini, "section", "key", 1);
-  if(errINI != INI_NIL) { return INI_FAIL; }
-
-  int value;
-
-  errINI = getBoolINI(ini, "section", "key", &value);
-  return (errINI == INI_NIL && value == 1) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testSetCharININilINI() {
-  errINI_t errINI = setCharINI(NULL, "section", "key", 'c');
-  return (errINI == INI_NIL_INI) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testSetCharININilSection() {
-  ini_t *ini;
-
-  errINI_t errINI = makeINI(&ini);
-  if(errINI != INI_NIL) { return INI_FAIL; }
-
-  errINI = setCharINI(ini, NULL, "key", 'c');
-  return (errINI == INI_NIL_SECTION) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testSetCharININilKey() {
-  ini_t *ini;
-
-  errINI_t errINI = makeINI(&ini);
-  if(errINI != INI_NIL) { return INI_FAIL; }
-
-  errINI = setCharINI(ini, "section", NULL, 'c');
-  return (errINI == INI_NIL_KEY) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testSetCharINIInvalidGrammerSection() {
-  ini_t *ini;
-
-  errINI_t errINI = makeINI(&ini);
-  if(errINI != INI_NIL) { return INI_FAIL; }
-
-  errINI = setCharINI(ini, "sec tion", "key", 'c');
-  return (errINI == INI_INVALID_SECTION) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testSetCharINIInvalidGrammerKey() {
-  ini_t *ini;
-
-  errINI_t errINI = makeINI(&ini);
-  if(errINI != INI_NIL) { return INI_FAIL; }
-
-  errINI = setCharINI(ini, "section", "k ey", 'c');
-  return (errINI == INI_INVALID_KEY) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testSetCharINIValidSetting() {
-  ini_t *ini;
-
-  errINI_t errINI = makeINI(&ini);
-  if(errINI != INI_NIL) { return INI_FAIL; }
-
-  errINI = setCharINI(ini, "section", "key", 'c');
-  return (errINI == INI_NIL) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testSetCharINIValidOverwriteSetting() {
-  ini_t *ini;
-
-  errINI_t errINI = makeINI(&ini);
-  if(errINI != INI_NIL) { return INI_FAIL; }
-
-  errINI = setCharINI(ini, "section", "key", 'c');
-  if(errINI != INI_NIL) { return INI_FAIL; }
-
-  errINI = setCharINI(ini, "section", "key", 'f');
-  return (errINI == INI_NIL) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testGetCharININilINI() {
-  char value;
-
-  errINI_t errINI = getCharINI(NULL, "section", "key", &value);
-  return (errINI == INI_NIL_INI) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testGetCharININilSection() {
-  ini_t *ini;
-
-  errINI_t errINI = makeINI(&ini);
-  if(errINI != INI_NIL) { return INI_FAIL; }
-
-  char value;
-
-  errINI = getCharINI(ini, NULL, "key", &value);
-  return (errINI == INI_NIL_SECTION) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testGetCharININilKey() {
-  ini_t *ini;
-
-  errINI_t errINI = makeINI(&ini);
-  if(errINI != INI_NIL) { return INI_FAIL; }
-
-  char value;
-
-  errINI = getCharINI(ini, "section", NULL, &value);
-  return (errINI == INI_NIL_KEY) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testGetCharININilValue() {
-  ini_t *ini;
-
-  errINI_t errINI = makeINI(&ini);
-  if(errINI != INI_NIL) { return INI_FAIL; }
-
-  errINI = getCharINI(ini, "section", "key", NULL);
-  return (errINI == INI_NIL_VAL) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testGetCharINIInvalidGrammerSection() {
-  ini_t *ini;
-
-  errINI_t errINI = makeINI(&ini);
-  if(errINI != INI_NIL) { return INI_FAIL; }
-
-  char value;
-
-  errINI = getCharINI(ini, "sec tion", "key", &value);
-  return (errINI == INI_INVALID_SECTION) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testGetCharINIInvalidGrammerKey() {
-  ini_t *ini;
-
-  errINI_t errINI = makeINI(&ini);
-  if(errINI != INI_NIL) { return INI_FAIL; }
-
-  char value;
-
-  errINI = getCharINI(ini, "section", "ke y", &value);
-  return (errINI == INI_INVALID_KEY) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testGetCharININonPresentKey() {
-  ini_t *ini;
-
-  errINI_t errINI = makeINI(&ini);
-  if(errINI != INI_NIL) { return INI_FAIL; }
-
-  errINI = setCharINI(ini, "section", "foo", 'c');
-  if(errINI != INI_NIL) { return INI_FAIL; }
-
-  char value;
-
-  errINI = getCharINI(ini, "section", "key", &value);
-  return (errINI == INI_NOT_FOUND) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testGetCharININonPresentSection() {
-  ini_t *ini;
-
-  errINI_t errINI = makeINI(&ini);
-  if(errINI != INI_NIL) { return INI_FAIL; }
-
-  char value;
-
-  errINI = getCharINI(ini, "section", "key", &value);
-  return (errINI == INI_NOT_FOUND) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testGetCharINIValid() {
-  ini_t *ini;
-
-  errINI_t errINI = makeINI(&ini);
-  if(errINI != INI_NIL) { return INI_FAIL; }
-
-  errINI = setCharINI(ini, "section", "key", 'c');
-  if(errINI != INI_NIL) { return INI_FAIL; }
-
-  char value;
-
-  errINI = getCharINI(ini, "section", "key", &value);
-  return (errINI == INI_NIL && value == 'c') ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testSetStrININilINI() {
-  errINI_t errINI = setStrINI(NULL, "section", "key", "string");
-  return (errINI == INI_NIL_INI) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testSetStrININilSection() {
-  ini_t *ini;
-
-  errINI_t errINI = makeINI(&ini);
-  if(errINI != INI_NIL) { return INI_FAIL; }
-
-  errINI = setStrINI(ini, NULL, "key", "string");
-  return (errINI == INI_NIL_SECTION) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testSetStrININilKey() {
-  ini_t *ini;
-
-  errINI_t errINI = makeINI(&ini);
-  if(errINI != INI_NIL) { return INI_FAIL; }
-
-  errINI = setStrINI(ini, "section", NULL, "string");
-  return (errINI == INI_NIL_KEY) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testSetStrINIInvalidGrammerSection() {
-  ini_t *ini;
-
-  errINI_t errINI = makeINI(&ini);
-  if(errINI != INI_NIL) { return INI_FAIL; }
-
-  errINI = setStrINI(ini, "sec tion", "key", "string");
-  return (errINI == INI_INVALID_SECTION) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testSetStrINIInvalidGrammerKey() {
-  ini_t *ini;
-
-  errINI_t errINI = makeINI(&ini);
-  if(errINI != INI_NIL) { return INI_FAIL; }
-
-  errINI = setStrINI(ini, "section", "k ey", "string");
-  return (errINI == INI_INVALID_KEY) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testSetStrINIValidSetting() {
-  ini_t *ini;
-
-  errINI_t errINI = makeINI(&ini);
-  if(errINI != INI_NIL) { return INI_FAIL; }
-
-  errINI = setStrINI(ini, "section", "key", "string");
-  return (errINI == INI_NIL) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testSetStrINIValidOverwriteSetting() {
-  ini_t *ini;
-
-  errINI_t errINI = makeINI(&ini);
-  if(errINI != INI_NIL) { return INI_FAIL; }
-
-  errINI = setStrINI(ini, "section", "key", "string");
-  if(errINI != INI_NIL) { return INI_FAIL; }
-
-  errINI = setStrINI(ini, "section", "key", "string2");
-  return (errINI == INI_NIL) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testGetStrININilINI() {
-  char *value;
-
-  errINI_t errINI = getStrINI(NULL, "section", "key", &value);
-  return (errINI == INI_NIL_INI) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testGetStrININilSection() {
-  ini_t *ini;
-
-  errINI_t errINI = makeINI(&ini);
-  if(errINI != INI_NIL) { return INI_FAIL; }
-
-  char *value;
-
-  errINI = getStrINI(ini, NULL, "key", &value);
-  return (errINI == INI_NIL_SECTION) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testGetStrININilKey() {
-  ini_t *ini;
-
-  errINI_t errINI = makeINI(&ini);
-  if(errINI != INI_NIL) { return INI_FAIL; }
-
-  char *value;
-
-  errINI = getStrINI(ini, "section", NULL, &value);
-  return (errINI == INI_NIL_KEY) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testGetStrININilValue() {
-  ini_t *ini;
-
-  errINI_t errINI = makeINI(&ini);
-  if(errINI != INI_NIL) { return INI_FAIL; }
-
-  errINI = getStrINI(ini, "section", "key", NULL);
-  return (errINI == INI_NIL_VAL) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testGetStrINIInvalidGrammerSection() {
-  ini_t *ini;
-
-  errINI_t errINI = makeINI(&ini);
-  if(errINI != INI_NIL) { return INI_FAIL; }
-
-  char *value;
-
-  errINI = getStrINI(ini, "sec tion", "key", &value);
-  return (errINI == INI_INVALID_SECTION) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testGetStrINIInvalidGrammerKey() {
-  ini_t *ini;
-
-  errINI_t errINI = makeINI(&ini);
-  if(errINI != INI_NIL) { return INI_FAIL; }
-
-  char *value;
-
-  errINI = getStrINI(ini, "section", "ke y", &value);
-  return (errINI == INI_INVALID_KEY) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testGetStrININonPresentKey() {
-  ini_t *ini;
-
-  errINI_t errINI = makeINI(&ini);
-  if(errINI != INI_NIL) { return INI_FAIL; }
-
-  errINI = setStrINI(ini, "section", "foo", "string");
-  if(errINI != INI_NIL) { return INI_FAIL; }
-
-  char *value;
-
-  errINI = getStrINI(ini, "section", "key", &value);
-  return (errINI == INI_NOT_FOUND) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testGetStrININonPresentSection() {
-  ini_t *ini;
-
-  errINI_t errINI = makeINI(&ini);
-  if(errINI != INI_NIL) { return INI_FAIL; }
-
-  char *value;
-
-  errINI = getStrINI(ini, "section", "key", &value);
-  return (errINI == INI_NOT_FOUND) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testGetStrINIValid() {
-  ini_t *ini;
-
-  errINI_t errINI = makeINI(&ini);
-  if(errINI != INI_NIL) { return INI_FAIL; }
-
-  errINI = setStrINI(ini, "section", "key", "string");
-  if(errINI != INI_NIL) { return INI_FAIL; }
-
-  char *value;
-
-  errINI = getStrINI(ini, "section", "key", &value);
-  return (errINI == INI_NIL && !strcmp(value, "string")) ? INI_PASS : INI_FAIL;
-}
-
-// FIXME: still need to add invalid len error cehcks for arrays??
-//     INI_NIL_LEN, INI_INVALID_LEN
-
-//setIntArrArrINI(ini_t *ini, char *section, char *key, int *val, int n)// TODO
-testResultINI_t testSetIntArrININilINI() {
-  errINI_t errINI = INI_NIL;
-  return (errINI == INI_NIL_INI) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testSetIntArrININilSection() {
-  errINI_t errINI = INI_NIL;
-  return (errINI == INI_NIL_INI) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testSetIntArrININilKey() {
-  errINI_t errINI = INI_NIL;
-  return (errINI == INI_NIL_INI) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testSetIntArrINIInvalidGrammerSection() {
-  errINI_t errINI = INI_NIL;
-  return (errINI == INI_NIL_INI) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testSetIntArrINIInvalidGrammerKey() {
-  errINI_t errINI = INI_NIL;
-  return (errINI == INI_NIL_INI) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testSetIntArrINIValidSetting() {
-  errINI_t errINI = INI_NIL;
-  return (errINI == INI_NIL_INI) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testSetIntArrINIValidOverwriteSetting() {
-  errINI_t errINI = INI_NIL;
-  return (errINI == INI_NIL_INI) ? INI_PASS : INI_FAIL;
-}
-
-//getIntArrArrINI(ini_t *ini, char *section, char *key, int **value, int *n)// TODO
-testResultINI_t testGetIntArrININilINI() {
-  errINI_t errINI = INI_NIL;
-  return (errINI == INI_NIL_INI) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testGetIntArrININilSection() {
-  errINI_t errINI = INI_NIL;
-  return (errINI == INI_NIL_INI) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testGetIntArrININilKey() {
-  errINI_t errINI = INI_NIL;
-  return (errINI == INI_NIL_INI) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testGetIntArrININilValue() {
-  errINI_t errINI = INI_NIL;
-  return (errINI == INI_NIL_INI) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testGetIntArrINIInvalidGrammerSection() {
-  errINI_t errINI = INI_NIL;
-  return (errINI == INI_NIL_INI) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testGetIntArrINIInvalidGrammerKey() {
-  errINI_t errINI = INI_NIL;
-  return (errINI == INI_NIL_INI) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testGetIntArrININonPresentKey() {
-  errINI_t errINI = INI_NIL;
-  return (errINI == INI_NIL_INI) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testGetIntArrININonPresentSection() {
-  errINI_t errINI = INI_NIL;
-  return (errINI == INI_NIL_INI) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testGetIntArrINIValid() {
-  errINI_t errINI = INI_NIL;
-  return (errINI == INI_NIL_INI) ? INI_PASS : INI_FAIL;
-}
-
-//setFloatArrINI(ini_t *ini, char *section, char *key, double *val, int n)// TODO
-testResultINI_t testSetFloatArrININilINI() {
-  errINI_t errINI = INI_NIL;
-  return (errINI == INI_NIL_INI) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testSetFloatArrININilSection() {
-  errINI_t errINI = INI_NIL;
-  return (errINI == INI_NIL_INI) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testSetFloatArrININilKey() {
-  errINI_t errINI = INI_NIL;
-  return (errINI == INI_NIL_INI) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testSetFloatArrINIInvalidGrammerSection() {
-  errINI_t errINI = INI_NIL;
-  return (errINI == INI_NIL_INI) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testSetFloatArrINIInvalidGrammerKey() {
-  errINI_t errINI = INI_NIL;
-  return (errINI == INI_NIL_INI) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testSetFloatArrINIValidSetting() {
-  errINI_t errINI = INI_NIL;
-  return (errINI == INI_NIL_INI) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testSetFloatArrINIValidOverwriteSetting() {
-  errINI_t errINI = INI_NIL;
-  return (errINI == INI_NIL_INI) ? INI_PASS : INI_FAIL;
-}
-
-//getFloatArrINI(ini_t *ini, char *section, char *key, double **value, int *n)// TODO
-testResultINI_t testGetFloatArrININilINI() {
-  errINI_t errINI = INI_NIL;
-  return (errINI == INI_NIL_INI) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testGetFloatArrININilSection() {
-  errINI_t errINI = INI_NIL;
-  return (errINI == INI_NIL_INI) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testGetFloatArrININilKey() {
-  errINI_t errINI = INI_NIL;
-  return (errINI == INI_NIL_INI) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testGetFloatArrININilValue() {
-  errINI_t errINI = INI_NIL;
-  return (errINI == INI_NIL_INI) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testGetFloatArrINIInvalidGrammerSection() {
-  errINI_t errINI = INI_NIL;
-  return (errINI == INI_NIL_INI) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testGetFloatArrINIInvalidGrammerKey() {
-  errINI_t errINI = INI_NIL;
-  return (errINI == INI_NIL_INI) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testGetFloatArrININonPresentKey() {
-  errINI_t errINI = INI_NIL;
-  return (errINI == INI_NIL_INI) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testGetFloatArrININonPresentSection() {
-  errINI_t errINI = INI_NIL;
-  return (errINI == INI_NIL_INI) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testGetFloatArrINIValid() {
-  errINI_t errINI = INI_NIL;
-  return (errINI == INI_NIL_INI) ? INI_PASS : INI_FAIL;
-}
-
-//setBoolArrINI(ini_t *ini, char *section, char *key, int *val, int n)// TODO
-testResultINI_t testSetBoolArrININilINI() {
-  errINI_t errINI = INI_NIL;
-  return (errINI == INI_NIL_INI) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testSetBoolArrININilSection() {
-  errINI_t errINI = INI_NIL;
-  return (errINI == INI_NIL_INI) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testSetBoolArrININilKey() {
-  errINI_t errINI = INI_NIL;
-  return (errINI == INI_NIL_INI) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testSetBoolArrINIInvalidGrammerSection() {
-  errINI_t errINI = INI_NIL;
-  return (errINI == INI_NIL_INI) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testSetBoolArrINIInvalidGrammerKey() {
-  errINI_t errINI = INI_NIL;
-  return (errINI == INI_NIL_INI) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testSetBoolArrINIValidSetting() {
-  errINI_t errINI = INI_NIL;
-  return (errINI == INI_NIL_INI) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testSetBoolArrINIValidOverwriteSetting() {
-  errINI_t errINI = INI_NIL;
-  return (errINI == INI_NIL_INI) ? INI_PASS : INI_FAIL;
-}
-
-//getBoolArrINI(ini_t *ini, char *section, char *key, int **value, int *n)// TODO
-testResultINI_t testGetBoolArrININilINI() {
-  errINI_t errINI = INI_NIL;
-  return (errINI == INI_NIL_INI) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testGetBoolArrININilSection() {
-  errINI_t errINI = INI_NIL;
-  return (errINI == INI_NIL_INI) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testGetBoolArrININilKey() {
-  errINI_t errINI = INI_NIL;
-  return (errINI == INI_NIL_INI) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testGetBoolArrININilValue() {
-  errINI_t errINI = INI_NIL;
-  return (errINI == INI_NIL_INI) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testGetBoolArrINIInvalidGrammerSection() {
-  errINI_t errINI = INI_NIL;
-  return (errINI == INI_NIL_INI) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testGetBoolArrINIInvalidGrammerKey() {
-  errINI_t errINI = INI_NIL;
-  return (errINI == INI_NIL_INI) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testGetBoolArrININonPresentKey() {
-  errINI_t errINI = INI_NIL;
-  return (errINI == INI_NIL_INI) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testGetBoolArrININonPresentSection() {
-  errINI_t errINI = INI_NIL;
-  return (errINI == INI_NIL_INI) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testGetBoolArrINIValid() {
-  errINI_t errINI = INI_NIL;
-  return (errINI == INI_NIL_INI) ? INI_PASS : INI_FAIL;
-}
-
-//setCharArrINI(ini_t *ini, char *section, char *key, char *val, int n)// TODO
-testResultINI_t testSetCharArrININilINI() {
-  errINI_t errINI = INI_NIL;
-  return (errINI == INI_NIL_INI) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testSetCharArrININilSection() {
-  errINI_t errINI = INI_NIL;
-  return (errINI == INI_NIL_INI) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testSetCharArrININilKey() {
-  errINI_t errINI = INI_NIL;
-  return (errINI == INI_NIL_INI) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testSetCharArrINIInvalidGrammerSection() {
-  errINI_t errINI = INI_NIL;
-  return (errINI == INI_NIL_INI) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testSetCharArrINIInvalidGrammerKey() {
-  errINI_t errINI = INI_NIL;
-  return (errINI == INI_NIL_INI) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testSetCharArrINIValidSetting() {
-  errINI_t errINI = INI_NIL;
-  return (errINI == INI_NIL_INI) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testSetCharArrINIValidOverwriteSetting() {
-  errINI_t errINI = INI_NIL;
-  return (errINI == INI_NIL_INI) ? INI_PASS : INI_FAIL;
-}
-
-//getCharArrINI(ini_t *ini, char *section, char *key, char **value, int *n)// TODO
-testResultINI_t testGetCharArrININilINI() {
-  errINI_t errINI = INI_NIL;
-  return (errINI == INI_NIL_INI) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testGetCharArrININilSection() {
-  errINI_t errINI = INI_NIL;
-  return (errINI == INI_NIL_INI) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testGetCharArrININilKey() {
-  errINI_t errINI = INI_NIL;
-  return (errINI == INI_NIL_INI) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testGetCharArrININilValue() {
-  errINI_t errINI = INI_NIL;
-  return (errINI == INI_NIL_INI) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testGetCharArrINIInvalidGrammerSection() {
-  errINI_t errINI = INI_NIL;
-  return (errINI == INI_NIL_INI) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testGetCharArrINIInvalidGrammerKey() {
-  errINI_t errINI = INI_NIL;
-  return (errINI == INI_NIL_INI) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testGetCharArrININonPresentKey() {
-  errINI_t errINI = INI_NIL;
-  return (errINI == INI_NIL_INI) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testGetCharArrININonPresentSection() {
-  errINI_t errINI = INI_NIL;
-  return (errINI == INI_NIL_INI) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testGetCharArrINIValid() {
-  errINI_t errINI = INI_NIL;
-  return (errINI == INI_NIL_INI) ? INI_PASS : INI_FAIL;
-}
-
-//setStrArrINI(ini_t *ini, char *section, char *key, char **val, int n)// TODO
-testResultINI_t testSetStrArrININilINI() {
-  errINI_t errINI = INI_NIL;
-  return (errINI == INI_NIL_INI) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testSetStrArrININilSection() {
-  errINI_t errINI = INI_NIL;
-  return (errINI == INI_NIL_INI) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testSetStrArrININilKey() {
-  errINI_t errINI = INI_NIL;
-  return (errINI == INI_NIL_INI) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testSetStrArrINIInvalidGrammerSection() {
-  errINI_t errINI = INI_NIL;
-  return (errINI == INI_NIL_INI) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testSetStrArrINIInvalidGrammerKey() {
-  errINI_t errINI = INI_NIL;
-  return (errINI == INI_NIL_INI) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testSetStrArrINIValidSetting() {
-  errINI_t errINI = INI_NIL;
-  return (errINI == INI_NIL_INI) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testSetStrArrINIValidOverwriteSetting() {
-  errINI_t errINI = INI_NIL;
-  return (errINI == INI_NIL_INI) ? INI_PASS : INI_FAIL;
-}
-
-//getStrArrINI(ini_t *ini, char *section, char *key, char ***value, int *n)// TODO
-testResultINI_t testGetStrArrININilINI() {
-  errINI_t errINI = INI_NIL;
-  return (errINI == INI_NIL_INI) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testGetStrArrININilSection() {
-  errINI_t errINI = INI_NIL;
-  return (errINI == INI_NIL_INI) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testGetStrArrININilKey() {
-  errINI_t errINI = INI_NIL;
-  return (errINI == INI_NIL_INI) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testGetStrArrININilValue() {
-  errINI_t errINI = INI_NIL;
-  return (errINI == INI_NIL_INI) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testGetStrArrINIInvalidGrammerSection() {
-  errINI_t errINI = INI_NIL;
-  return (errINI == INI_NIL_INI) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testGetStrArrINIInvalidGrammerKey() {
-  errINI_t errINI = INI_NIL;
-  return (errINI == INI_NIL_INI) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testGetStrArrININonPresentKey() {
-  errINI_t errINI = INI_NIL;
-  return (errINI == INI_NIL_INI) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testGetStrArrININonPresentSection() {
-  errINI_t errINI = INI_NIL;
-  return (errINI == INI_NIL_INI) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testGetStrArrINIValid() {
-  errINI_t errINI = INI_NIL;
-  return (errINI == INI_NIL_INI) ? INI_PASS : INI_FAIL;
-}
-
-testResultINI_t testDeleteININilINI() {
-  errINI_t errINI = deleteINI(NULL, "section", "key");
+testResultINI_t testDeleteSettingNilINI() {
+  errINI_t errINI = deleteSetting(NULL, "section", "key");
   return  (errINI == INI_NIL_INI) ? INI_PASS : INI_FAIL;
 }
 
-testResultINI_t testDeleteININilSection() {
+testResultINI_t testDeleteSettingNilSection() {
   ini_t *ini;
 
   errINI_t errINI = makeINI(&ini);
   if(errINI != INI_NIL) { return INI_FAIL; }
 
-  errINI = deleteINI(ini, NULL, "key");
+  errINI = deleteSetting(ini, NULL, "key");
   return  (errINI == INI_NIL_SECTION) ? INI_PASS : INI_FAIL;
 }
 
-testResultINI_t testDeleteININilKey() {
+testResultINI_t testDeleteSettingNilKey() {
   ini_t *ini;
 
   errINI_t errINI = makeINI(&ini);
   if(errINI != INI_NIL) { return INI_FAIL; }
 
-  errINI = deleteINI(ini, "section", NULL);
+  errINI = deleteSetting(ini, "section", NULL);
   return  (errINI == INI_NIL_KEY) ? INI_PASS : INI_FAIL;
 }
 
-testResultINI_t testDeleteINIInvalidGrammerSection() {
+testResultINI_t testDeleteSettingInvalidGrammerSection() {
   ini_t *ini;
 
   errINI_t errINI = makeINI(&ini);
   if(errINI != INI_NIL) { return INI_FAIL; }
 
-  errINI = deleteINI(ini, "sec tion", "key");
+  errINI = deleteSetting(ini, "sec tion", "key");
   return  (errINI == INI_INVALID_SECTION) ? INI_PASS : INI_FAIL;
 }
 
-testResultINI_t testDeleteINIInvalidGrammerKey() {
+testResultINI_t testDeleteSettingInvalidGrammerKey() {
   ini_t *ini;
 
   errINI_t errINI = makeINI(&ini);
   if(errINI != INI_NIL) { return INI_FAIL; }
 
-  errINI = deleteINI(ini, "section", "ke y");
+  errINI = deleteSetting(ini, "section", "ke y");
   return  (errINI == INI_INVALID_KEY) ? INI_PASS : INI_FAIL;
 }
 
-testResultINI_t testDeleteININonPresentSection() {
+testResultINI_t testDeleteSettingNonPresentSetting() {
   ini_t *ini;
 
   errINI_t errINI = makeINI(&ini);
   if(errINI != INI_NIL) { return INI_FAIL; }
 
-  errINI = deleteINI(ini, "nowhere", "key");
+  errINI = deleteSetting(ini, "nowhere", "key");
   return  (errINI == INI_NIL) ? INI_PASS : INI_FAIL;
 }
 
-testResultINI_t testDeleteININonPresentKey() {
+testResultINI_t testDeleteSettingValid() {
   ini_t *ini;
 
   errINI_t errINI = makeINI(&ini);
   if(errINI != INI_NIL) { return INI_FAIL; }
 
-  errINI = setIntINI(ini, "new", "new", 0);
+  setting_t *setting;
+
+  errINI = createSetting(ini, "section", "key", &setting);
   if(errINI != INI_NIL) { return INI_FAIL; }
 
-  errINI = deleteINI(ini, "new", "nowhere");
+  errINI = deleteSetting(ini, "section", "key");
   return  (errINI == INI_NIL) ? INI_PASS : INI_FAIL;
 }
 
-testResultINI_t testDeleteINIValid() {
+testResultINI_t testSettingLookupDeleted() {
   ini_t *ini;
 
   errINI_t errINI = makeINI(&ini);
   if(errINI != INI_NIL) { return INI_FAIL; }
 
-  errINI = setIntINI(ini, "new", "new", 0);
+  setting_t *setting;
+
+  errINI = createSetting(ini, "section", "key", &setting);
   if(errINI != INI_NIL) { return INI_FAIL; }
 
-  errINI = deleteINI(ini, "new", "new");
-  return  (errINI == INI_NIL) ? INI_PASS : INI_FAIL;
+  errINI = deleteSetting(ini, "section", "key");
+  if(errINI != INI_NIL) { return INI_FAIL; }
+
+  errINI = lookupSetting(ini, "section", "key", &setting);
+  return  (errINI == INI_NIL && !setting) ? INI_PASS : INI_FAIL;
+}
+
+testResultINI_t testSettingCompleteFlow() {
+  ini_t *ini;
+
+  errINI_t errINI = makeINI(&ini);
+  if(errINI != INI_NIL) { return INI_FAIL; }
+
+  setting_t *setting1;
+
+  errINI = createSetting(ini, "section", "key", &setting1);
+  if(errINI != INI_NIL) { return INI_FAIL; }
+
+  setting_t *setting2;
+
+  errINI = lookupSetting(ini, "section", "key", &setting2);
+  if(errINI != INI_NIL) { return INI_FAIL; }
+
+  if(setting1 != setting2) { return INI_FAIL; }
+
+  errINI = deleteSetting(ini, "section", "key");
+  return (errINI == INI_NIL) ? INI_PASS : INI_FAIL;
+}
+
+testResultINI_t testSettingTypeNilSettings() {                          /*********TODO: rest of tests**************/
+  errINI_t errINI = INI_NIL_INI;
+  return (errINI == INI_NIL_SETTING) ? INI_PASS : INI_FAIL;
+}
+
+testResultINI_t testSettingTypeNilType() {
+  errINI_t errINI = INI_NIL_INI;
+  return (errINI == INI_NIL_TYPE) ? INI_PASS : INI_FAIL;
+}
+
+testResultINI_t testSettingTypeValid() {
+  errINI_t errINI = INI_NIL_INI;
+  return (errINI == INI_NIL) ? INI_PASS : INI_FAIL;
+}
+
+testResultINI_t testSettingKeyLengthNilSetting() {
+  errINI_t errINI = INI_NIL_INI;
+  return (errINI == INI_NIL_SETTING) ? INI_PASS : INI_FAIL;
+}
+
+testResultINI_t testSettingKeyLengthNilLength() {
+  errINI_t errINI = INI_NIL_INI;
+  return (errINI == INI_NIL_LENGTH) ? INI_PASS : INI_FAIL;
+}
+
+testResultINI_t testSettingKeyLengthValid() {
+  errINI_t errINI = INI_NIL_INI;
+  return (errINI == INI_NIL) ? INI_PASS : INI_FAIL;
+}
+
+testResultINI_t testSettingKeyNilSetting() {
+  errINI_t errINI = INI_NIL_INI;
+  return (errINI == INI_NIL_SETTING) ? INI_PASS : INI_FAIL;
+}
+
+testResultINI_t testSettingKeyNilKey() {
+  errINI_t errINI = INI_NIL_INI;
+  return (errINI == INI_NIL_KEY) ? INI_PASS : INI_FAIL;
+}
+
+testResultINI_t testSettingKeyValid() {
+  errINI_t errINI = INI_NIL_INI;
+  return (errINI == INI_NIL) ? INI_PASS : INI_FAIL;
+}
+
+testResultINI_t testSettingLengthNilSetting() {
+  errINI_t errINI = INI_NIL_INI;
+  return (errINI == INI_NIL_SETTING) ? INI_PASS : INI_FAIL;
+}
+
+testResultINI_t testSettingLengthNilLength() {
+  errINI_t errINI = INI_NIL_INI;
+  return (errINI == INI_NIL_LENGTH) ? INI_PASS : INI_FAIL;
+}
+
+testResultINI_t testSettingLengthValid() {
+  errINI_t errINI = INI_NIL_INI;
+  return (errINI == INI_NIL) ? INI_PASS : INI_FAIL;
+}
+
+testResultINI_t testSettingElemLengthNilSetting() {
+  errINI_t errINI = INI_NIL_INI;
+  return (errINI == INI_NIL_SETTING) ? INI_PASS : INI_FAIL;
+}
+
+testResultINI_t testSettingElemLengthNilLength() {
+  errINI_t errINI = INI_NIL_INI;
+  return (errINI == INI_NIL_LENGTH) ? INI_PASS : INI_FAIL;
+}
+
+testResultINI_t testSettingElemLengthTypeMismatch() {
+  errINI_t errINI = INI_NIL_INI;
+  return (errINI == INI_TYPE_MISMATCH) ? INI_PASS : INI_FAIL;
+}
+
+testResultINI_t testSettingElemLengthInvalidIndex() {
+  errINI_t errINI = INI_NIL_INI;
+  return (errINI == INI_INVALID_INDEX) ? INI_PASS : INI_FAIL;
+}
+
+testResultINI_t testSettingElemLengthValid() {
+  errINI_t errINI = INI_NIL_INI;
+  return (errINI == INI_NIL) ? INI_PASS : INI_FAIL;
+}
+
+testResultINI_t testSettingGetIntNilSetting() {
+  errINI_t errINI = INI_NIL_INI;
+  return (errINI == INI_NIL_SETTING) ? INI_PASS : INI_FAIL;
+}
+
+testResultINI_t testSettingGetIntTypeMismatch() {
+  errINI_t errINI = INI_NIL_INI;
+  return (errINI == INI_TYPE_MISMATCH) ? INI_PASS : INI_FAIL;
+}
+
+testResultINI_t testSettingGetIntNilValue() {
+  errINI_t errINI = INI_NIL_INI;
+  return (errINI == INI_NIL_VALUE) ? INI_PASS : INI_FAIL;
+}
+
+testResultINI_t testSettingGetIntValid() {
+  errINI_t errINI = INI_NIL_INI;
+  return (errINI == INI_NIL) ? INI_PASS : INI_FAIL;
+}
+
+testResultINI_t testSettingGetFloatNilSetting() {
+  errINI_t errINI = INI_NIL_INI;
+  return (errINI == INI_NIL_SETTING) ? INI_PASS : INI_FAIL;
+}
+
+testResultINI_t testSettingGetFloatTypeMismatch() {
+  errINI_t errINI = INI_NIL_INI;
+  return (errINI == INI_TYPE_MISMATCH) ? INI_PASS : INI_FAIL;
+}
+
+testResultINI_t testSettingGetFloatNilValue() {
+  errINI_t errINI = INI_NIL_INI;
+  return (errINI == INI_NIL_VALUE) ? INI_PASS : INI_FAIL;
+}
+
+testResultINI_t testSettingGetFloatValid() {
+  errINI_t errINI = INI_NIL_INI;
+  return (errINI == INI_NIL) ? INI_PASS : INI_FAIL;
+}
+
+testResultINI_t testSettingGetBoolNilSetting() {
+  errINI_t errINI = INI_NIL_INI;
+  return (errINI == INI_NIL_SETTING) ? INI_PASS : INI_FAIL;
+}
+
+testResultINI_t testSettingGetBoolTypeMismatch() {
+  errINI_t errINI = INI_NIL_INI;
+  return (errINI == INI_TYPE_MISMATCH) ? INI_PASS : INI_FAIL;
+}
+
+testResultINI_t testSettingGetBoolNilValue() {
+  errINI_t errINI = INI_NIL_INI;
+  return (errINI == INI_NIL_VALUE) ? INI_PASS : INI_FAIL;
+}
+
+testResultINI_t testSettingGetBoolValid() {
+  errINI_t errINI = INI_NIL_INI;
+  return (errINI == INI_NIL) ? INI_PASS : INI_FAIL;
+}
+
+testResultINI_t testSettingGetCharNilSetting() {
+  errINI_t errINI = INI_NIL_INI;
+  return (errINI == INI_NIL_SETTING) ? INI_PASS : INI_FAIL;
+}
+
+testResultINI_t testSettingGetCharTypeMismatch() {
+  errINI_t errINI = INI_NIL_INI;
+  return (errINI == INI_TYPE_MISMATCH) ? INI_PASS : INI_FAIL;
+}
+
+testResultINI_t testSettingGetCharNilValue() {
+  errINI_t errINI = INI_NIL_INI;
+  return (errINI == INI_NIL_VALUE) ? INI_PASS : INI_FAIL;
+}
+
+testResultINI_t testSettingGetCharValid() {
+  errINI_t errINI = INI_NIL_INI;
+  return (errINI == INI_NIL) ? INI_PASS : INI_FAIL;
+}
+
+testResultINI_t testSettingGetStringNilSetting() {
+  errINI_t errINI = INI_NIL_INI;
+  return (errINI == INI_NIL_SETTING) ? INI_PASS : INI_FAIL;
+}
+
+testResultINI_t testSettingGetStringTypeMismatch() {
+  errINI_t errINI = INI_NIL_INI;
+  return (errINI == INI_TYPE_MISMATCH) ? INI_PASS : INI_FAIL;
+}
+
+testResultINI_t testSettingGetStringNilValue() {
+  errINI_t errINI = INI_NIL_INI;
+  return (errINI == INI_NIL_VALUE) ? INI_PASS : INI_FAIL;
+}
+
+testResultINI_t testSettingGetStringValid() {
+  errINI_t errINI = INI_NIL_INI;
+  return (errINI == INI_NIL) ? INI_PASS : INI_FAIL;
+}
+
+testResultINI_t testSettingGetIntElemNilSetting() {
+  errINI_t errINI = INI_NIL_INI;
+  return (errINI == INI_NIL_SETTING) ? INI_PASS : INI_FAIL;
+}
+
+testResultINI_t testSettingGetIntElemTypeMismatch() {
+  errINI_t errINI = INI_NIL_INI;
+  return (errINI == INI_TYPE_MISMATCH) ? INI_PASS : INI_FAIL;
+}
+
+testResultINI_t testSettingGetIntElemInvalidIndex() {
+  errINI_t errINI = INI_NIL_INI;
+  return (errINI == INI_INVALID_INDEX) ? INI_PASS : INI_FAIL;
+}
+
+testResultINI_t testSettingGetIntElemNilValue() {
+  errINI_t errINI = INI_NIL_INI;
+  return (errINI == INI_NIL_VALUE) ? INI_PASS : INI_FAIL;
+}
+
+testResultINI_t testSettingGetIntElemValid() {
+  errINI_t errINI = INI_NIL_INI;
+  return (errINI == INI_NIL) ? INI_PASS : INI_FAIL;
+}
+
+testResultINI_t testSettingGetFloatElemNilSetting() {
+  errINI_t errINI = INI_NIL_INI;
+  return (errINI == INI_NIL_SETTING) ? INI_PASS : INI_FAIL;
+}
+
+testResultINI_t testSettingGetFloatElemTypeMismatch() {
+  errINI_t errINI = INI_NIL_INI;
+  return (errINI == INI_TYPE_MISMATCH) ? INI_PASS : INI_FAIL;
+}
+
+testResultINI_t testSettingGetFloatElemInvalidIndex() {
+  errINI_t errINI = INI_NIL_INI;
+  return (errINI == INI_INVALID_INDEX) ? INI_PASS : INI_FAIL;
+}
+
+testResultINI_t testSettingGetFloatElemNilValue() {
+  errINI_t errINI = INI_NIL_INI;
+  return (errINI == INI_NIL_VALUE) ? INI_PASS : INI_FAIL;
+}
+
+testResultINI_t testSettingGetFloatElemValid() {
+  errINI_t errINI = INI_NIL_INI;
+  return (errINI == INI_NIL) ? INI_PASS : INI_FAIL;
+}
+
+testResultINI_t testSettingGetBoolElemNilSetting() {
+  errINI_t errINI = INI_NIL_INI;
+  return (errINI == INI_NIL_SETTING) ? INI_PASS : INI_FAIL;
+}
+
+testResultINI_t testSettingGetBoolElemTypeMismatch() {
+  errINI_t errINI = INI_NIL_INI;
+  return (errINI == INI_TYPE_MISMATCH) ? INI_PASS : INI_FAIL;
+}
+
+testResultINI_t testSettingGetBoolElemInvalidIndex() {
+  errINI_t errINI = INI_NIL_INI;
+  return (errINI == INI_INVALID_INDEX) ? INI_PASS : INI_FAIL;
+}
+
+testResultINI_t testSettingGetBoolElemNilValue() {
+  errINI_t errINI = INI_NIL_INI;
+  return (errINI == INI_NIL_VALUE) ? INI_PASS : INI_FAIL;
+}
+
+testResultINI_t testSettingGetBoolElemValid() {
+  errINI_t errINI = INI_NIL_INI;
+  return (errINI == INI_NIL) ? INI_PASS : INI_FAIL;
+}
+
+testResultINI_t testSettingGetCharElemNilSetting() {
+  errINI_t errINI = INI_NIL_INI;
+  return (errINI == INI_NIL_SETTING) ? INI_PASS : INI_FAIL;
+}
+
+testResultINI_t testSettingGetCharElemTypeMismatch() {
+  errINI_t errINI = INI_NIL_INI;
+  return (errINI == INI_TYPE_MISMATCH) ? INI_PASS : INI_FAIL;
+}
+
+testResultINI_t testSettingGetCharElemInvalidIndex() {
+  errINI_t errINI = INI_NIL_INI;
+  return (errINI == INI_INVALID_INDEX) ? INI_PASS : INI_FAIL;
+}
+
+testResultINI_t testSettingGetCharElemNilValue() {
+  errINI_t errINI = INI_NIL_INI;
+  return (errINI == INI_NIL_VALUE) ? INI_PASS : INI_FAIL;
+}
+
+testResultINI_t testSettingGetCharElemValid() {
+  errINI_t errINI = INI_NIL_INI;
+  return (errINI == INI_NIL) ? INI_PASS : INI_FAIL;
+}
+
+testResultINI_t testSettingGetStringElemNilSetting() {
+  errINI_t errINI = INI_NIL_INI;
+  return (errINI == INI_NIL_SETTING) ? INI_PASS : INI_FAIL;
+}
+
+testResultINI_t testSettingGetStringElemTypeMismatch() {
+  errINI_t errINI = INI_NIL_INI;
+  return (errINI == INI_TYPE_MISMATCH) ? INI_PASS : INI_FAIL;
+}
+
+testResultINI_t testSettingGetStringElemInvalidIndex() {
+  errINI_t errINI = INI_NIL_INI;
+  return (errINI == INI_INVALID_INDEX) ? INI_PASS : INI_FAIL;
+}
+
+testResultINI_t testSettingGetStringElemNilValue() {
+  errINI_t errINI = INI_NIL_INI;
+  return (errINI == INI_NIL_VALUE) ? INI_PASS : INI_FAIL;
+}
+
+testResultINI_t testSettingGetStringElemValid() {
+  errINI_t errINI = INI_NIL_INI;
+  return (errINI == INI_NIL) ? INI_PASS : INI_FAIL;
+}
+
+testResultINI_t testSettingSetIntNilSetting() {
+  errINI_t errINI = INI_NIL_INI;
+  return (errINI == INI_NIL_SETTING) ? INI_PASS : INI_FAIL;
+}
+
+testResultINI_t testSettingSetIntTypeMismatch() {
+  errINI_t errINI = INI_NIL_INI;
+  return (errINI == INI_TYPE_MISMATCH) ? INI_PASS : INI_FAIL;
+}
+
+testResultINI_t testSettingSetIntValid() {
+  errINI_t errINI = INI_NIL_INI;
+  return (errINI == INI_NIL) ? INI_PASS : INI_FAIL;
+}
+
+testResultINI_t testSettingSetFloatNilSetting() {
+  errINI_t errINI = INI_NIL_INI;
+  return (errINI == INI_NIL_SETTING) ? INI_PASS : INI_FAIL;
+}
+
+testResultINI_t testSettingSetFloatTypeMismatch() {
+  errINI_t errINI = INI_NIL_INI;
+  return (errINI == INI_TYPE_MISMATCH) ? INI_PASS : INI_FAIL;
+}
+
+testResultINI_t testSettingSetFloatValid() {
+  errINI_t errINI = INI_NIL_INI;
+  return (errINI == INI_NIL) ? INI_PASS : INI_FAIL;
+}
+
+testResultINI_t testSettingSetBoolNilSetting() {
+  errINI_t errINI = INI_NIL_INI;
+  return (errINI == INI_NIL_SETTING) ? INI_PASS : INI_FAIL;
+}
+
+testResultINI_t testSettingSetBoolTypeMismatch() {
+  errINI_t errINI = INI_NIL_INI;
+  return (errINI == INI_TYPE_MISMATCH) ? INI_PASS : INI_FAIL;
+}
+
+testResultINI_t testSettingSetBoolValid() {
+  errINI_t errINI = INI_NIL_INI;
+  return (errINI == INI_NIL) ? INI_PASS : INI_FAIL;
+}
+
+testResultINI_t testSettingSetCharNilSetting() {
+  errINI_t errINI = INI_NIL_INI;
+  return (errINI == INI_NIL_SETTING) ? INI_PASS : INI_FAIL;
+}
+
+testResultINI_t testSettingSetCharTypeMismatch() {
+  errINI_t errINI = INI_NIL_INI;
+  return (errINI == INI_TYPE_MISMATCH) ? INI_PASS : INI_FAIL;
+}
+
+testResultINI_t testSettingSetCharValid() {
+  errINI_t errINI = INI_NIL_INI;
+  return (errINI == INI_NIL) ? INI_PASS : INI_FAIL;
+}
+
+testResultINI_t testSettingSetStringNilSetting() {
+  errINI_t errINI = INI_NIL_INI;
+  return (errINI == INI_NIL_SETTING) ? INI_PASS : INI_FAIL;
+}
+
+testResultINI_t testSettingSetStringTypeMismatch() {
+  errINI_t errINI = INI_NIL_INI;
+  return (errINI == INI_TYPE_MISMATCH) ? INI_PASS : INI_FAIL;
+}
+
+testResultINI_t testSettingSetStringNilValue() {
+  errINI_t errINI = INI_NIL_INI;
+  return (errINI == INI_NIL_VALUE) ? INI_PASS : INI_FAIL;
+}
+
+//testResultINI_t testSettingSetStringOutOfMemory() {}
+
+testResultINI_t testSettingSetStringValid() {
+  errINI_t errINI = INI_NIL_INI;
+  return (errINI == INI_NIL) ? INI_PASS : INI_FAIL;
+}
+
+testResultINI_t testSettingSetIntElemNilSetting() {
+  errINI_t errINI = INI_NIL_INI;
+  return (errINI == INI_NIL_SETTING) ? INI_PASS : INI_FAIL;
+}
+
+testResultINI_t testSettingSetIntElemTypeMismatch() {
+  errINI_t errINI = INI_NIL_INI;
+  return (errINI == INI_TYPE_MISMATCH) ? INI_PASS : INI_FAIL;
+}
+
+testResultINI_t testSettingSetIntElemInvalidIndex() {
+  errINI_t errINI = INI_NIL_INI;
+  return (errINI == INI_INVALID_INDEX) ? INI_PASS : INI_FAIL;
+}
+
+//testResultINI_t testSettingSetIntElemOutOfMemory() {}
+
+testResultINI_t testSettingSetIntElemValid() {
+  errINI_t errINI = INI_NIL_INI;
+  return (errINI == INI_NIL) ? INI_PASS : INI_FAIL;
+}
+
+testResultINI_t testSettingSetFloatElemNilSetting() {
+  errINI_t errINI = INI_NIL_INI;
+  return (errINI == INI_NIL_SETTING) ? INI_PASS : INI_FAIL;
+}
+
+testResultINI_t testSettingSetFloatElemTypeMismatch() {
+  errINI_t errINI = INI_NIL_INI;
+  return (errINI == INI_TYPE_MISMATCH) ? INI_PASS : INI_FAIL;
+}
+
+testResultINI_t testSettingSetFloatElemInvalidIndex() {
+  errINI_t errINI = INI_NIL_INI;
+  return (errINI == INI_INVALID_INDEX) ? INI_PASS : INI_FAIL;
+}
+
+//testResultINI_t testSettingSetFloatElemOutOfMemory() {}
+
+testResultINI_t testSettingSetFloatElemValid() {
+  errINI_t errINI = INI_NIL_INI;
+  return (errINI == INI_NIL) ? INI_PASS : INI_FAIL;
+}
+
+testResultINI_t testSettingSetBoolElemNilSetting() {
+  errINI_t errINI = INI_NIL_INI;
+  return (errINI == INI_NIL_SETTING) ? INI_PASS : INI_FAIL;
+}
+
+testResultINI_t testSettingSetBoolElemTypeMismatch() {
+  errINI_t errINI = INI_NIL_INI;
+  return (errINI == INI_TYPE_MISMATCH) ? INI_PASS : INI_FAIL;
+}
+
+testResultINI_t testSettingSetBoolElemInvalidIndex() {
+  errINI_t errINI = INI_NIL_INI;
+  return (errINI == INI_INVALID_INDEX) ? INI_PASS : INI_FAIL;
+}
+
+//testResultINI_t testSettingSetBoolElemOutOfMemory() {}
+
+testResultINI_t testSettingSetBoolElemValid() {
+  errINI_t errINI = INI_NIL_INI;
+  return (errINI == INI_NIL) ? INI_PASS : INI_FAIL;
+}
+
+testResultINI_t testSettingSetCharElemNilSetting() {
+  errINI_t errINI = INI_NIL_INI;
+  return (errINI == INI_NIL_SETTING) ? INI_PASS : INI_FAIL;
+}
+
+testResultINI_t testSettingSetCharElemTypeMismatch() {
+  errINI_t errINI = INI_NIL_INI;
+  return (errINI == INI_TYPE_MISMATCH) ? INI_PASS : INI_FAIL;
+}
+
+testResultINI_t testSettingSetCharElemInvalidIndex() {
+  errINI_t errINI = INI_NIL_INI;
+  return (errINI == INI_INVALID_INDEX) ? INI_PASS : INI_FAIL;
+}
+
+//testResultINI_t testSettingSetCharElemOutOfMemory() {}
+
+testResultINI_t testSettingSetCharElemValid() {
+  errINI_t errINI = INI_NIL_INI;
+  return (errINI == INI_NIL) ? INI_PASS : INI_FAIL;
+}
+
+testResultINI_t testSettingSetStringElemNilSetting() {
+  errINI_t errINI = INI_NIL_INI;
+  return (errINI == INI_NIL_SETTING) ? INI_PASS : INI_FAIL;
+}
+
+testResultINI_t testSettingSetStringElemTypeMismatch() {
+  errINI_t errINI = INI_NIL_INI;
+  return (errINI == INI_TYPE_MISMATCH) ? INI_PASS : INI_FAIL;
+}
+
+testResultINI_t testSettingSetStringElemInvalidIndex() {
+  errINI_t errINI = INI_NIL_INI;
+  return (errINI == INI_INVALID_INDEX) ? INI_PASS : INI_FAIL;
+}
+
+testResultINI_t testSettingSetStringElemNilValue() {
+  errINI_t errINI = INI_NIL_INI;
+  return (errINI == INI_NIL_VALUE) ? INI_PASS : INI_FAIL;
+}
+
+//testResultINI_t testSettingSetStringElemOutOfMemory() {}
+
+testResultINI_t testSettingSetStringElemValid() {
+  errINI_t errINI = INI_NIL_INI;
+  return (errINI == INI_NIL) ? INI_PASS : INI_FAIL;
 }
 
 testResultINI_t testCompleteIOFlow() {
@@ -1601,212 +1100,177 @@ testResultINI_t testCompleteIOFlow() {
  *                                                                            *
  ******************************************************************************/
 void *TESTS[TOTAL_TESTS][2] = {
-  { testStrErrINI_UNKNOWN_TYPE,                  "testStrErrINI_UNKNOWN_TYPE"                },
-  { testStrErrINI_OPEN_FAILURE,                  "testStrErrINI_OPEN_FAILURE"                },
-  { testStrErrINI_CLOSE_FAILURE,                 "testStrErrINI_CLOSE_FAILURE"               },
-  { testStrErrINI_OUT_OF_MEMORY,                 "testStrErrINI_OUT_OF_MEMORY"               },
-  { testStrErrINI_NOT_FOUND,                     "testStrErrINI_NOT_FOUND"                   },
-  { testStrErrINI_TYPE_MISMATCH,                 "testStrErrINI_TYPE_MISMATCH"               },
-  { testStrErrINI_INVALID_CONF,                  "testStrErrINI_INVALID_CONF"                },
-  { testStrErrINI_INVALID_KEY,                   "testStrErrINI_INVALID_KEY"                 },
-  { testStrErrINI_INVALID_VAL,                   "testStrErrINI_INVALID_VAL"                 },
-  { testStrErrINI_INVALID_SECTION,               "testStrErrINI_INVALID_SECTION"             },
-  { testStrErrINI_INVALID_LEN,                   "testStrErrINI_INVALID_LEN"                 },
-  { testStrErrINI_NIL_FNAME,                     "testStrErrINI_NIL_FNAME"                   },
-  { testStrErrINI_NIL_INI,                       "testStrErrINI_NIL_INI"                     },
-  { testStrErrINI_NIL_KEY,                       "testStrErrINI_NIL_KEY"                     },
-  { testStrErrINI_NIL_VAL,                       "testStrErrINI_NIL_VAL"                     },
-  { testStrErrINI_NIL_LEN,                       "testStrErrINI_NIL_LEN"                     },
-  { testStrErrINI_NIL_SECTION,                   "testStrErrINI_NIL_SECTION"                 },
-  { testStrErrINI_NIL,                           "testStrErrINI_NIL"                         },
-  { testMakeININilINI,                           "testMakeININilINI"                         },
-  //{ testMakeINIOutOfMemory,                      "testMakeINIOutOfMemory"                    },
-  { testMakeINIValid,                            "testMakeINIValid"                          },
-  { testFreeININilINI,                           "testFreeININilINI"                         },
-  { testFreeINIValid,                            "testFreeINIValid"                          },
-  { testReadININilINI,                           "testReadININilINI"                         },
-  { testReadININilFname,                         "testReadININilFname"                       },
-  { testReadINIInvalidSection,                   "testReadINIInvalidSection"                 },
-  { testReadINIInvalidKey,                       "testReadINIInvalidKey"                     },
-  { testReadINIInvalidArrayComma,                "testReadINIInvalidArrayComma"              },
-  { testReadINIInvalidArrayType,                 "testReadINIInvalidArrayType"               },
-  { testReadINIInvalidArrayLenght,               "testReadINIInvalidArrayLenght"             },
-  { testReadINIInvalidString,                    "testReadINIInvalidString"                  },
-  { testReadINIValid,                            "testReadINIValid"                          },
-  { testWriteININilINI,                          "testWriteININilINI"                        },
-  { testWriteININilFileName,                     "testWriteININilFileName"                   },
-  { testWriteINIOpenFailure,                     "testWriteINIOpenFailure"                   },
-  //{ testWriteINICloseFailure,                    "testWriteINICloseFailure"                  },
-  { testWriteINIValid,                           "testWriteINIValid"                         },
-  { testSetIntININilINI,                         "testSetIntININilINI"                       },
-  { testSetIntININilSection,                     "testSetIntININilSection"                   },
-  { testSetIntININilKey,                         "testSetIntININilKey"                       },
-  { testSetIntINIInvalidGrammerSection,          "testSetIntINIInvalidGrammerSection"        },
-  { testSetIntINIInvalidGrammerKey,              "testSetIntINIInvalidGrammerKey"            },
-  { testSetIntINIValidSetting,                   "testSetIntINIValidSetting"                 },
-  { testSetIntINIValidOverwriteSetting,          "testSetIntINIValidOverwriteSetting"        },
-  { testGetIntININilINI,                         "testGetIntININilINI"                       },
-  { testGetIntININilSection,                     "testGetIntININilSection"                   },
-  { testGetIntININilKey,                         "testGetIntININilKey"                       },
-  { testGetIntININilValue,                       "testGetIntININilValue"                     },
-  { testGetIntINIInvalidGrammerSection,          "testGetIntINIInvalidGrammerSection"        },
-  { testGetIntINIInvalidGrammerKey,              "testGetIntINIInvalidGrammerKey"            },
-  { testGetIntININonPresentKey,                  "testGetIntININonPresentKey"                },
-  { testGetIntININonPresentSection,              "testGetIntININonPresentSection"            },
-  { testGetIntINIValid,                          "testGetIntINIValid"                        },
-  { testSetFloatININilINI,                       "testSetFloatININilINI"                     },
-  { testSetFloatININilSection,                   "testSetFloatININilSection"                 },
-  { testSetFloatININilKey,                       "testSetFloatININilKey"                     },
-  { testSetFloatINIInvalidGrammerSection,        "testSetFloatINIInvalidGrammerSection"      },
-  { testSetFloatINIInvalidGrammerKey,            "testSetFloatINIInvalidGrammerKey"          },
-  { testSetFloatINIValidSetting,                 "testSetFloatINIValidSetting"               },
-  { testSetFloatINIValidOverwriteSetting,        "testSetFloatINIValidOverwriteSetting"      },
-  { testGetFloatININilINI,                       "testGetFloatININilINI"                     },
-  { testGetFloatININilSection,                   "testGetFloatININilSection"                 },
-  { testGetFloatININilKey,                       "testGetFloatININilKey"                     },
-  { testGetFloatININilValue,                     "testGetFloatININilValue"                   },
-  { testGetFloatINIInvalidGrammerSection,        "testGetFloatINIInvalidGrammerSection"      },
-  { testGetFloatINIInvalidGrammerKey,            "testGetFloatINIInvalidGrammerKey"          },
-  { testGetFloatININonPresentKey,                "testGetFloatININonPresentKey"              },
-  { testGetFloatININonPresentSection,            "testGetFloatININonPresentSection"          },
-  { testGetFloatINIValid,                        "testGetFloatINIValid"                      },
-  { testSetBoolININilINI,                        "testSetBoolININilINI"                      },
-  { testSetBoolININilSection,                    "testSetBoolININilSection"                  },
-  { testSetBoolININilKey,                        "testSetBoolININilKey"                      },
-  { testSetBoolINIInvalidGrammerSection,         "testSetBoolINIInvalidGrammerSection"       },
-  { testSetBoolINIInvalidGrammerKey,             "testSetBoolINIInvalidGrammerKey"           },
-  { testSetBoolINIValidSetting,                  "testSetBoolINIValidSetting"                },
-  { testSetBoolINIValidOverwriteSetting,         "testSetBoolINIValidOverwriteSetting"       },
-  { testGetBoolININilINI,                        "testGetBoolININilINI"                      },
-  { testGetBoolININilSection,                    "testGetBoolININilSection"                  },
-  { testGetBoolININilKey,                        "testGetBoolININilKey"                      },
-  { testGetBoolININilValue,                      "testGetBoolININilValue"                    },
-  { testGetBoolINIInvalidGrammerSection,         "testGetBoolINIInvalidGrammerSection"       },
-  { testGetBoolINIInvalidGrammerKey,             "testGetBoolINIInvalidGrammerKey"           },
-  { testGetBoolININonPresentKey,                 "testGetBoolININonPresentKey"               },
-  { testGetBoolININonPresentSection,             "testGetBoolININonPresentSection"           },
-  { testGetBoolINIValid,                         "testGetBoolINIValid"                       },
-  { testSetCharININilINI,                        "testSetCharININilINI"                      },
-  { testSetCharININilSection,                    "testSetCharININilSection"                  },
-  { testSetCharININilKey,                        "testSetCharININilKey"                      },
-  { testSetCharINIInvalidGrammerSection,         "testSetCharINIInvalidGrammerSection"       },
-  { testSetCharINIInvalidGrammerKey,             "testSetCharINIInvalidGrammerKey"           },
-  { testSetCharINIValidSetting,                  "testSetCharINIValidSetting"                },
-  { testSetCharINIValidOverwriteSetting,         "testSetCharINIValidOverwriteSetting"       },
-  { testGetCharININilINI,                        "testGetCharININilINI"                      },
-  { testGetCharININilSection,                    "testGetCharININilSection"                  },
-  { testGetCharININilKey,                        "testGetCharININilKey"                      },
-  { testGetCharININilValue,                      "testGetCharININilValue"                    },
-  { testGetCharINIInvalidGrammerSection,         "testGetCharINIInvalidGrammerSection"       },
-  { testGetCharINIInvalidGrammerKey,             "testGetCharINIInvalidGrammerKey"           },
-  { testGetCharININonPresentKey,                 "testGetCharININonPresentKey"               },
-  { testGetCharININonPresentSection,             "testGetCharININonPresentSection"           },
-  { testGetCharINIValid,                         "testGetCharINIValid"                       },
-  { testSetStrININilINI,                         "testSetStrININilINI"                       },
-  { testSetStrININilSection,                     "testSetStrININilSection"                   },
-  { testSetStrININilKey,                         "testSetStrININilKey"                       },
-  { testSetStrINIInvalidGrammerSection,          "testSetStrINIInvalidGrammerSection"        },
-  { testSetStrINIInvalidGrammerKey,              "testSetStrINIInvalidGrammerKey"            },
-  { testSetStrINIValidSetting,                   "testSetStrINIValidSetting"                 },
-  { testSetStrINIValidOverwriteSetting,          "testSetStrINIValidOverwriteSetting"        },
-  { testGetStrININilINI,                         "testGetStrININilINI"                       },
-  { testGetStrININilSection,                     "testGetStrININilSection"                   },
-  { testGetStrININilKey,                         "testGetStrININilKey"                       },
-  { testGetStrININilValue,                       "testGetStrININilValue"                     },
-  { testGetStrINIInvalidGrammerSection,          "testGetStrINIInvalidGrammerSection"        },
-  { testGetStrINIInvalidGrammerKey,              "testGetStrINIInvalidGrammerKey"            },
-  { testGetStrININonPresentKey,                  "testGetStrININonPresentKey"                },
-  { testGetStrININonPresentSection,              "testGetStrININonPresentSection"            },
-  { testGetStrINIValid,                          "testGetStrINIValid"                        },
-  { testSetIntArrININilINI,                      "testSetIntArrININilINI"                    },
-  { testSetIntArrININilSection,                  "testSetIntArrININilSection"                },
-  { testSetIntArrININilKey,                      "testSetIntArrININilKey"                    },
-  { testSetIntArrINIInvalidGrammerSection,       "testSetIntArrINIInvalidGrammerSection"     },
-  { testSetIntArrINIInvalidGrammerKey,           "testSetIntArrINIInvalidGrammerKey"         },
-  { testSetIntArrINIValidSetting,                "testSetIntArrINIValidSetting"              },
-  { testSetIntArrINIValidOverwriteSetting,       "testSetIntArrINIValidOverwriteSetting"     },
-  { testGetIntArrININilINI,                      "testGetIntArrININilINI"                    },
-  { testGetIntArrININilSection,                  "testGetIntArrININilSection"                },
-  { testGetIntArrININilKey,                      "testGetIntArrININilKey"                    },
-  { testGetIntArrININilValue,                    "testGetIntArrININilValue"                  },
-  { testGetIntArrINIInvalidGrammerSection,       "testGetIntArrINIInvalidGrammerSection"     },
-  { testGetIntArrINIInvalidGrammerKey,           "testGetIntArrINIInvalidGrammerKey"         },
-  { testGetIntArrININonPresentKey,               "testGetIntArrININonPresentKey"             },
-  { testGetIntArrININonPresentSection,           "testGetIntArrININonPresentSection"         },
-  { testGetIntArrINIValid,                       "testGetIntArrINIValid"                     },
-  { testSetFloatArrININilINI,                    "testSetFloatArrININilINI"                  },
-  { testSetFloatArrININilSection,                "testSetFloatArrININilSection"              },
-  { testSetFloatArrININilKey,                    "testSetFloatArrININilKey"                  },
-  { testSetFloatArrINIInvalidGrammerSection,     "testSetFloatArrINIInvalidGrammerSection"   },
-  { testSetFloatArrINIInvalidGrammerKey,         "testSetFloatArrINIInvalidGrammerKey"       },
-  { testSetFloatArrINIValidSetting,              "testSetFloatArrINIValidSetting"            },
-  { testSetFloatArrINIValidOverwriteSetting,     "testSetFloatArrINIValidOverwriteSetting"   },
-  { testGetFloatArrININilINI,                    "testGetFloatArrININilINI"                  },
-  { testGetFloatArrININilSection,                "testGetFloatArrININilSection"              },
-  { testGetFloatArrININilKey,                    "testGetFloatArrININilKey"                  },
-  { testGetFloatArrININilValue,                  "testGetFloatArrININilValue"                },
-  { testGetFloatArrINIInvalidGrammerSection,     "testGetFloatArrINIInvalidGrammerSection"   },
-  { testGetFloatArrINIInvalidGrammerKey,         "testGetFloatArrINIInvalidGrammerKey"       },
-  { testGetFloatArrININonPresentKey,             "testGetFloatArrININonPresentKey"           },
-  { testGetFloatArrININonPresentSection,         "testGetFloatArrININonPresentSection"       },
-  { testGetFloatArrINIValid,                     "testGetFloatArrINIValid"                   },
-  { testSetBoolArrININilINI,                     "testSetBoolArrININilINI"                   },
-  { testSetBoolArrININilSection,                 "testSetBoolArrININilSection"               },
-  { testSetBoolArrININilKey,                     "testSetBoolArrININilKey"                   },
-  { testSetBoolArrINIInvalidGrammerSection,      "testSetBoolArrINIInvalidGrammerSection"    },
-  { testSetBoolArrINIInvalidGrammerKey,          "testSetBoolArrINIInvalidGrammerKey"        },
-  { testSetBoolArrINIValidSetting,               "testSetBoolArrINIValidSetting"             },
-  { testSetBoolArrINIValidOverwriteSetting,      "testSetBoolArrINIValidOverwriteSetting"    },
-  { testGetBoolArrININilINI,                     "testGetBoolArrININilINI"                   },
-  { testGetBoolArrININilSection,                 "testGetBoolArrININilSection"               },
-  { testGetBoolArrININilKey,                     "testGetBoolArrININilKey"                   },
-  { testGetBoolArrININilValue,                   "testGetBoolArrININilValue"                 },
-  { testGetBoolArrINIInvalidGrammerSection,      "testGetBoolArrINIInvalidGrammerSection"    },
-  { testGetBoolArrINIInvalidGrammerKey,          "testGetBoolArrINIInvalidGrammerKey"        },
-  { testGetBoolArrININonPresentKey,              "testGetBoolArrININonPresentKey"            },
-  { testGetBoolArrININonPresentSection,          "testGetBoolArrININonPresentSection"        },
-  { testGetBoolArrINIValid,                      "testGetBoolArrINIValid"                    },
-  { testSetCharArrININilINI,                     "testSetCharArrININilINI"                   },
-  { testSetCharArrININilSection,                 "testSetCharArrININilSection"               },
-  { testSetCharArrININilKey,                     "testSetCharArrININilKey"                   },
-  { testSetCharArrINIInvalidGrammerSection,      "testSetCharArrINIInvalidGrammerSection"    },
-  { testSetCharArrINIInvalidGrammerKey,          "testSetCharArrINIInvalidGrammerKey"        },
-  { testSetCharArrINIValidSetting,               "testSetCharArrINIValidSetting"             },
-  { testSetCharArrINIValidOverwriteSetting,      "testSetCharArrINIValidOverwriteSetting"    },
-  { testGetCharArrININilINI,                     "testGetCharArrININilINI"                   },
-  { testGetCharArrININilSection,                 "testGetCharArrININilSection"               },
-  { testGetCharArrININilKey,                     "testGetCharArrININilKey"                   },
-  { testGetCharArrININilValue,                   "testGetCharArrININilValue"                 },
-  { testGetCharArrINIInvalidGrammerSection,      "testGetCharArrINIInvalidGrammerSection"    },
-  { testGetCharArrINIInvalidGrammerKey,          "testGetCharArrINIInvalidGrammerKey"        },
-  { testGetCharArrININonPresentKey,              "testGetCharArrININonPresentKey"            },
-  { testGetCharArrININonPresentSection,          "testGetCharArrININonPresentSection"        },
-  { testGetCharArrINIValid,                      "testGetCharArrINIValid"                    },
-  { testSetStrArrININilINI,                      "testSetStrArrININilINI"                    },
-  { testSetStrArrININilSection,                  "testSetStrArrININilSection"                },
-  { testSetStrArrININilKey,                      "testSetStrArrININilKey"                    },
-  { testSetStrArrINIInvalidGrammerSection,       "testSetStrArrINIInvalidGrammerSection"     },
-  { testSetStrArrINIInvalidGrammerKey,           "testSetStrArrINIInvalidGrammerKey"         },
-  { testSetStrArrINIValidSetting,                "testSetStrArrINIValidSetting"              },
-  { testSetStrArrINIValidOverwriteSetting,       "testSetStrArrINIValidOverwriteSetting"     },
-  { testGetStrArrININilINI,                      "testGetStrArrININilINI"                    },
-  { testGetStrArrININilSection,                  "testGetStrArrININilSection"                },
-  { testGetStrArrININilKey,                      "testGetStrArrININilKey"                    },
-  { testGetStrArrININilValue,                    "testGetStrArrININilValue"                  },
-  { testGetStrArrINIInvalidGrammerSection,       "testGetStrArrINIInvalidGrammerSection"     },
-  { testGetStrArrINIInvalidGrammerKey,           "testGetStrArrINIInvalidGrammerKey"         },
-  { testGetStrArrININonPresentKey,               "testGetStrArrININonPresentKey"             },
-  { testGetStrArrININonPresentSection,           "testGetStrArrININonPresentSection"         },
-  { testGetStrArrINIValid,                       "testGetStrArrINIValid"                     },
-  { testDeleteININilINI,                         "testDeleteININilINI"                       },
-  { testDeleteININilSection,                     "testDeleteININilSection"                   },
-  { testDeleteININilKey,                         "testDeleteININilKey"                       },
-  { testDeleteINIInvalidGrammerSection,          "testDeleteINIInvalidGrammerSection"        },
-  { testDeleteINIInvalidGrammerKey,              "testDeleteINIInvalidGrammerKey"            },
-  { testDeleteININonPresentSection,              "testDeleteININonPresentSection"            },
-  { testDeleteININonPresentKey,                  "testDeleteININonPresentKey"                },
-  { testDeleteINIValid,                          "testDeleteINIValid"                        },
-  { testCompleteIOFlow,                          "testCompleteIOFlow"                        },
+  { testStrErrINI_OPEN_FAILURE,             "testStrErrINI_OPEN_FAILURE"              },
+  { testStrErrINI_CLOSE_FAILURE,            "testStrErrINI_CLOSE_FAILURE"             },
+  { testStrErrINI_OUT_OF_MEMORY,            "testStrErrINI_OUT_OF_MEMORY"             },
+  { testStrErrINI_TYPE_MISMATCH,            "testStrErrINI_TYPE_MISMATCH"             },
+  { testStrErrINI_DUPLICATE_SETTING,        "testStrErrINI_DUPLICATE_SETTING"         },
+  { testStrErrINI_INVALID_CONF,             "testStrErrINI_INVALID_CONF"              },
+  { testStrErrINI_INVALID_KEY,              "testStrErrINI_INVALID_KEY"               },
+  { testStrErrINI_INVALID_VALUE,            "testStrErrINI_INVALID_VALUE"             },
+  { testStrErrINI_INVALID_SECTION,          "testStrErrINI_INVALID_SECTION"           },
+  { testStrErrINI_INVALID_INDEX,            "testStrErrINI_INVALID_INDEX"             },
+  { testStrErrINI_INVALID_OPTIONS,          "testStrErrINI_INVALID_OPTIONS"           },
+  { testStrErrINI_NIL_FNAME,                "testStrErrINI_NIL_FNAME"                 },
+  { testStrErrINI_NIL_INI,                  "testStrErrINI_NIL_INI"                   },
+  { testStrErrINI_NIL_KEY,                  "testStrErrINI_NIL_KEY"                   },
+  { testStrErrINI_NIL_VALUE,                "testStrErrINI_NIL_VALUE"                 },
+  { testStrErrINI_NIL_SECTION,              "testStrErrINI_NIL_SECTION"               },
+  { testStrErrINI_NIL_OPTIONS,              "testStrErrINI_NIL_OPTIONS"               },
+  { testStrErrINI_NIL_SETTING,              "testStrErrINI_NIL_SETTING"               },
+  { testStrErrINI_NIL_TYPE,                 "testStrErrINI_NIL_TYPE"                  },
+  { testStrErrINI_NIL_LENGTH,               "testStrErrINI_NIL_LENGTH"                },
+  { testStrErrINI_NIL,                      "testStrErrINI_NIL"                       },
+  { testMakeININilINI,                      "testMakeININilINI"                       },
+//  { testMakeINIOutOfMemory,                 "testMakeINIOutOfMemory"                  }, 
+  { testMakeINIValid,                       "testMakeINIValid"                        },
+  { testFreeININilINI,                      "testFreeININilINI"                       },
+  { testFreeINIValid,                       "testFreeINIValid"                        },
+  { testReadININilINI,                      "testReadININilINI"                       },
+  { testReadININilFname,                    "testReadININilFname"                     },
+  { testReadINIInvalidSection,              "testReadINIInvalidSection"               },
+  { testReadINIInvalidKey,                  "testReadINIInvalidKey"                   },
+  { testReadINIInvalidArrayComma,           "testReadINIInvalidArrayComma"            },
+  { testReadINIInvalidArrayType,            "testReadINIInvalidArrayType"             },
+  { testReadINIInvalidString,               "testReadINIInvalidString"                },
+  { testReadINIValid,                       "testReadINIValid"                        },
+  { testWriteININilINI,                     "testWriteININilINI"                      },
+  { testWriteININilFileName,                "testWriteININilFileName"                 },
+  { testWriteINIOpenFailure,                "testWriteINIOpenFailure"                 },
+//  { testWriteINICloseFailure,               "testWriteINICloseFailure"                },
+  { testWriteINIValid,                      "testWriteINIValid"                       },
+  { testGetConfigurationNilINI,             "testGetConfigurationNilINI"              },
+  { testGetConfigurationNilOptions,         "testGetConfigurationNilOptions"          },
+  { testGetConfigurationValid,              "testGetConfigurationValid"               },
+  { testSetConfigurationNilINI,             "testSetConfigurationNilINI"              },
+  { testSetConfigurationInvalidOptions,     "testSetConfigurationInvalidOptions"      },
+  { testSetConfigurationValid,              "testSetConfigurationValid"               },
+  { testCreateSettingNilINI,                "testCreateSettingNilINI"                 },
+  { testCreateSettingNilSection,            "testCreateSettingNilSection"             },
+  { testCreateSettingNilKey,                "testCreateSettingNilKey"                 },
+  { testCreateSettingNilSetting,            "testCreateSettingNilSetting"             },
+  { testCreateSettingInvalidSection,        "testCreateSettingInvalidSection"         },
+  { testCreateSettingInvalidKey,            "testCreateSettingInvalidKey"             },
+  { testCreateSettingDuplicateSetting,      "testCreateSettingDuplicateSetting"       },
+//  { testCreateSettingOutOfMemory,           "testCreateSettingOutOfMemory"            },
+  { testCreateSettingValid,                 "testCreateSettingValid"                  },
+  { testLookupSettingNilINI,                "testLookupSettingNilINI"                 },
+  { testLookupSettingNilSection,            "testLookupSettingNilSection"             },
+  { testLookupSettingNilKey,                "testLookupSettingNilKey"                 },
+  { testLookupSettingNilSetting,            "testLookupSettingNilSetting"             },
+  { testLookupSettingInvalidSection,        "testLookupSettingInvalidSection"         },
+  { testLookupSettingInvalidKey,            "testLookupSettingInvalidKey"             },
+  { testLookupNonPresentSetting,            "testLookupNonPresentSetting"             },
+  { testLookupSettingValid,                 "testLookupSettingValid"                  },
+  { testDeleteSettingNilINI,                "testDeleteSettingNilINI"                 },
+  { testDeleteSettingNilSection,            "testDeleteSettingNilSection"             },
+  { testDeleteSettingNilKey,                "testDeleteSettingNilKey"                 },
+  { testDeleteSettingInvalidGrammerSection, "testDeleteSettingInvalidGrammerSection"  },
+  { testDeleteSettingInvalidGrammerKey,     "testDeleteSettingInvalidGrammerKey"      },
+  { testDeleteSettingNonPresentSetting,     "testDeleteSettingNonPresentSetting"      },
+  { testDeleteSettingValid,                 "testDeleteSettingValid"                  },
+  { testSettingLookupDeleted,               "testSettingLookupDeleted"                },
+  { testSettingCompleteFlow,                "testSettingCompleteFlow"                 },
+  { testSettingTypeNilSettings,             "testSettingTypeNilSettings"              },
+  { testSettingTypeNilType,                 "testSettingTypeNilType"                  },
+  { testSettingTypeValid,                   "testSettingTypeValid"                    },
+  { testSettingKeyLengthNilSetting,         "testSettingKeyLengthNilSetting"          },
+  { testSettingKeyLengthNilLength,          "testSettingKeyLengthNilLength"           },
+  { testSettingKeyLengthValid,              "testSettingKeyLengthValid"               },
+  { testSettingKeyNilSetting,               "testSettingKeyNilSetting"                },
+  { testSettingKeyNilKey,                   "testSettingKeyNilKey"                    },
+  { testSettingKeyValid,                    "testSettingKeyValid"                     },
+  { testSettingLengthNilSetting,            "testSettingLengthNilSetting"             },
+  { testSettingLengthNilLength,             "testSettingLengthNilLength"              },
+  { testSettingLengthValid,                 "testSettingLengthValid"                  },
+  { testSettingElemLengthNilSetting,        "testSettingElemLengthNilSetting"         },
+  { testSettingElemLengthNilLength,         "testSettingElemLengthNilLength"          },
+  { testSettingElemLengthTypeMismatch,      "testSettingElemLengthTypeMismatch"       },
+  { testSettingElemLengthInvalidIndex,      "testSettingElemLengthInvalidIndex"       },
+  { testSettingElemLengthValid,             "testSettingElemLengthValid"              },
+  { testSettingGetIntNilSetting,            "testSettingGetIntNilSetting"             },
+  { testSettingGetIntTypeMismatch,          "testSettingGetIntTypeMismatch"           },
+  { testSettingGetIntNilValue,              "testSettingGetIntNilValue"               },
+  { testSettingGetIntValid,                 "testSettingGetIntValid"                  },
+  { testSettingGetFloatNilSetting,          "testSettingGetFloatNilSetting"           },
+  { testSettingGetFloatTypeMismatch,        "testSettingGetFloatTypeMismatch"         },
+  { testSettingGetFloatNilValue,            "testSettingGetFloatNilValue"             },
+  { testSettingGetFloatValid,               "testSettingGetFloatValid"                },
+  { testSettingGetBoolNilSetting,           "testSettingGetBoolNilSetting"            },
+  { testSettingGetBoolTypeMismatch,         "testSettingGetBoolTypeMismatch"          },
+  { testSettingGetBoolNilValue,             "testSettingGetBoolNilValue"              },
+  { testSettingGetBoolValid,                "testSettingGetBoolValid"                 },
+  { testSettingGetCharNilSetting,           "testSettingGetCharNilSetting"            },
+  { testSettingGetCharTypeMismatch,         "testSettingGetCharTypeMismatch"          },
+  { testSettingGetCharNilValue,             "testSettingGetCharNilValue"              },
+  { testSettingGetCharValid,                "testSettingGetCharValid"                 },
+  { testSettingGetStringNilSetting,         "testSettingGetStringNilSetting"          },
+  { testSettingGetStringTypeMismatch,       "testSettingGetStringTypeMismatch"        },
+  { testSettingGetStringNilValue,           "testSettingGetStringNilValue"            },
+  { testSettingGetStringValid,              "testSettingGetStringValid"               },
+  { testSettingGetIntElemNilSetting,        "testSettingGetIntElemNilSetting"         },
+  { testSettingGetIntElemTypeMismatch,      "testSettingGetIntElemTypeMismatch"       },
+  { testSettingGetIntElemInvalidIndex,      "testSettingGetIntElemInvalidIndex"       },
+  { testSettingGetIntElemNilValue,          "testSettingGetIntElemNilValue"           },
+  { testSettingGetIntElemValid,             "testSettingGetIntElemValid"              },
+  { testSettingGetFloatElemNilSetting,      "testSettingGetFloatElemNilSetting"       },
+  { testSettingGetFloatElemTypeMismatch,    "testSettingGetFloatElemTypeMismatch"     },
+  { testSettingGetFloatElemInvalidIndex,    "testSettingGetFloatElemInvalidIndex"     },
+  { testSettingGetFloatElemNilValue,        "testSettingGetFloatElemNilValue"         },
+  { testSettingGetFloatElemValid,           "testSettingGetFloatElemValid"            },
+  { testSettingGetBoolElemNilSetting,       "testSettingGetBoolElemNilSetting"        },
+  { testSettingGetBoolElemTypeMismatch,     "testSettingGetBoolElemTypeMismatch"      },
+  { testSettingGetBoolElemInvalidIndex,     "testSettingGetBoolElemInvalidIndex"      },
+  { testSettingGetBoolElemNilValue,         "testSettingGetBoolElemNilValue"          },
+  { testSettingGetBoolElemValid,            "testSettingGetBoolElemValid"             },
+  { testSettingGetCharElemNilSetting,       "testSettingGetCharElemNilSetting"        },
+  { testSettingGetCharElemTypeMismatch,     "testSettingGetCharElemTypeMismatch"      },
+  { testSettingGetCharElemInvalidIndex,     "testSettingGetCharElemInvalidIndex"      },
+  { testSettingGetCharElemNilValue,         "testSettingGetCharElemNilValue"          },
+  { testSettingGetCharElemValid,            "testSettingGetCharElemValid"             },
+  { testSettingGetStringElemNilSetting,     "testSettingGetStringElemNilSetting"      },
+  { testSettingGetStringElemTypeMismatch,   "testSettingGetStringElemTypeMismatch"    },
+  { testSettingGetStringElemInvalidIndex,   "testSettingGetStringElemInvalidIndex"    },
+  { testSettingGetStringElemNilValue,       "testSettingGetStringElemNilValue"        },
+  { testSettingGetStringElemValid,          "testSettingGetStringElemValid"           },
+  { testSettingSetIntNilSetting,            "testSettingSetIntNilSetting"             },
+  { testSettingSetIntTypeMismatch,          "testSettingSetIntTypeMismatch"           },
+  { testSettingSetIntValid,                 "testSettingSetIntValid"                  },
+  { testSettingSetFloatNilSetting,          "testSettingSetFloatNilSetting"           },
+  { testSettingSetFloatTypeMismatch,        "testSettingSetFloatTypeMismatch"         },
+  { testSettingSetBoolNilSetting,           "testSettingSetBoolNilSetting"            },
+  { testSettingSetBoolTypeMismatch,         "testSettingSetBoolTypeMismatch"          },
+  { testSettingSetCharNilSetting,           "testSettingSetCharNilSetting"            },
+  { testSettingSetCharTypeMismatch,         "testSettingSetCharTypeMismatch"          },
+  { testSettingSetStringNilSetting,         "testSettingSetStringNilSetting"          },
+  { testSettingSetStringTypeMismatch,       "testSettingSetStringTypeMismatch"        },
+  { testSettingSetStringNilValue,           "testSettingSetStringNilValue"            },
+//  { testSettingSetStringOutOfMemory,        "testSettingSetStringOutOfMemory"         },
+  { testSettingSetIntElemNilSetting,        "testSettingSetIntElemNilSetting"         },
+  { testSettingSetIntElemTypeMismatch,      "testSettingSetIntElemTypeMismatch"       },
+  { testSettingSetIntElemInvalidIndex,      "testSettingSetIntElemInvalidIndex"       },
+//  { testSettingSetIntElemOutOfMemory,       "testSettingSetIntElemOutOfMemory"        },
+  { testSettingSetFloatElemNilSetting,      "testSettingSetFloatElemNilSetting"       },
+  { testSettingSetFloatElemTypeMismatch,    "testSettingSetFloatElemTypeMismatch"     },
+  { testSettingSetFloatElemInvalidIndex,    "testSettingSetFloatElemInvalidIndex"     },
+//  { testSettingSetFloatElemOutOfMemory,     "testSettingSetFloatElemOutOfMemory"      },
+  { testSettingSetBoolElemNilSetting,       "testSettingSetBoolElemNilSetting"        },
+  { testSettingSetBoolElemTypeMismatch,     "testSettingSetBoolElemTypeMismatch"      },
+  { testSettingSetBoolElemInvalidIndex,     "testSettingSetBoolElemInvalidIndex"      },
+//  { testSettingSetBoolElemOutOfMemory,      "testSettingSetBoolElemOutOfMemory"       },
+  { testSettingSetBoolElemValid,            "testSettingSetBoolElemValid"             },
+  { testSettingSetCharElemNilSetting,       "testSettingSetCharElemNilSetting"        },
+  { testSettingSetCharElemTypeMismatch,     "testSettingSetCharElemTypeMismatch"      },
+  { testSettingSetCharElemInvalidIndex,     "testSettingSetCharElemInvalidIndex"      },
+//  { testSettingSetCharElemOutOfMemory,      "testSettingSetCharElemOutOfMemory"       },
+  { testSettingSetCharElemValid,            "testSettingSetCharElemValid"             },
+  { testSettingSetStringElemNilSetting,     "testSettingSetStringElemNilSetting"      },
+  { testSettingSetStringElemTypeMismatch,   "testSettingSetStringElemTypeMismatch"    },
+  { testSettingSetStringElemInvalidIndex,   "testSettingSetStringElemInvalidIndex"    },
+  { testSettingSetStringElemNilValue,       "testSettingSetStringElemNilValue"        },
+//  { testSettingSetStringElemOutOfMemory,    "testSettingSetStringElemOutOfMemory"     },
+  { testSettingSetStringElemValid,          "testSettingSetStringElemValid"           },
+  { testCompleteIOFlow,                     "testCompleteIOFlow"                      }
 };
 
 int main() {
