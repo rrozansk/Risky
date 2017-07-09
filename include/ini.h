@@ -2,7 +2,7 @@
  * FILE:    ini.h                                                             *
  * AUTHOR:  Ryan Rozanski                                                     *
  * CREATED: 3/27/17                                                           *
- * EDITED:  7/6/17                                                            *
+ * EDITED:  7/8/17                                                            *
  * INFO:    A ini configuration file library. Allows the static reading from  *
  *          and dynamic output to a file, as well as dynamic CRUD operations. *
  *          The exposed library API's follow a uniform interface where only   *
@@ -70,11 +70,21 @@ typedef unsigned char option_t; /* INI configuration options */
 
 typedef enum errINI { /* All the possible errors produced by this library. */
   INI_OPEN_FAILURE, INI_CLOSE_FAILURE, INI_OUT_OF_MEMORY, INI_TYPE_MISMATCH,
-  INI_INVALID_CONF, INI_INVALID_KEY, INI_INVALID_VALUE, INI_INVALID_SECTION,
-  INI_INVALID_INDEX, INI_NIL_FNAME, INI_NIL_INI, INI_NIL_KEY, INI_NIL_VALUE,
+  INI_DUPLICATE_SETTING, INI_VALUE_UNINITIALIZED, INI_INVALID_CONF,
+  INI_INVALID_KEY, INI_INVALID_VALUE, INI_INVALID_SECTION, INI_INVALID_INDEX,
+  INI_INVALID_OPTIONS, INI_NIL_FNAME, INI_NIL_INI, INI_NIL_KEY, INI_NIL_VALUE,
   INI_NIL_SECTION, INI_NIL_OPTIONS, INI_NIL_SETTING, INI_NIL_TYPE,
-  INI_NIL_LENGTH, INI_NIL,
+  INI_NIL_LENGTH, INI_NIL
 } errINI_t;
+
+/******************************************************************************
+ *                                                                            *
+ *   C O N S T A N T S                                                        *
+ *                                                                            *
+ ******************************************************************************/
+
+// to output setting with and ':' if set, else '=' between the key and value
+#define SETTING_SEPERATOR 0b00000001
 
 /******************************************************************************
  *                                                                            *
@@ -138,7 +148,15 @@ errINI_t freeINI(ini_t *ini);
  * ini      a pointer which to set with the address of the conf read in       *
  * fname    the name of the file to read from                                 *
  *                                                                            *
- * RETURNS: TODO 
+ * RETURNS: INI_NIL_INI
+ *          INI_NIL_FNAME
+ *          INI_OPEN_FAILURE
+ *          INI_OUT_OF_MEMORY
+ *          INI_INVALID_SECTION
+ *          INI_INVALID_KEY
+ *          INI_INVALID_CONF
+ *          INI_NIL if no error
+ TODO: correct/fill in the rest when implemented
  *                                                                            *
  ******************************************************************************/
 errINI_t readINI(ini_t **ini, char *filename);
@@ -181,10 +199,6 @@ errINI_t getConfigurationINI(ini_t *ini, option_t *options);
 /******************************************************************************
  *                                                                            *
  * PURPOSE:  TODO
- *          option SETTING_SEPERATOR_EQUAL   = 0b00000001;
- *          option SETTING_SEPERATOR_COLON   = 0b00000010;
- *          option SETTING_COMMENT_HASH      = 0b00000100;
- *          option SETTING_COMMENT_SEMICOLON = 0b00001000;
  *           | (bit or) wanted settings
  *                                                                            *
  * ARGUMENT DESCRIPTION                                                       *
@@ -201,7 +215,7 @@ errINI_t setConfigurationINI(ini_t *ini, option_t options);
 
 /******************************************************************************
  *                                                                            *
- * PURPOSE: TODO
+ * PURPOSE: TODO insert into ini, possibly creating a new section
  *                                                                            *
  * ARGUMENT DESCRIPTION                                                       *
  * -------- -----------                                                       *
@@ -213,10 +227,11 @@ errINI_t setConfigurationINI(ini_t *ini, option_t options);
  * RETURNS: INI_NIL_INI if ini is NULL                                        *
  *          INI_NIL_SECTION if section is NULL                                *
  *          INI_NIL_KEY if key is NULL                                        *
- *          INI_OUT_OF_MEMORY if allocation of the new setting fails          *
  *          INI_NIL_SETTING if setting is NULL                                *
  *          INI_INVALID_SECTION if section does not adhere to library grammar *
  *          INI_INVALID_KEY if key does not adhere to library grammar         *
+ *          INI_DUPLICATE_SETTING if key already appears under section        *
+ *          INI_OUT_OF_MEMORY if allocation of the new setting fails          *
  *          INI_NIL if no error                                               *
  *                                                                            *
  ******************************************************************************/
@@ -292,14 +307,30 @@ errINI_t settingType(setting_t *setting, typeINI_t *typeINI);
  * ARGUMENT DESCRIPTION                                                       *
  * -------- -----------                                                       *
  * setting  the setting to query                                              *
- * key      a ptr to an allocated ptr to store the key at                     *
+ * length   a ptr to an allocated into to store the length gotten at          *
+ *                                                                            *
+ * RETURNS: INI_NIL_SETTING if setting is NULL                                *
+ *          INI_NIL_LENGTH if length is NULL                                  *
+ *          INI_NIL if no error                                               *
+ *                                                                            *
+ ******************************************************************************/
+errINI_t settingKeyLength(setting_t *setting, int *length);
+
+/******************************************************************************
+ *                                                                            *
+ * PURPOSE: TODO immutable key
+ *                                                                            *
+ * ARGUMENT DESCRIPTION                                                       *
+ * -------- -----------                                                       *
+ * setting  the setting to query                                              *
+ * key      a ptr to an allocated char array to store the key at              *
  *                                                                            *
  * RETURNS: INI_NIL_SETTING if setting is NULL                                *
  *          INI_NIL_KEY if key is NULL                                        *
  *          INI_NIL if no error                                               *
  *                                                                            *
  ******************************************************************************/
-errINI_t settingKey(setting_t *setting, const char **key); 
+errINI_t settingKey(setting_t *setting, char *key); 
 
 /******************************************************************************
  *                                                                            *
@@ -329,8 +360,8 @@ errINI_t settingLength(setting_t *setting, int *length);
  *                                                                            *
  * RETURNS: INI_NIL_SETTING if setting is NULL                                *
  *          INI_NIL_LENGTH if length is NULL                                  *
- *          INI_TYPE_MISMATCH if setting is a non array type                  *
  *          INI_INVALID_INDEX if index is out of range                        *
+ *          INI_TYPE_MISMATCH if setting is a non array type                  *
  *          INI_NIL if no error                                               *
  *                                                                            *
  ******************************************************************************/
@@ -348,6 +379,7 @@ errINI_t settingElemLength(setting_t *setting, int index, int *length);
  * RETURNS: INI_NIL_SETTING if setting is NULL                                *
  *          INI_TYPE_MISMATCH if stored value does not match getter type      *
  *          INI_NIL_VALUE if value is NULL                                    *
+ *          INI_VALUE_UNINITIALIZED if value had not been set yet             *
  *          INI_NIL if no error                                               *
  *                                                                            *
  ******************************************************************************/
@@ -365,6 +397,7 @@ errINI_t settingGetInt(setting_t *setting, int *value);
  * RETURNS: INI_NIL_SETTING if setting is NULL                                *
  *          INI_TYPE_MISMATCH if stored value does not match getter type      *
  *          INI_NIL_VALUE if value is NULL                                    *
+ *          INI_VALUE_UNINITIALIZED if value had not been set yet             *
  *          INI_NIL if no error                                               *
  *                                                                            *
  ******************************************************************************/
@@ -382,6 +415,7 @@ errINI_t settingGetFloat(setting_t *setting, float *value);
  * RETURNS: INI_NIL_SETTING if setting is NULL                                *
  *          INI_TYPE_MISMATCH if stored value does not match getter type      *
  *          INI_NIL_VALUE if value is NULL                                    *
+ *          INI_VALUE_UNINITIALIZED if value had not been set yet             *
  *          INI_NIL if no error                                               *
  *                                                                            *
  ******************************************************************************/
@@ -399,6 +433,7 @@ errINI_t settingGetBool(setting_t *setting, int *value);
  * RETURNS: INI_NIL_SETTING if setting is NULL                                *
  *          INI_TYPE_MISMATCH if stored value does not match getter type      *
  *          INI_NIL_VALUE if value is NULL                                    *
+ *          INI_VALUE_UNINITIALIZED if value had not been set yet             *
  *          INI_NIL if no error                                               *
  *                                                                            *
  ******************************************************************************/
@@ -416,10 +451,11 @@ errINI_t settingGetChar(setting_t *setting, char *value);
  * RETURNS: INI_NIL_SETTING if setting is NULL                                *
  *          INI_TYPE_MISMATCH if stored value does not match getter type      *
  *          INI_NIL_VALUE if value is NULL                                    *
+ *          INI_VALUE_UNINITIALIZED if value had not been set yet             *
  *          INI_NIL if no error                                               *
  *                                                                            *
  ******************************************************************************/
-errINI_t settingGetString(setting_t *setting, char **value);
+errINI_t settingGetString(setting_t *setting, char *value);
 
 /******************************************************************************
  *                                                                            *
@@ -435,6 +471,7 @@ errINI_t settingGetString(setting_t *setting, char **value);
  *          INI_TYPE_MISMATCH if stored value does not match getter type      *
  *          INI_INVALID_INDEX if index is out of range                        *
  *          INI_NIL_VALUE if elem is NULL                                     *
+ *          INI_VALUE_UNINITIALIZED if value had not been set yet             *
  *          INI_NIL if no error                                               *
  *                                                                            *
  ******************************************************************************/
@@ -454,6 +491,7 @@ errINI_t settingGetIntElem(setting_t *setting, int index, int *elem);
  *          INI_TYPE_MISMATCH if stored value does not match getter type      *
  *          INI_INVALID_INDEX if index is out of range                        *
  *          INI_NIL_VALUE if elem is NULL                                     *
+ *          INI_VALUE_UNINITIALIZED if value had not been set yet             *
  *          INI_NIL if no error                                               *
  *                                                                            *
  ******************************************************************************/
@@ -473,6 +511,7 @@ errINI_t settingGetFloatElem(setting_t *setting, int index, float *elem);
  *          INI_TYPE_MISMATCH if stored value does not match getter type      *
  *          INI_INVALID_INDEX if index is out of range                        *
  *          INI_NIL_VALUE if elem is NULL                                     *
+ *          INI_VALUE_UNINITIALIZED if value had not been set yet             *
  *          INI_NIL if no error                                               *
  *                                                                            *
  ******************************************************************************/
@@ -492,6 +531,7 @@ errINI_t settingGetBoolElem(setting_t *setting, int index, int *elem);
  *          INI_TYPE_MISMATCH if stored value does not match getter type      *
  *          INI_INVALID_INDEX if index is out of range                        *
  *          INI_NIL_VALUE if elem is NULL                                     *
+ *          INI_VALUE_UNINITIALIZED if value had not been set yet             *
  *          INI_NIL if no error                                               *
  *                                                                            *
  ******************************************************************************/
@@ -511,10 +551,11 @@ errINI_t settingGetCharElem(setting_t *setting, int index, char *elem);
  *          INI_TYPE_MISMATCH if stored value does not match getter type      *
  *          INI_INVALID_INDEX if index is out of range                        *
  *          INI_NIL_VALUE if elem is NULL                                     *
+ *          INI_VALUE_UNINITIALIZED if value had not been set yet             *
  *          INI_NIL if no error                                               *
  *                                                                            *
  ******************************************************************************/
-errINI_t settingGetStringElem(setting_t *setting, int index, char **elem);
+errINI_t settingGetStringElem(setting_t *setting, int index, char *elem);
  
 /******************************************************************************
  *                                                                            *
@@ -528,7 +569,6 @@ errINI_t settingGetStringElem(setting_t *setting, int index, char **elem);
  *                                                                            *
  * RETURNS: INI_NIL_SETTING if setting is NULL                                *
  *          INI_TYPE_MISMATCH if stored value does not match getter type      *
- *          INI_NIL_VALUE if value is NULL                                    *
  *          INI_OUT_OF_MEMORY if allocation fails                             *
  *          INI_NIL if no error                                               *
  *                                                                            *
@@ -546,7 +586,6 @@ errINI_t settingSetInt(setting_t *setting, int value);
  *                                                                            *
  * RETURNS: INI_NIL_SETTING if setting is NULL                                *
  *          INI_TYPE_MISMATCH if stored value does not match getter type      *
- *          INI_NIL_VALUE if value is NULL                                    *
  *          INI_OUT_OF_MEMORY if allocation fails                             *
  *          INI_NIL if no error                                               *
  *                                                                            *
@@ -564,7 +603,6 @@ errINI_t settingSetFloat(setting_t *setting, float value);
  *                                                                            *
  * RETURNS: INI_NIL_SETTING if setting is NULL                                *
  *          INI_TYPE_MISMATCH if stored value does not match getter type      *
- *          INI_NIL_VALUE if value is NULL                                    *
  *          INI_OUT_OF_MEMORY if allocation fails                             *
  *          INI_NIL if no error                                               *
  *                                                                            *
@@ -582,7 +620,6 @@ errINI_t settingSetBool(setting_t *setting, int value);
  *                                                                            *
  * RETURNS: INI_NIL_SETTING if setting is NULL                                *
  *          INI_TYPE_MISMATCH if stored value does not match getter type      *
- *          INI_NIL_VALUE if value is NULL                                    *
  *          INI_OUT_OF_MEMORY if allocation fails                             *
  *          INI_NIL if no error                                               *
  *                                                                            *
@@ -620,7 +657,6 @@ errINI_t settingSetString(setting_t *setting, char *value);
  * RETURNS: INI_NIL_SETTING if setting is NULL                                *
  *          INI_TYPE_MISMATCH if stored value does not match getter type      *
  *          INI_INVALID_INDEX if index is out of range                        *
- *          INI_NIL_VALUE if elem is NULL                                     *
  *          INI_OUT_OF_MEMORY if allocation fails                             *
  *          INI_NIL if no error                                               *
  *                                                                            *
@@ -640,7 +676,6 @@ errINI_t settingSetIntElem(setting_t *setting, int index, int elem);
  * RETURNS: INI_NIL_SETTING if setting is NULL                                *
  *          INI_TYPE_MISMATCH if stored value does not match getter type      *
  *          INI_INVALID_INDEX if index is out of range                        *
- *          INI_NIL_VALUE if elem is NULL                                     *
  *          INI_OUT_OF_MEMORY if allocation fails                             *
  *          INI_NIL if no error                                               *
  *                                                                            *
@@ -660,7 +695,6 @@ errINI_t settingSetFloatElem(setting_t *setting, int index, float elem);
  * RETURNS: INI_NIL_SETTING if setting is NULL                                *
  *          INI_TYPE_MISMATCH if stored value does not match getter type      *
  *          INI_INVALID_INDEX if index is out of range                        *
- *          INI_NIL_VALUE if elem is NULL                                     *
  *          INI_OUT_OF_MEMORY if allocation fails                             *
  *          INI_NIL if no error                                               *
  *                                                                            *
@@ -680,7 +714,6 @@ errINI_t settingSetBoolElem(setting_t *setting, int index, int elem);
  * RETURNS: INI_NIL_SETTING if setting is NULL                                *
  *          INI_TYPE_MISMATCH if stored value does not match getter type      *
  *          INI_INVALID_INDEX if index is out of range                        *
- *          INI_NIL_VALUE if elem is NULL                                     *
  *          INI_OUT_OF_MEMORY if allocation fails                             *
  *          INI_NIL if no error                                               *
  *                                                                            *
