@@ -2,7 +2,7 @@
  * FILE:    main.c                                                            *
  * AUTHOR:  Ryan Rozanski                                                     *
  * CREATED: 4/4/17                                                            *
- * EDITED:  7/3/17                                                            *
+ * EDITED:  7/8/17                                                            *
  * INFO:    main.c assimilates the ini, log, dna, and risk libraries into an  *
  *          easily configurable command line version of a risk like game. The *
  *          game supports logging and artificial intellegence whose behavior  *
@@ -144,9 +144,15 @@ int fitness(char *who, int chromosome[], int traits) {
 
 // attempt to set up the logger from the INI conf file.
 void setupLOGfromINI(ini_t *ini, log_t **logger) {
+  setting_t *setting;
+ 
+  if((errINI = lookupSetting(ini, "Logging", "log", &setting)) != INI_NIL) {
+    printError("lookupSetting(), section=Logging, key=log", (char *)strErrINI(errINI));
+  }
+
   int log;
-  if((errINI = getBoolINI(ini, "Logging", "log", &log)) != INI_NIL) {
-    printError("getBoolINI(), section=Logging, key=log", (char *)strErrINI(errINI));
+  if((errINI = settingGetInt(setting, &log)) != INI_NIL) {
+    printError("settingGetInt(), section=Logging, key=log", (char *)strErrINI(errINI));
   }
 
   if(!log) {
@@ -154,13 +160,25 @@ void setupLOGfromINI(ini_t *ini, log_t **logger) {
     return;
   }
 
-  if((errINI = getIntINI(ini, "Logging", "columns", &log)) != INI_NIL) {
-    printError("getIntINI(), section=Logging, key=columns", (char *)strErrINI(errINI));
+  if((errINI = lookupSetting(ini, "Logging", "dir", &setting)) != INI_NIL) {
+    printError("lookupSetting(), section=Logging, key=dir", (char *)strErrINI(errINI));
   }
 
-  char dir[255];
-  if((errINI = getStrINI(ini, "Logging", "dir", (char **)dir)) != INI_NIL) {
-    printError("getStrINI(), section=Logging, key=dir", (char *)strErrINI(errINI));
+  if((errINI = settingLength(setting, &log)) != INI_NIL) {
+    printError("settingLength(), section=Logging, key=dir", (char *)strErrINI(errINI));
+  }
+
+  char dir[log];
+  if((errINI = settingGetString(setting, dir)) != INI_NIL) {
+    printError("settingGetString(), section=Logging, key=dir", (char *)strErrINI(errINI));
+  }
+
+  if((errINI = lookupSetting(ini, "Logging", "columns", &setting)) != INI_NIL) {
+    printError("lookupSetting(), section=Logging, key=columns", (char *)strErrINI(errINI));
+  }
+
+  if((errINI = settingGetInt(setting, &log)) != INI_NIL) {
+    printError("settingGetInt(), section=Logging, key=columns", (char *)strErrINI(errINI));
   }
 
   time_t t = time(NULL);
@@ -182,37 +200,84 @@ void setupLOGfromINI(ini_t *ini, log_t **logger) {
 
 // attempt to set up all the AI/chromosomes from the INI conf file
 void setupDNAfromINI(ini_t *ini, dna_t **dna) {
-  int cps, traits, elitism;
-  int lbound, ubound, *chromosome;
-  char **ids;
-  double rate, percentile;
-
-  if((errINI = getIntINI(ini, "Chromosomes", "traits", &traits)) != INI_NIL) {
-    printError("getIntINI(), section=Chromosomes, key=traits", (char *)strErrINI(errINI));
+  setting_t *setting;
+ 
+  if((errINI = lookupSetting(ini, "Chromosomes", "traits", &setting)) != INI_NIL) {
+    printError("lookupSetting(), section=Chromosomes, key=traits", (char *)strErrINI(errINI));
   }
 
-  if((errINI = getBoolINI(ini, "Chromosomes", "elitism", &elitism)) != INI_NIL) {
-    printError("getBoolINI(), section=Chromosomes, key=elitism", (char *)strErrINI(errINI));
+  int traits;
+  if((errINI = settingGetInt(setting, &traits)) != INI_NIL) {
+    printError("settingGetInt(), section=Chromosomes, key=traits", (char *)strErrINI(errINI));
   }
 
-  if((errINI = getFloatINI(ini, "Chromosomes", "percentile", &percentile)) != INI_NIL) {
-    printError("getFloatINI(), section=Chromosomes, key=percentile", (char *)strErrINI(errINI));
+  if((errINI = lookupSetting(ini, "Chromosomes", "elitism", &setting)) != INI_NIL) {
+    printError("lookupSetting(), section=Chromosomes, key=elitism", (char *)strErrINI(errINI));
   }
 
-  if((errINI = getFloatINI(ini, "Chromosomes", "mutation", &rate)) != INI_NIL) {
-    printError("getFloatINI(), section=Chromosomes, key=mutation", (char *)strErrINI(errINI));
+  int elitism;
+  if((errINI = settingGetBool(setting, &elitism)) != INI_NIL) {
+    printError("settingGetBool(), section=Chromosomes, key=elitism", (char *)strErrINI(errINI));
   }
 
-  if((errINI = getIntINI(ini, "Chromosomes", "ubound", &ubound)) != INI_NIL) {
-    printError("getIntINI(), section=Chromosomes, key=ubound", (char *)strErrINI(errINI));
+  if((errINI = lookupSetting(ini, "Chromosomes", "percentile", &setting)) != INI_NIL) {
+    printError("lookupSetting(), section=Chromosomes, key=percentile", (char *)strErrINI(errINI));
   }
 
-  if((errINI = getIntINI(ini, "Chromosomes", "lbound", &lbound)) != INI_NIL) {
-    printError("getIntINI(), section=Chromosomes, key=lbound", (char *)strErrINI(errINI));
+  float percentile;
+  if((errINI = settingGetFloat(setting, &percentile)) != INI_NIL) {
+    printError("settingGetFloat(), section=Chromosomes, key=percentile", (char *)strErrINI(errINI));
   }
 
-  if((errINI = getStrArrINI(ini, "Chromosomes", "cps", &ids, &cps)) != INI_NIL) {
-    printError("getStrINI(), section=Chromosomes, key=cps", (char *)strErrINI(errINI));
+  if((errINI = lookupSetting(ini, "Chromosomes", "mutation", &setting)) != INI_NIL) {
+    printError("lookupSetting(), section=Chromosomes, key=mutation", (char *)strErrINI(errINI));
+  }
+
+  float rate;
+  if((errINI = settingGetFloat(setting, &rate)) != INI_NIL) {
+    printError("settingGetFloat(), section=Chromosomes, key=mutation", (char *)strErrINI(errINI));
+  }
+
+  if((errINI = lookupSetting(ini, "Chromosomes", "ubound", &setting)) != INI_NIL) {
+    printError("lookupSetting(), section=Chromosomes, key=ubound", (char *)strErrINI(errINI));
+  }
+
+  int ubound;
+  if((errINI = settingGetInt(setting, &ubound)) != INI_NIL) {
+    printError("settingGetInt(), section=Chromosomes, key=ubound", (char *)strErrINI(errINI));
+  }
+
+  if((errINI = lookupSetting(ini, "Chromosomes", "lbound", &setting)) != INI_NIL) {
+    printError("lookupSetting(), section=Chromosomes, key=lbound", (char *)strErrINI(errINI));
+  }
+
+  int lbound;
+  if((errINI = settingGetInt(setting, &lbound)) != INI_NIL) {
+    printError("settingGetInt(), section=Chromosomes, key=lbound", (char *)strErrINI(errINI));
+  }
+
+  if((errINI = lookupSetting(ini, "Chromosomes", "cps", &setting)) != INI_NIL) {
+    printError("lookupSetting(), section=Chromosomes, key=cps", (char *)strErrINI(errINI));
+  }
+
+  int cps;
+  if((errINI = settingLength(setting, &cps)) != INI_NIL) {
+    printError("settingGetInt(), section=Chromosomes, key=cps", (char *)strErrINI(errINI));
+  }
+
+  char *ids[cps];
+  
+  int i, j;
+  for(i = 0; i < cps; i++) {
+    if((errINI = settingElemLength(setting, i,&j)) != INI_NIL) {
+      printError("settingElemLength(), section=Chromosomes, key=cps", (char *)strErrINI(errINI));
+    }
+
+    char cp[j];
+    if((errINI = settingGetString(setting, cp)) != INI_NIL) {
+      printError("settingGetString(), section=Chromosomes, key=cp", (char *)strErrINI(errINI));
+    }
+    ids[i] = cp;
   }
 
   if((errDNA = makeDNA(dna, ids, cps, traits)) != DNA_NIL) {
@@ -231,12 +296,27 @@ void setupDNAfromINI(ini_t *ini, dna_t **dna) {
     printError("setElitism()", (char *)strErrDNA(errDNA));
   }
 
-  for(; cps; cps--) {
-    if((errINI = getIntArrINI(ini, "Chromosomes", ids[cps-1], &chromosome, &traits)) != INI_NIL) {
-      printError("getIntArrINI(), section=Chromosomes, key=??", (char *)strErrINI(errINI));
+  int chromosome[traits];
+  for(i = 0; i < cps; i++) {
+    if((errINI = lookupSetting(ini, "Chromosomes", ids[i], &setting)) != INI_NIL) {
+      printError("lookupSetting(), section=Chromosomes, key=??", (char *)strErrINI(errINI));
     }
 
-    if((errDNA = setStrand(*dna, ids[cps-1], chromosome, traits)) != DNA_NIL) {
+    if((errINI = settingLength(setting, &j)) != INI_NIL) {
+      printError("settingLength(), section=Chromosomes, key=??", (char *)strErrINI(errINI));
+    }
+
+    if(j != traits) {
+      printError("setupDNAfromINI()", "computer traits does not match specified length");
+    }
+
+    for(j = 0; j < traits; j++) {
+      if((errINI = settingGetIntElem(setting, j, &chromosome[j])) != INI_NIL) {
+        printError("settingGetIntElem(), section=Chromosomes, key=??", (char *)strErrINI(errINI));
+      }
+    }
+
+    if((errDNA = setStrand(*dna, ids[i], chromosome, traits)) != DNA_NIL) {
       printError("setStrand()", (char *)strErrDNA(errDNA));
     }
   }
@@ -327,8 +407,6 @@ void logDNA(dna_t *dna, log_t *logger) {
     }
   }
 }
-
-
 
 /*
 // attempt to set up the risk game from the INI conf file.
@@ -726,8 +804,13 @@ int main(int argc, char *argv[]) {
     printError("readINI()", (char *)strErrINI(errINI));
   }
 
-  if((errINI = getIntINI(ini, "Training", "games", &argc)) != INI_NIL) {
-    printError("getIntINI(), section=Training, key=games", (char *)strErrINI(errINI));
+  setting_t *setting;
+  if((errINI = lookupSetting(ini, "Training", "games", &setting)) != INI_NIL) {
+    printError("lookupSetting(), section=Training, key=games", (char *)strErrINI(errINI));
+  }
+
+  if((errINI = settingGetInt(setting, &argc)) != INI_NIL) {
+    printError("settingGetInt(), section=Training, key=games", (char *)strErrINI(errINI));
   }
 
   if((errINI = makeINI(&ini)) != INI_NIL) {
@@ -761,9 +844,24 @@ int main(int argc, char *argv[]) {
       if(errDNA != DNA_NIL) {
         printError("getStrands()", (char *)strErrDNA(errDNA));
       }
-      errINI = setIntArrINI(ini, "Chromosomes", ids[strands-1], strand, traits);
-      if(errINI != INI_NIL) {
-        printError("setIntArrINI(), section=Chromosomes, key=??", (char *)strErrINI(errINI));
+
+      if((errINI = lookupSetting(ini, "Chromosomes", ids[strands-1], &setting)) != INI_NIL) {
+        printError("lookupSetting(), section=Chromosomes, key=??", (char *)strErrINI(errINI));
+      }
+
+      int i;
+      if((errINI = settingLength(setting, &i)) != INI_NIL) {
+        printError("settingLength(), section=Chromosomes, key=??", (char *)strErrINI(errINI));
+      }
+
+      if(i != traits) {
+        printError("main()", "failure to overwrite strand, length mismatch");
+      }
+
+      for(; i; i--) {
+        if((errINI = settingSetIntElem(setting, i-1, strand[i-1])) != INI_NIL) {
+          printError("settingSetIntElem(), section=Chromosomes, key=??", (char *)strErrINI(errINI));
+        }
       }
     }
 
