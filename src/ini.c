@@ -2,7 +2,7 @@
  * FILE:    ini.c                                                             *
  * AUTHOR:  Ryan Rozanski                                                     *
  * CREATED: 3/27/17                                                           *
- * EDITED:  7/8/17                                                            *
+ * EDITED:  7/10/17                                                           *
  * INFO:    Implementation of the interface located in ini.h.                 *
  *                                                                            *
  ******************************************************************************/
@@ -102,7 +102,7 @@ static void putArrayList(arrayList_t *arrayList, void *item) {
   if(!arrayList) { return; }
 
   if(arrayList->cap == arrayList->size) {
-    arrayList->arr = realloc(arrayList->arr, arrayList->cap *= 2);
+    arrayList->arr = realloc(arrayList->arr, sizeof(void *) * (arrayList->cap *= 2));
     if(!arrayList->arr) { return; }
   }
 
@@ -217,6 +217,7 @@ static errINI_t settingSet(setting_t *setting, int index, typeINI_t typeINI, voi
       return INI_NIL;
     case BOOL:
       if(setting->typeINI == UNINITIALIZED) { setting->typeINI = BOOL; }
+      if(*(int *)value != 0 && *(int *)value != 1) { return INI_INVALID_VALUE; }
       setting->val.b = *(int *)value;
       return INI_NIL;
     case CHAR:
@@ -226,18 +227,20 @@ static errINI_t settingSet(setting_t *setting, int index, typeINI_t typeINI, voi
     case STRING:
       if(setting->typeINI == UNINITIALIZED) {
         setting->val.str = calloc(strlen((char *)value)+1, sizeof(char));
+        setting->len = strlen((char *)value);
         setting->typeINI = STRING;
       }
-      if(strlen(setting->val.str) != strlen((char *)value)) {
-        setting->val.str = realloc(setting->val.str, strlen((char *)value) * sizeof(char));
+      if(setting->len != strlen((char *)value)) {
+        free(setting->val.str);
+        setting->val.str = calloc(strlen((char *)value)+1, sizeof(char));
+        setting->len = strlen((char *)value);
       }
       if(!(setting->val.str)) { return INI_OUT_OF_MEMORY; }
-      setting->len = strlen((char *)value);
       strncpy(setting->val.str, (char *)value, setting->len); 
       return INI_NIL;
     case INT_ARRAY:
       if(setting->typeINI == UNINITIALIZED) {
-        setting->val.iarr = malloc(sizeof(int) * 1);
+        setting->val.iarr = malloc(sizeof(int) * ++setting->len);
         setting->typeINI = INT_ARRAY;
       }
       if(index == setting->len) {
@@ -248,7 +251,7 @@ static errINI_t settingSet(setting_t *setting, int index, typeINI_t typeINI, voi
       return INI_NIL;
     case FLOAT_ARRAY:
       if(setting->typeINI == UNINITIALIZED) {
-        setting->val.farr = malloc(sizeof(float) * 1);
+        setting->val.farr = malloc(sizeof(float) * ++setting->len);
         setting->typeINI = FLOAT_ARRAY;
       }
       if(index == setting->len) {
@@ -258,8 +261,9 @@ static errINI_t settingSet(setting_t *setting, int index, typeINI_t typeINI, voi
       setting->val.farr[index] = *(float *)value;
       return INI_NIL;
     case BOOL_ARRAY:
+      if(*(int *)value != 0 && *(int *)value != 1) { return INI_INVALID_VALUE; }
       if(setting->typeINI == UNINITIALIZED) {
-        setting->val.barr = malloc(sizeof(int) * 1);
+        setting->val.barr = malloc(sizeof(int) * ++setting->len);
         setting->typeINI = BOOL_ARRAY;
       }
       if(index == setting->len) {
@@ -270,7 +274,7 @@ static errINI_t settingSet(setting_t *setting, int index, typeINI_t typeINI, voi
       return INI_NIL;
     case CHAR_ARRAY:
       if(setting->typeINI == UNINITIALIZED) {
-        setting->val.carr = malloc(sizeof(char) * 1);
+        setting->val.carr = malloc(sizeof(char) * ++setting->len);
         setting->typeINI = CHAR_ARRAY;
       }
       if(index == setting->len) {
@@ -282,12 +286,15 @@ static errINI_t settingSet(setting_t *setting, int index, typeINI_t typeINI, voi
     case STRING_ARRAY:
       if(setting->typeINI == UNINITIALIZED) {
         setting->val.sarr = calloc(++setting->len, sizeof(char *));
+        setting->val.sarr[0] = NULL;
         setting->typeINI = STRING_ARRAY;
       }
       if(index == setting->len) {
         setting->val.sarr = realloc(setting->val.sarr, sizeof(char *) * ++setting->len);
+        setting->val.sarr[index] = NULL;
       }
       if(!(setting->val.sarr)) { return INI_OUT_OF_MEMORY; }
+      free(setting->val.sarr[index]);
       setting->val.sarr[index] = calloc(strlen((char *)value)+1, sizeof(char));
       if(!(setting->val.sarr[index])) { return INI_OUT_OF_MEMORY; }
       strncpy(setting->val.sarr[index], (char *)value, strlen((char *)value));
@@ -325,7 +332,7 @@ const char *strErrINI(errINI_t errINI) {
     case INI_NIL_VALUE: return "nil value";
     case INI_NIL_SECTION: return "nil section";
     case INI_NIL_OPTIONS: return "nil options";
-    case INI_NIL_SETTING: return "nil settings";
+    case INI_NIL_SETTING: return "nil setting";
     case INI_NIL_TYPE: return "nil type";
     case INI_NIL_LENGTH: return "nil length";
     case INI_NIL: return "";
@@ -527,7 +534,7 @@ errINI_t writeINI(ini_t *ini, char *fname) {
           fprintf(fp, "%i\n", setting->val.i);
           break;
         case FLOAT:
-          fprintf(fp, "%f\n", setting->val.f);
+          fprintf(fp, "%01.2f\n", setting->val.f);
           break;
         case BOOL:
           fprintf(fp, setting->val.b ? "true\n" : "false\n");
@@ -541,21 +548,21 @@ errINI_t writeINI(ini_t *ini, char *fname) {
         case INT_ARRAY:
           fprintf(fp, "{");
           for(k = 0; k < setting->len; k++) {
-            fprintf(fp, (k < setting->len-1) ? "%i, " : "%i", setting->val.i);
+            fprintf(fp, (k < setting->len-1) ? "%i, " : "%i", setting->val.iarr[k]);
           }
           fprintf(fp, "}\n");
           break;
         case FLOAT_ARRAY:
           fprintf(fp, "{");
           for(k = 0; k < setting->len; k++) {
-            fprintf(fp, (k < setting->len-1) ? "%f, " : "%f", setting->val.f);
+            fprintf(fp, (k < setting->len-1) ? "%f, " : "%f", setting->val.farr[k]);
           }
           fprintf(fp, "}\n");
           break;
         case BOOL_ARRAY:
           fprintf(fp, "{");
           for(k = 0; k < setting->len; k++) {
-            fprintf(fp, setting->val.b ? "true" : "false");
+            fprintf(fp, setting->val.barr[k] ? "true" : "false");
             fprintf(fp, (k < setting->len-1) ? ", " : "");
           }
           fprintf(fp, "}\n");
@@ -563,14 +570,14 @@ errINI_t writeINI(ini_t *ini, char *fname) {
         case CHAR_ARRAY:
           fprintf(fp, "{");
           for(k = 0; k < setting->len; k++) {
-            fprintf(fp, (k < setting->len-1) ? "'%c', " : "'%c'", setting->val.c);
+            fprintf(fp, (k < setting->len-1) ? "'%c', " : "'%c'", setting->val.carr[k]);
           }
           fprintf(fp, "}\n");
           break;
         case STRING_ARRAY:
           fprintf(fp, "{");
           for(k = 0; k < setting->len; k++) {
-            fprintf(fp, (k < setting->len-1) ? "\"%s\", " : "\"%s\"", setting->val.str);
+            fprintf(fp, (k < setting->len-1) ? "\"%s\", " : "\"%s\"", setting->val.sarr[k]);
           }
           fprintf(fp, "}\n");
           break;
