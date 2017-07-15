@@ -2,7 +2,7 @@
  * FILE:    testDNA.c                                                         *
  * AUTHOR:  Ryan Rozanski                                                     *
  * CREATED: 6/3/17                                                            *
- * EDITED:  7/3/17                                                            *
+ * EDITED:  7/15/17                                                           *
  * INFO:    Test file for implementation of the interface located in dna.h.   *
  *                                                                            *
  ******************************************************************************/
@@ -203,6 +203,9 @@ testResultDNA_t testSetFitnessNilFitness() {
   if(errDNA != DNA_NIL) { return DNA_FAIL; }
 
   errDNA = setFitness(dna, NULL);
+
+  freeDNA(dna);
+
   return (errDNA != DNA_NIL_FITNESS) ?  DNA_FAIL : DNA_PASS;
 }
 
@@ -226,6 +229,9 @@ testResultDNA_t testSetFitnessValid() {
   if(errDNA != DNA_NIL) { return DNA_FAIL; }
 
   errDNA = setFitness(dna, testFitness);
+
+  freeDNA(dna);
+
   return (errDNA != DNA_NIL) ?  DNA_FAIL : DNA_PASS;
 }
 
@@ -245,6 +251,9 @@ testResultDNA_t testGetFitnessNilId() {
 
   int fitness;
   errDNA = getFitness(dna, NULL, &fitness);
+
+  freeDNA(dna);
+
   return (errDNA != DNA_NIL_ID) ?  DNA_FAIL : DNA_PASS;
 }
 
@@ -256,6 +265,9 @@ testResultDNA_t testGetFitnessNilFitnessDest() {
   if(errDNA != DNA_NIL) { return DNA_FAIL; }
 
   errDNA = getFitness(dna, "foo", NULL);
+
+  freeDNA(dna);
+
   return (errDNA != DNA_NIL_FITNESS_INT) ?  DNA_FAIL : DNA_PASS;
 }
 
@@ -268,6 +280,9 @@ testResultDNA_t testGetFitnessNilFitness() {
 
   int fitness;
   errDNA = getFitness(dna, "foo", &fitness);
+
+  freeDNA(dna);
+
   return (errDNA != DNA_NIL_FITNESS) ?  DNA_FAIL : DNA_PASS;
 }
 
@@ -283,6 +298,9 @@ testResultDNA_t testGetFitnessInvalidId() {
 
   int fitness;
   errDNA = getFitness(dna, "foobarber", &fitness);
+
+  freeDNA(dna);
+
   return (errDNA != DNA_INVALID_ID) ?  DNA_FAIL : DNA_PASS;
 }
 
@@ -298,6 +316,9 @@ testResultDNA_t testGetFitnessValid() {
 
   int fitness = 10;
   errDNA = getFitness(dna, "foo", &fitness);
+
+  freeDNA(dna);
+
   return (errDNA != DNA_NIL || fitness) ?  DNA_FAIL : DNA_PASS;
 }
 
@@ -314,6 +335,9 @@ testResultDNA_t testSetMutationInvalidBounds() {
   if(errDNA != DNA_NIL) { return DNA_FAIL; }
 
   errDNA = setMutation(dna, 10, 5, 0.0);
+
+  freeDNA(dna);
+
   return (errDNA != DNA_INVALID_BOUNDS) ?  DNA_FAIL : DNA_PASS;
 }
 
@@ -325,6 +349,9 @@ testResultDNA_t testSetMutationInvalidRate() {
   if(errDNA != DNA_NIL) { return DNA_FAIL; }
 
   errDNA = setMutation(dna, 1, 5, 1000.0);
+
+  freeDNA(dna);
+
   return (errDNA != DNA_INVALID_RATE) ?  DNA_FAIL : DNA_PASS;
 }
 
@@ -336,6 +363,9 @@ testResultDNA_t testSetMutationValid() {
   if(errDNA != DNA_NIL) { return DNA_FAIL; }
 
   errDNA = setMutation(dna, 0, 50, 0.0);
+
+  freeDNA(dna);
+
   return (errDNA != DNA_NIL) ?  DNA_FAIL : DNA_PASS;
 }
 
@@ -358,6 +388,9 @@ testResultDNA_t testGetMutationNilLowerBound() {
   float rate;
 
   errDNA = getMutation(dna, NULL, &ubound, &rate);
+
+  freeDNA(dna);
+
   return (errDNA != DNA_NIL_LBOUND) ?  DNA_FAIL : DNA_PASS;
 }
 
@@ -372,6 +405,9 @@ testResultDNA_t testGetMutationNilUpperBound() {
   float rate;
 
   errDNA = getMutation(dna, &lbound, NULL, &rate);
+
+  freeDNA(dna);
+
   return (errDNA != DNA_NIL_UBOUND) ?  DNA_FAIL : DNA_PASS;
 }
 
@@ -385,6 +421,9 @@ testResultDNA_t testGetMutationNilRate() {
   int lbound, ubound;
 
   errDNA = getMutation(dna, &lbound, &ubound, NULL);
+
+  freeDNA(dna);
+
   return (errDNA != DNA_NIL_RATE) ?  DNA_FAIL : DNA_PASS;
 }
 
@@ -401,6 +440,9 @@ testResultDNA_t testGetMutationValid() {
   lbound = ubound = 10;
   rate = 10.0;
   errDNA = getMutation(dna, &lbound, &ubound, &rate);
+
+  freeDNA(dna);
+
   return (errDNA != DNA_NIL || ubound || lbound || rate != 0.0) ?  DNA_FAIL : DNA_PASS;
 }
 
@@ -417,6 +459,9 @@ testResultDNA_t testSetElitismInvalidElitism() {
   if(errDNA != DNA_NIL) { return DNA_FAIL; }
 
   errDNA = setElitism(dna, 2, 0.0);
+
+  freeDNA(dna);
+
   return (errDNA != DNA_INVALID_ELITISM) ?  DNA_FAIL : DNA_PASS;
 }
 
@@ -428,6 +473,9 @@ testResultDNA_t testSetElitismInvalidPercent() {
   if(errDNA != DNA_NIL) { return DNA_FAIL; }
 
   errDNA = setElitism(dna, 1, -1.0);
+
+  freeDNA(dna);
+
   return (errDNA != DNA_INVALID_PERCENT) ?  DNA_FAIL : DNA_PASS;
 }
 
@@ -439,6 +487,9 @@ testResultDNA_t testSetElitismValid() {
   if(errDNA != DNA_NIL) { return DNA_FAIL; }
 
   errDNA = setElitism(dna, 1, 11.0);
+
+  freeDNA(dna);
+
   return (errDNA != DNA_NIL) ?  DNA_FAIL : DNA_PASS;
 }
 
@@ -460,6 +511,9 @@ testResultDNA_t testGetElitismNilElitism() {
   float percent;
 
   errDNA = getElitism(dna, NULL, &percent);
+
+  freeDNA(dna);
+
   return (errDNA != DNA_NIL_ELITISM) ?  DNA_FAIL : DNA_PASS;
 }
 
@@ -473,6 +527,9 @@ testResultDNA_t testGetElitismNilPercent() {
   int elitism;
 
   errDNA = getElitism(dna, &elitism, NULL);
+
+  freeDNA(dna);
+
   return (errDNA != DNA_NIL_PERCENT) ?  DNA_FAIL : DNA_PASS;
 }
 
@@ -487,6 +544,9 @@ testResultDNA_t testGetElitismValid() {
   float percent = 10.0;
 
   errDNA = getElitism(dna, &elitism, &percent);
+
+  freeDNA(dna);
+
   return (errDNA != DNA_NIL || elitism || percent != 0.0) ?  DNA_FAIL : DNA_PASS;
 }
 
@@ -507,6 +567,9 @@ testResultDNA_t testSetStrandNilID() {
   int strand[5] = {0, 1, 2, 3, 4};
 
   errDNA = setStrand(dna, NULL, strand, 5);
+
+  freeDNA(dna);
+
   return (errDNA != DNA_NIL_ID) ?  DNA_FAIL : DNA_PASS;
 }
 
@@ -518,6 +581,9 @@ testResultDNA_t testSetStrandNilStrand() {
   if(errDNA != DNA_NIL) { return DNA_FAIL; }
 
   errDNA = setStrand(dna, "foo", NULL, 5);
+
+  freeDNA(dna);
+
   return (errDNA != DNA_NIL_STRAND) ?  DNA_FAIL : DNA_PASS;
 }
 
@@ -531,6 +597,9 @@ testResultDNA_t testSetStrandInvalidTraits() {
   int strand[5] = {0, 1, 2, 3, 4};
 
   errDNA = setStrand(dna, "foo", strand, 6);
+
+  freeDNA(dna);
+
   return (errDNA != DNA_INVALID_TRAITS) ?  DNA_FAIL : DNA_PASS;
 }
 
@@ -544,6 +613,9 @@ testResultDNA_t testSetStrandInvalidID() {
   int strand[5] = {0, 1, 2, 3, 4};
 
   errDNA = setStrand(dna, "foobarber", strand, 5);
+
+  freeDNA(dna);
+
   return (errDNA != DNA_INVALID_ID) ?  DNA_FAIL : DNA_PASS;
 }
 
@@ -557,6 +629,9 @@ testResultDNA_t testSetStrandValid() {
   int strand[5] = {0, 1, 2, 3, 4};
 
   errDNA = setStrand(dna, "foo", strand, 5);
+
+  freeDNA(dna);
+
   return (errDNA != DNA_NIL) ?  DNA_FAIL : DNA_PASS;
 }
 
@@ -580,6 +655,9 @@ testResultDNA_t testGetStrandNilID() {
   int strand[5] = {0, 0, 0, 0, 0};
 
   errDNA = getStrand(dna, NULL, strand, &traits);
+
+  freeDNA(dna);
+
   return (errDNA != DNA_NIL_ID) ?  DNA_FAIL : DNA_PASS;
 }
 
@@ -593,6 +671,9 @@ testResultDNA_t testGetStrandNilStrand() {
   int traits = 5;
 
   errDNA = getStrand(dna, "foo", NULL, &traits);
+
+  freeDNA(dna);
+
   return (errDNA != DNA_NIL_STRAND) ?  DNA_FAIL : DNA_PASS;
 }
 
@@ -606,6 +687,9 @@ testResultDNA_t testGetStrandNilTraits() {
   int strand[5] = {0, 0, 0, 0, 0};
 
   errDNA = getStrand(dna, "foo", strand, NULL);
+
+  freeDNA(dna);
+
   return (errDNA != DNA_NIL_TRAITS) ?  DNA_FAIL : DNA_PASS;
 }
 
@@ -620,6 +704,9 @@ testResultDNA_t testGetStrandInvalidId() {
   int strand[5] = {0, 0, 0, 0, 0};
 
   errDNA = getStrand(dna, "\0\0\0", strand, &traits);
+
+  freeDNA(dna);
+
   return (errDNA != DNA_INVALID_ID) ?  DNA_FAIL : DNA_PASS;
 }
 
@@ -637,6 +724,8 @@ testResultDNA_t testGetStrandValid() {
   if(errDNA != DNA_NIL || traits != 5) { return DNA_FAIL; }
 
   for(; traits; traits--) { if(strand[traits-1]) { return DNA_FAIL; } }
+
+  freeDNA(dna);
 
   return DNA_PASS;
 }
@@ -658,6 +747,9 @@ testResultDNA_t testGetChromosomesNilStrand() {
   int traits;
 
   errDNA = getChromosomes(dna, NULL, &traits);
+
+  freeDNA(dna);
+
   return (errDNA != DNA_NIL_STRAND) ?  DNA_FAIL : DNA_PASS;
 }
 
@@ -671,6 +763,9 @@ testResultDNA_t testGetChromosomesNilTraits() {
   int strands;
 
   errDNA = getChromosomes(dna, &strands, NULL);
+
+  freeDNA(dna);
+
   return (errDNA != DNA_NIL_TRAITS) ?  DNA_FAIL : DNA_PASS;
 }
 
@@ -685,6 +780,9 @@ testResultDNA_t testGetChromosomesValid() {
   strands = traits = 0;
 
   errDNA = getChromosomes(dna, &strands, &traits);
+
+  freeDNA(dna);
+
   return (errDNA != DNA_NIL || strands != 3 || traits != 5) ?  DNA_FAIL : DNA_PASS;
 }
 
@@ -703,6 +801,9 @@ testResultDNA_t testGetIDsNilIDs() {
   if(errDNA != DNA_NIL) { return DNA_FAIL; }
 
   errDNA = getIDs(dna, NULL);
+
+  freeDNA(dna);
+
   return (errDNA != DNA_NIL_IDS) ?  DNA_FAIL : DNA_PASS;
 }
 
@@ -726,6 +827,8 @@ testResultDNA_t testGetIDsValid() {
   if(strcmp(ids[1], ids_cpy[1])) { return DNA_FAIL; }
   if(strcmp(ids[2], ids_cpy[2])) { return DNA_FAIL; }
 
+  freeDNA(dna);
+
   return DNA_PASS;
 }
 
@@ -748,6 +851,9 @@ testResultDNA_t testCrossoverNilFather() {
   int child[5];
 
   errDNA = crossover(dna, NULL, "mother", child, &traits);
+
+  freeDNA(dna);
+
   return (errDNA != DNA_NIL_FATHER) ?  DNA_FAIL : DNA_PASS;
 }
 
@@ -762,6 +868,9 @@ testResultDNA_t testCrossoverNilMother() {
   int child[5];
   
   errDNA = crossover(dna, "father", NULL, child, &traits);
+
+  freeDNA(dna);
+
   return (errDNA != DNA_NIL_MOTHER) ?  DNA_FAIL : DNA_PASS;
 }
 
@@ -775,6 +884,9 @@ testResultDNA_t testCrossoverNilChild() {
   int traits;
   
   errDNA = crossover(dna, "father", "mother", NULL, &traits);
+
+  freeDNA(dna);
+
   return (errDNA != DNA_NIL_CHILD) ?  DNA_FAIL : DNA_PASS;
 }
 
@@ -788,6 +900,9 @@ testResultDNA_t testCrossoverNilTraits() {
   int child[5];
   
   errDNA = crossover(dna, "father", "mother", child, NULL);
+
+  freeDNA(dna);
+
   return (errDNA != DNA_NIL_TRAITS) ?  DNA_FAIL : DNA_PASS;
 }
 
@@ -802,6 +917,9 @@ testResultDNA_t testCrossoverInvalidID() {
   int child[5];
   
   errDNA = crossover(dna, "father", "mother", child, &traits);
+
+  freeDNA(dna);
+
   return (errDNA != DNA_INVALID_ID) ?  DNA_FAIL : DNA_PASS;
 }
 
@@ -816,6 +934,9 @@ testResultDNA_t testCrossoverInvalidParents() {
   int child[5];
   
   errDNA = crossover(dna, "foo", "foo", child, &traits);
+
+  freeDNA(dna);
+
   return (errDNA != DNA_INVALID_PARENTS) ?  DNA_FAIL : DNA_PASS;
 }
 
@@ -845,6 +966,8 @@ testResultDNA_t testCrossoverValid() {
   // NOTE: small chance of false failure here. basically want to make sure we
   // got traits from both parents.
   if(!sum || sum == 15) { return DNA_FAIL; }
+
+  freeDNA(dna);
   
   return DNA_PASS;
 }
@@ -862,6 +985,9 @@ testResultDNA_t testMutateNilID() {
   if(errDNA != DNA_NIL) { return DNA_FAIL; }
 
   errDNA = mutate(dna, NULL);
+
+  freeDNA(dna);
+
   return (errDNA != DNA_NIL_ID) ?  DNA_FAIL : DNA_PASS;
 }
 
@@ -873,6 +999,9 @@ testResultDNA_t testMutateInvalidID() {
   if(errDNA != DNA_NIL) { return DNA_FAIL; }
 
   errDNA = mutate(dna, "foobarber");
+
+  freeDNA(dna);
+
   return (errDNA != DNA_INVALID_ID) ?  DNA_FAIL : DNA_PASS;
 }
 
@@ -897,6 +1026,8 @@ testResultDNA_t testMutateValid() {
   if(errDNA != DNA_NIL) { return DNA_FAIL; }
 
   for(; traits; traits--) { if(!strand[traits-1]) { return DNA_FAIL; } }
+
+  freeDNA(dna);
 
   return DNA_PASS;
 }
@@ -972,6 +1103,8 @@ testResultDNA_t testNextGenerationValid() {
   }
 
   if(zeros != 1) { return DNA_FAIL; }
+
+  freeDNA(dna);
 
   return DNA_PASS;
 }

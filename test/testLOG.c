@@ -2,7 +2,7 @@
  * FILE:    testLOG.c                                                         *
  * AUTHOR:  Ryan Rozanski                                                     *
  * CREATED: 6/3/17                                                            *
- * EDITED:  7/3/17                                                            *
+ * EDITED:  7/15/17                                                           *
  * INFO:    Test file for implementation of the interface located in log.h.   *
  *                                                                            *
  ******************************************************************************/
@@ -219,6 +219,8 @@ testResultLOG_t testLogTitleNilTitle() {
   remove("logs/log.txt");
   remove("logs");
 
+  freeLOG(log);
+
   return (errLOG == LOG_NIL_TITLE) ? LOG_PASS : LOG_FAIL;
 }
 
@@ -262,12 +264,14 @@ testResultLOG_t testLogTitleValid() {
   remove("logs/logtitle.txt");
   remove("logs");
   fclose(fp);
+  freeLOG(log);
   return LOG_PASS;
 
 FAIL:
   remove("logs/logtitle.txt");
   remove("logs");
   fclose(fp);
+  freeLOG(log);
   return LOG_FAIL;
 }
 
@@ -286,6 +290,8 @@ testResultLOG_t testLogHeaderNilHeader() {
 
   remove("logs/log.txt");
   remove("logs");
+
+  freeLOG(log);
 
   return (errLOG == LOG_NIL_HEADER) ? LOG_PASS : LOG_FAIL;
 }
@@ -319,12 +325,14 @@ testResultLOG_t testLogHeaderValid() {
 
   remove("logs/logheader.txt");
   remove("logs");
+  freeLOG(log);
   fclose(fp);
   return LOG_PASS;
 
 FAIL:
   remove("logs/logheader.txt");
   remove("logs");
+  freeLOG(log);
   fclose(fp);
   return LOG_FAIL;
 }
@@ -344,6 +352,8 @@ testResultLOG_t testLogSectionNilSection() {
 
   remove("logs/log.txt");
   remove("logs");
+
+  freeLOG(log);
 
   return (errLOG == LOG_NIL_SECTION) ? LOG_PASS : LOG_FAIL;
 }
@@ -369,12 +379,14 @@ testResultLOG_t testLogSectionValid() {
 
   remove("logs/logsection.txt");
   remove("logs");
+  freeLOG(log);
   fclose(fp);
   return LOG_PASS;
 
 FAIL:
   remove("logs/logsection.txt");
   remove("logs");
+  freeLOG(log);
   fclose(fp);
   return LOG_FAIL;
 }
@@ -394,6 +406,8 @@ testResultLOG_t testLogEventInvalidTimestamp() {
 
   remove("logs/log.txt");
   remove("logs");
+
+  freeLOG(log);
 
   return (errLOG == LOG_INVALID_TIMESTAMP) ? LOG_PASS : LOG_FAIL;
 }
@@ -418,12 +432,14 @@ testResultLOG_t testLogEventValid() {
 
   remove("logs/logevent.txt");
   remove("logs");
+  freeLOG(log);
   fclose(fp);
   return LOG_PASS;
 
 FAIL:
   remove("logs/logevent.txt");
   remove("logs");
+  freeLOG(log);
   fclose(fp);
   return LOG_FAIL;
 }
@@ -444,6 +460,8 @@ testResultLOG_t testIntSettingNilKey() {
   remove("logs/log.txt");
   remove("logs");
 
+  freeLOG(log);
+
   return (errLOG == LOG_NIL_KEY) ? LOG_PASS : LOG_FAIL;
 }
 
@@ -461,6 +479,8 @@ testResultLOG_t testIntSettingInvalidKey() {
 
   remove("logs/log.txt");
   remove("logs");
+  
+  freeLOG(log);
 
   return (errLOG == LOG_INVALID_KEY) ? LOG_PASS : LOG_FAIL;
 }
@@ -489,12 +509,14 @@ testResultLOG_t testIntSettingValid() {
 
   remove("logs/logintsetting.txt");
   remove("logs");
+  freeLOG(log);
   fclose(fp);
   return LOG_PASS;
 
 FAIL:
   remove("logs/logintsetting.txt");
   remove("logs");
+  freeLOG(log);
   fclose(fp);
   return LOG_FAIL;
 }
@@ -517,6 +539,8 @@ testResultLOG_t testIntArrayNilArray() {
   remove("logs/log.txt");
   remove("logs");
 
+  freeLOG(log);
+
   return (errLOG == LOG_NIL_ARR) ? LOG_PASS : LOG_FAIL;
 }
 
@@ -532,6 +556,8 @@ testResultLOG_t testIntArrayInvalidSize() {
 
   remove("logs/log.txt");
   remove("logs");
+
+  freeLOG(log);
 
   return (errLOG == LOG_INVALID_ARR_SIZE) ? LOG_PASS : LOG_FAIL;
 }
@@ -559,12 +585,14 @@ testResultLOG_t testIntArrayValid() {
 
   remove("logs/logintarr.txt");
   remove("logs");
+  freeLOG(log);
   fclose(fp);
   return LOG_PASS;
 
 FAIL:
   remove("logs/logintarr.txt");
   remove("logs");
+  freeLOG(log);
   fclose(fp);
   return LOG_FAIL;
 }
@@ -587,6 +615,8 @@ testResultLOG_t testIntMatrixNilMatrix() {
   remove("logs/log.txt");
   remove("logs");
 
+  freeLOG(log);
+
   return (errLOG == LOG_NIL_MATRIX) ? LOG_PASS : LOG_FAIL;
 }
 
@@ -603,6 +633,8 @@ testResultLOG_t testIntMatrixInvalidRowSize() {
   remove("logs/log.txt");
   remove("logs");
 
+  freeLOG(log);
+
   return (errLOG == LOG_INVALID_ROW_SIZE) ? LOG_PASS : LOG_FAIL;
 }
 
@@ -618,6 +650,8 @@ testResultLOG_t testIntMatrixInvalidColumnSize() {
 
   remove("logs/log.txt");
   remove("logs");
+
+  freeLOG(log);
 
   return (errLOG == LOG_INVALID_COL_SIZE) ? LOG_PASS : LOG_FAIL;
 }
@@ -659,12 +693,14 @@ testResultLOG_t testIntMatrixValid() {
 
   remove("logs/logintmatrix.txt");
   remove("logs");
+  freeLOG(log);
   fclose(fp);
   return LOG_PASS;
 
 FAIL:
   remove("logs/logintmatrix.txt");
   remove("logs");
+  freeLOG(log);
   fclose(fp);
   return LOG_FAIL;
 }
@@ -685,6 +721,8 @@ testResultLOG_t testFloatSettingNilKey() {
   remove("logs/log.txt");
   remove("logs");
 
+  freeLOG(log);
+
   return (errLOG == LOG_NIL_KEY) ? LOG_PASS : LOG_FAIL;
 }
 
@@ -702,6 +740,8 @@ testResultLOG_t testFloatSettingInvalidKey() {
 
   remove("logs/log.txt");
   remove("logs");
+
+  freeLOG(log);
 
   return (errLOG == LOG_INVALID_KEY) ? LOG_PASS : LOG_FAIL;
 }
@@ -730,12 +770,14 @@ testResultLOG_t testFloatSettingValid() {
 
   remove("logs/logfloatsetting.txt");
   remove("logs");
+  freeLOG(log);
   fclose(fp);
   return LOG_PASS;
 
 FAIL:
   remove("logs/logfloatsetting.txt");
   remove("logs");
+  freeLOG(log);
   fclose(fp);
   return LOG_FAIL;
 }
@@ -758,6 +800,8 @@ testResultLOG_t testFloatArrayNilArray() {
   remove("logs/log.txt");
   remove("logs");
 
+  freeLOG(log);
+
   return (errLOG == LOG_NIL_ARR) ? LOG_PASS : LOG_FAIL;
 }
 
@@ -773,6 +817,8 @@ testResultLOG_t testFloatArrayInvalidSize() {
 
   remove("logs/log.txt");
   remove("logs");
+
+  freeLOG(log);
 
   return (errLOG == LOG_INVALID_ARR_SIZE) ? LOG_PASS : LOG_FAIL;
 }
@@ -801,12 +847,14 @@ testResultLOG_t testFloatArrayValid() {
 
   remove("logs/logfloatarr.txt");
   remove("logs");
+  freeLOG(log);
   fclose(fp);
   return LOG_PASS;
 
 FAIL:
   remove("logs/logfloatarr.txt");
   remove("logs");
+  freeLOG(log);
   fclose(fp);
   return LOG_FAIL;
 }
@@ -829,6 +877,8 @@ testResultLOG_t testFloatMatrixNilMatrix() {
   remove("logs/log.txt");
   remove("logs");
 
+  freeLOG(log);
+
   return (errLOG == LOG_NIL_MATRIX) ? LOG_PASS : LOG_FAIL;
 }
 
@@ -844,6 +894,8 @@ testResultLOG_t testFloatMatrixInvalidRowSize() {
 
   remove("logs/log.txt");
   remove("logs");
+
+  freeLOG(log);
 
   return (errLOG == LOG_INVALID_ROW_SIZE) ? LOG_PASS : LOG_FAIL;
 }
@@ -861,6 +913,8 @@ testResultLOG_t testFloatMatrixInvalidColumnSize() {
 
   remove("logs/log.txt");
   remove("logs");
+
+  freeLOG(log);
 
   return (errLOG == LOG_INVALID_COL_SIZE) ? LOG_PASS : LOG_FAIL;
 }
@@ -898,12 +952,14 @@ testResultLOG_t testFloatMatrixValid() {
 
   remove("logs/logfloatmatrix.txt");
   remove("logs");
+  freeLOG(log);
   fclose(fp);
   return LOG_PASS;
 
 FAIL:
   remove("logs/logfloatmatrix.txt");
   remove("logs");
+  freeLOG(log);
   fclose(fp);
   return LOG_FAIL;
 }
@@ -924,6 +980,8 @@ testResultLOG_t testBoolSettingNilKey() {
   remove("logs/log.txt");
   remove("logs");
 
+  freeLOG(log);
+
   return (errLOG == LOG_NIL_KEY) ? LOG_PASS : LOG_FAIL;
 }
 
@@ -941,6 +999,8 @@ testResultLOG_t testBoolSettingInvalidKey() {
 
   remove("logs/log.txt");
   remove("logs");
+
+  freeLOG(log);
 
   return (errLOG == LOG_INVALID_KEY) ? LOG_PASS : LOG_FAIL;
 }
@@ -969,12 +1029,14 @@ testResultLOG_t testBoolSettingValid() {
 
   remove("logs/logboolsetting.txt");
   remove("logs");
+  freeLOG(log);
   fclose(fp);
   return LOG_PASS;
 
 FAIL:
   remove("logs/logboolsetting.txt");
   remove("logs");
+  freeLOG(log);
   fclose(fp);
   return LOG_FAIL;
 }
@@ -997,6 +1059,8 @@ testResultLOG_t testBoolArrayNilArray() {
   remove("logs/log.txt");
   remove("logs");
 
+  freeLOG(log);
+
   return (errLOG == LOG_NIL_ARR) ? LOG_PASS : LOG_FAIL;
 }
 
@@ -1012,6 +1076,8 @@ testResultLOG_t testBoolArrayInvalidSize() {
 
   remove("logs/log.txt");
   remove("logs");
+
+  freeLOG(log);
 
   return (errLOG == LOG_INVALID_ARR_SIZE) ? LOG_PASS : LOG_FAIL;
 }
@@ -1046,12 +1112,14 @@ testResultLOG_t testBoolArrayValid() {
 
   remove("logs/logboolarr.txt");
   remove("logs");
+  freeLOG(log);
   fclose(fp);
   return LOG_PASS;
 
 FAIL:
   remove("logs/logboolarr.txt");
   remove("logs");
+  freeLOG(log);
   fclose(fp);
   return LOG_FAIL;
 }
@@ -1074,6 +1142,8 @@ testResultLOG_t testBoolMatrixNilMatrix() {
   remove("logs/log.txt");
   remove("logs");
 
+  freeLOG(log);
+
   return (errLOG == LOG_NIL_MATRIX) ? LOG_PASS : LOG_FAIL;
 }
 
@@ -1090,6 +1160,8 @@ testResultLOG_t testBoolMatrixInvalidRowSize() {
   remove("logs/log.txt");
   remove("logs");
 
+  freeLOG(log);
+
   return (errLOG == LOG_INVALID_ROW_SIZE) ? LOG_PASS : LOG_FAIL;
 }
 
@@ -1105,6 +1177,8 @@ testResultLOG_t testBoolMatrixInvalidColumnSize() {
 
   remove("logs/log.txt");
   remove("logs");
+
+  freeLOG(log);
 
   return (errLOG == LOG_INVALID_COL_SIZE) ? LOG_PASS : LOG_FAIL;
 }
@@ -1146,12 +1220,14 @@ testResultLOG_t testBoolMatrixValid() {
 
   remove("logs/logboolmatrix.txt");
   remove("logs");
+  freeLOG(log);
   fclose(fp);
   return LOG_PASS;
 
 FAIL:
   remove("logs/logboolmatrix.txt");
   remove("logs");
+  freeLOG(log);
   fclose(fp);
   return LOG_FAIL;
 }
@@ -1172,6 +1248,8 @@ testResultLOG_t testCharSettingNilKey() {
   remove("logs/log.txt");
   remove("logs");
 
+  freeLOG(log);
+
   return (errLOG == LOG_NIL_KEY) ? LOG_PASS : LOG_FAIL;
 }
 
@@ -1189,6 +1267,8 @@ testResultLOG_t testCharSettingInvalidKey() {
 
   remove("logs/log.txt");
   remove("logs");
+
+  freeLOG(log);
 
   return (errLOG == LOG_INVALID_KEY) ? LOG_PASS : LOG_FAIL;
 }
@@ -1217,12 +1297,14 @@ testResultLOG_t testCharSettingValid() {
 
   remove("logs/logcharsetting.txt");
   remove("logs");
+  freeLOG(log);
   fclose(fp);
   return LOG_PASS;
 
 FAIL:
   remove("logs/logcharsetting.txt");
   remove("logs");
+  freeLOG(log);
   fclose(fp);
   return LOG_FAIL;
 }
@@ -1245,6 +1327,8 @@ testResultLOG_t testCharArrayNilArray() {
   remove("logs/log.txt");
   remove("logs");
 
+  freeLOG(log);
+
   return (errLOG == LOG_NIL_ARR) ? LOG_PASS : LOG_FAIL;
 }
 
@@ -1260,6 +1344,8 @@ testResultLOG_t testCharArrayInvalidSize() {
 
   remove("logs/log.txt");
   remove("logs");
+
+  freeLOG(log);
 
   return (errLOG == LOG_INVALID_ARR_SIZE) ? LOG_PASS : LOG_FAIL;
 }
@@ -1288,12 +1374,14 @@ testResultLOG_t testCharArrayValid() {
 
   remove("logs/logchararr.txt");
   remove("logs");
+  freeLOG(log);
   fclose(fp);
   return LOG_PASS;
 
 FAIL:
   remove("logs/logchararr.txt");
   remove("logs");
+  freeLOG(log);
   fclose(fp);
   return LOG_FAIL;
 }
@@ -1316,6 +1404,8 @@ testResultLOG_t testCharMatrixNilMatrix() {
   remove("logs/log.txt");
   remove("logs");
 
+  freeLOG(log);
+
   return (errLOG == LOG_NIL_MATRIX) ? LOG_PASS : LOG_FAIL;
 }
 
@@ -1332,6 +1422,8 @@ testResultLOG_t testCharMatrixInvalidRowSize() {
   remove("logs/log.txt");
   remove("logs");
 
+  freeLOG(log);
+
   return (errLOG == LOG_INVALID_ROW_SIZE) ? LOG_PASS : LOG_FAIL;
 }
 
@@ -1347,6 +1439,8 @@ testResultLOG_t testCharMatrixInvalidColumnSize() {
 
   remove("logs/log.txt");
   remove("logs");
+
+  freeLOG(log);
 
   return (errLOG == LOG_INVALID_COL_SIZE) ? LOG_PASS : LOG_FAIL;
 }
@@ -1384,12 +1478,14 @@ testResultLOG_t testCharMatrixValid() {
 
   remove("logs/logcharmatrix.txt");
   remove("logs");
+  freeLOG(log);
   fclose(fp);
   return LOG_PASS;
 
 FAIL:
   remove("logs/logcharmatrix.txt");
   remove("logs");
+  freeLOG(log);
   fclose(fp);
   return LOG_FAIL;
 }
@@ -1410,6 +1506,8 @@ testResultLOG_t testStringSettingNilKey() {
   remove("logs/log.txt");
   remove("logs");
 
+  freeLOG(log);
+
   return (errLOG == LOG_NIL_KEY) ? LOG_PASS : LOG_FAIL;
 }
 
@@ -1427,6 +1525,8 @@ testResultLOG_t testStringSettingInvalidKey() {
 
   remove("logs/log.txt");
   remove("logs");
+
+  freeLOG(log);
 
   return (errLOG == LOG_INVALID_KEY) ? LOG_PASS : LOG_FAIL;
 }
@@ -1455,12 +1555,14 @@ testResultLOG_t testStringSettingValid() {
 
   remove("logs/logstringsetting.txt");
   remove("logs");
+  freeLOG(log);
   fclose(fp);
   return LOG_PASS;
 
 FAIL:
   remove("logs/logstringsetting.txt");
   remove("logs");
+  freeLOG(log);
   fclose(fp);
   return LOG_FAIL;
 }
@@ -1483,6 +1585,8 @@ testResultLOG_t testStringArrayNilArray() {
   remove("logs/log.txt");
   remove("logs");
 
+  freeLOG(log);
+
   return (errLOG == LOG_NIL_ARR) ? LOG_PASS : LOG_FAIL;
 }
 
@@ -1498,6 +1602,8 @@ testResultLOG_t testStringArrayInvalidSize() {
 
   remove("logs/log.txt");
   remove("logs");
+
+  freeLOG(log);
 
   return (errLOG == LOG_INVALID_ARR_SIZE) ? LOG_PASS : LOG_FAIL;
 }
@@ -1526,12 +1632,14 @@ testResultLOG_t testStringArrayValid() {
 
   remove("logs/logstrarr.txt");
   remove("logs");
+  freeLOG(log);
   fclose(fp);
   return LOG_PASS;
 
 FAIL:
   remove("logs/logstrarr.txt");
   remove("logs");
+  freeLOG(log);
   fclose(fp);
   return LOG_FAIL;
 }
@@ -1554,6 +1662,8 @@ testResultLOG_t testStringMatrixNilMatrix() {
   remove("logs/log.txt");
   remove("logs");
 
+  freeLOG(log);
+
   return (errLOG == LOG_NIL_MATRIX) ? LOG_PASS : LOG_FAIL;
 }
 
@@ -1570,6 +1680,8 @@ testResultLOG_t testStringMatrixInvalidRowSize() {
   remove("logs/log.txt");
   remove("logs");
 
+  freeLOG(log);
+
   return (errLOG == LOG_INVALID_ROW_SIZE) ? LOG_PASS : LOG_FAIL;
 }
 
@@ -1585,6 +1697,8 @@ testResultLOG_t testStringMatrixInvalidColumnSize() {
 
   remove("logs/log.txt");
   remove("logs");
+
+  freeLOG(log);
 
   return (errLOG == LOG_INVALID_COL_SIZE) ? LOG_PASS : LOG_FAIL;
 }
@@ -1622,12 +1736,14 @@ testResultLOG_t testStringMatrixValid() {
 
   remove("logs/logstrmatrix.txt");
   remove("logs");
+  freeLOG(log);
   fclose(fp);
   return LOG_PASS;
 
 FAIL:
   remove("logs/logstrmatrix.txt");
   remove("logs");
+  freeLOG(log);
   fclose(fp);
   return LOG_FAIL;
 }

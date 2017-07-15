@@ -2,7 +2,7 @@
  * FILE:    testINI.c                                                         *
  * AUTHOR:  Ryan Rozanski                                                     *
  * CREATED: 6/3/17                                                            *
- * EDITED:  7/10/17                                                           *
+ * EDITED:  7/15/17                                                           *
  * INFO:    Test file for implementation of the interface located in ini.h.   *
  *                                                                            *
  ******************************************************************************/
@@ -22,7 +22,7 @@
  *   C O N S T A N T S                                                        *
  *                                                                            *
  ******************************************************************************/
-#define TOTAL_TESTS 186
+#define TOTAL_TESTS 188
 
 /******************************************************************************
  *                                                                            *
@@ -168,32 +168,121 @@ testResultINI_t testReadINIOpenFailure() {
   return (errINI == INI_OPEN_FAILURE) ? INI_PASS : INI_FAIL;
 }
 
-testResultINI_t testReadINIInvalidSection() { // TODO
-  // write to a file then read -- declare a var (like ini_const = "...")
-  return INI_FAIL;  
+testResultINI_t testReadININilSection() {
+  char *_ini = "[]\n"
+               "key=5\n";
+
+  char *tmpfile = "testReadININilSection.txt";
+  FILE *fp;
+
+  if(!(fp = fopen(tmpfile, "w"))) { return INI_FAIL; }
+  fprintf(fp, "%s", _ini);
+  fclose(fp);
+
+  ini_t *ini;
+
+  errINI_t errINI = readINI(&ini, tmpfile);
+
+  if(remove(tmpfile)) { return INI_FAIL; }
+
+  return (errINI == INI_NIL_SECTION) ? INI_PASS : INI_FAIL;
 }
 
-testResultINI_t testReadINIInvalidKey() { // TODO
-  return INI_FAIL;  
+testResultINI_t testReadINIInvalidSection() {
+  char *_ini = "[test Section 1]\n"
+               "string=\"foobarber\"\n";
+
+  char *tmpfile = "testReadINIInvalidSection.txt";
+  FILE *fp;
+
+  if(!(fp = fopen(tmpfile, "w"))) { return INI_FAIL; }
+  fprintf(fp, "%s", _ini);
+  fclose(fp);
+
+  ini_t *ini;
+
+  errINI_t errINI = readINI(&ini, tmpfile);
+
+  if(remove(tmpfile)) { return INI_FAIL; }
+
+  return (errINI == INI_INVALID_SECTION) ? INI_PASS : INI_FAIL;
+}
+
+testResultINI_t testReadININilKey() {
+  char *_ini = "[Section]\n"
+               "=5\n";
+
+  char *tmpfile = "testReadININilKey.txt";
+  FILE *fp;
+
+  if(!(fp = fopen(tmpfile, "w"))) { return INI_FAIL; }
+  fprintf(fp, "%s", _ini);
+  fclose(fp);
+
+  ini_t *ini;
+
+  errINI_t errINI = readINI(&ini, tmpfile);
+
+  if(remove(tmpfile)) { return INI_FAIL; }
+
+  return (errINI == INI_NIL_KEY) ? INI_PASS : INI_FAIL;
+}
+
+testResultINI_t testReadINIInvalidKey() {
+  char *_ini = "[testSection1]\n"
+               "floating point=19.45\n";
+
+  char *tmpfile = "testReadINIInvalidKey.txt";
+  FILE *fp;
+
+  if(!(fp = fopen(tmpfile, "w"))) { return INI_FAIL; }
+  fprintf(fp, "%s", _ini);
+  fclose(fp);
+
+  ini_t *ini;
+
+  errINI_t errINI = readINI(&ini, tmpfile);
+
+  if(remove(tmpfile)) { return INI_FAIL; }
+
+  return (errINI == INI_INVALID_KEY) ? INI_PASS : INI_FAIL;
 }
 
 testResultINI_t testReadINIInvalidArrayComma() { // TODO
-  // extra comma at end of array element
-  return INI_FAIL;  
+  return INI_FAIL;
 }
 
 testResultINI_t testReadINIInvalidArrayType() { // TODO
-  // array with more than one type in it
-  return INI_FAIL;  
+  return INI_FAIL;
 }
 
+// NOTE: this also acts like invalid char/bool too!
 testResultINI_t testReadINIInvalidString() { // TODO
-  // cannot delcare string without enclosing ""
-  return INI_FAIL;  
+  return INI_FAIL;
 }
 
-testResultINI_t testReadINIValid() { // TODO
-  return INI_FAIL;  
+testResultINI_t testReadINIValid() {
+  char *_ini = "[testSection1]\n"
+               "integer=5\n"
+               "floating point=19.45\n"
+               "boolean=true\n"
+               "character='r'\n"
+               "string=\"foobarber\"\n";
+
+  char *tmpfile = "testReadINIValid.txt";
+  FILE *fp;
+
+  if(!(fp = fopen(tmpfile, "w"))) { return INI_FAIL; }
+  fprintf(fp, "%s", _ini);
+  fclose(fp);
+
+  ini_t *ini;
+
+  errINI_t errINI = readINI(&ini, tmpfile);
+
+  if(remove(tmpfile)) { return INI_FAIL; }
+
+  return (errINI == INI_NIL) ? INI_PASS : INI_FAIL;
 }
 
 testResultINI_t testWriteININilINI() {
@@ -208,6 +297,9 @@ testResultINI_t testWriteININilFileName() {
   if(errINI != INI_NIL) { return INI_FAIL; }
 
   errINI = writeINI(ini, NULL);
+
+  freeINI(ini);
+
   return (errINI == INI_NIL_FNAME) ? INI_PASS : INI_FAIL;
 }
 
@@ -218,6 +310,9 @@ testResultINI_t testWriteINIOpenFailure() {
   if(errINI != INI_NIL) { return INI_FAIL; }
 
   errINI = writeINI(ini, "invalid/0foo.txt");
+
+  freeINI(ini);
+
   return (errINI == INI_OPEN_FAILURE) ? INI_PASS : INI_FAIL;
 }
 
@@ -231,6 +326,8 @@ testResultINI_t testWriteINIValid() {
 
   errINI = writeINI(ini, "testINI.txt");
   if(errINI != INI_NIL) { return INI_FAIL; }
+
+  freeINI(ini);
 
   return remove("testINI.txt") ? INI_FAIL : INI_PASS;
 }
@@ -249,6 +346,9 @@ testResultINI_t testGetConfigurationNilOptions() {
   if(errINI != INI_NIL) { return INI_FAIL; }
 
   errINI = getConfigurationINI(ini, NULL);
+
+  freeINI(ini);
+
   return (errINI == INI_NIL_OPTIONS) ? INI_PASS : INI_FAIL;
 }
 
@@ -261,6 +361,9 @@ testResultINI_t testGetConfigurationValid() {
   option_t options;
 
   errINI = getConfigurationINI(ini, &options);
+
+  freeINI(ini);
+
   return (errINI == INI_NIL) ? INI_PASS : INI_FAIL;
 }
 
@@ -278,6 +381,9 @@ testResultINI_t testSetConfigurationInvalidOptions() {
   option_t options = 0b10000001;
 
   errINI = setConfigurationINI(ini, options);
+
+  freeINI(ini);
+
   return (errINI == INI_INVALID_OPTIONS) ? INI_PASS : INI_FAIL;
 }
 
@@ -290,6 +396,9 @@ testResultINI_t testSetConfigurationValid() {
   option_t options = 0;
 
   errINI = setConfigurationINI(ini, options);
+
+  freeINI(ini);
+
   return (errINI == INI_NIL) ? INI_PASS : INI_FAIL;
 }
 
@@ -309,6 +418,9 @@ testResultINI_t testCreateSettingNilSection() {
   setting_t *setting;
 
   errINI = createSetting(ini, NULL, "key", &setting);
+
+  freeINI(ini);
+
   return (errINI == INI_NIL_SECTION) ? INI_PASS : INI_FAIL;
 }
 
@@ -321,6 +433,9 @@ testResultINI_t testCreateSettingNilKey() {
   setting_t *setting;
 
   errINI = createSetting(ini, "section", NULL, &setting);
+
+  freeINI(ini);
+
   return (errINI == INI_NIL_KEY) ? INI_PASS : INI_FAIL;
 }
 
@@ -331,6 +446,9 @@ testResultINI_t testCreateSettingNilSetting() {
   if(errINI != INI_NIL) { return INI_FAIL; }
 
   errINI = createSetting(ini, "section", "key", NULL);
+
+  freeINI(ini);
+
   return (errINI == INI_NIL_SETTING) ? INI_PASS : INI_FAIL;
 }
 
@@ -343,6 +461,9 @@ testResultINI_t testCreateSettingInvalidSection() {
   setting_t *setting;
 
   errINI = createSetting(ini, "sec tion", "key", &setting);
+
+  freeINI(ini);
+
   return (errINI == INI_INVALID_SECTION) ? INI_PASS : INI_FAIL;
 }
 
@@ -355,6 +476,9 @@ testResultINI_t testCreateSettingInvalidKey() {
   setting_t *setting;
 
   errINI = createSetting(ini, "section", "ke y", &setting);
+
+  freeINI(ini);
+
   return (errINI == INI_INVALID_KEY) ? INI_PASS : INI_FAIL;
 }
 
@@ -370,6 +494,9 @@ testResultINI_t testCreateSettingDuplicateSetting() {
   if(errINI != INI_NIL) { return INI_FAIL; }
 
   errINI = createSetting(ini, "section", "key", &setting);
+
+  freeINI(ini);
+
   return (errINI == INI_DUPLICATE_SETTING) ? INI_PASS : INI_FAIL;
 }
 
@@ -384,6 +511,9 @@ testResultINI_t testCreateSettingValid() {
   setting_t *setting;
 
   errINI = createSetting(ini, "section", "key", &setting);
+
+  freeINI(ini);
+
   return (errINI == INI_NIL && setting) ? INI_PASS : INI_FAIL;
 }
 
@@ -403,6 +533,9 @@ testResultINI_t testLookupSettingNilSection() {
   setting_t *setting;
 
   errINI = lookupSetting(ini, NULL, "key", &setting);
+
+  freeINI(ini);
+
   return (errINI == INI_NIL_SECTION) ? INI_PASS : INI_FAIL;
 }
 
@@ -415,6 +548,9 @@ testResultINI_t testLookupSettingNilKey() {
   setting_t *setting;
 
   errINI = lookupSetting(ini, "section", NULL, &setting);
+
+  freeINI(ini);
+
   return (errINI == INI_NIL_KEY) ? INI_PASS : INI_FAIL;
 }
 
@@ -425,6 +561,9 @@ testResultINI_t testLookupSettingNilSetting() {
   if(errINI != INI_NIL) { return INI_FAIL; }
 
   errINI = lookupSetting(ini, "section", "key", NULL);
+
+  freeINI(ini);
+
   return (errINI == INI_NIL_SETTING) ? INI_PASS : INI_FAIL;
 }
 
@@ -437,6 +576,9 @@ testResultINI_t testLookupSettingInvalidSection() {
   setting_t *setting;
 
   errINI = lookupSetting(ini, "sec tion", "key", &setting);
+
+  freeINI(ini);
+
   return (errINI == INI_INVALID_SECTION) ? INI_PASS : INI_FAIL;
 }
 
@@ -449,6 +591,9 @@ testResultINI_t testLookupSettingInvalidKey() {
   setting_t *setting;
 
   errINI = lookupSetting(ini, "section", "k ey", &setting);
+
+  freeINI(ini);
+
   return (errINI == INI_INVALID_KEY) ? INI_PASS : INI_FAIL;
 }
 
@@ -461,6 +606,9 @@ testResultINI_t testLookupNonPresentSetting() {
   setting_t *setting;
 
   errINI = lookupSetting(ini, "section", "key", &setting);
+
+  freeINI(ini);
+
   return (errINI == INI_NIL) ? INI_PASS : INI_FAIL;
 }
 
@@ -476,6 +624,9 @@ testResultINI_t testLookupSettingValid() {
   if(errINI != INI_NIL) { return INI_FAIL; }
 
   errINI = lookupSetting(ini, "section", "key", &setting);
+
+  freeINI(ini);
+
   return (errINI == INI_NIL) ? INI_PASS : INI_FAIL;
 }
 
@@ -491,6 +642,9 @@ testResultINI_t testDeleteSettingNilSection() {
   if(errINI != INI_NIL) { return INI_FAIL; }
 
   errINI = deleteSetting(ini, NULL, "key");
+
+  freeINI(ini);
+
   return  (errINI == INI_NIL_SECTION) ? INI_PASS : INI_FAIL;
 }
 
@@ -501,6 +655,9 @@ testResultINI_t testDeleteSettingNilKey() {
   if(errINI != INI_NIL) { return INI_FAIL; }
 
   errINI = deleteSetting(ini, "section", NULL);
+
+  freeINI(ini);
+
   return  (errINI == INI_NIL_KEY) ? INI_PASS : INI_FAIL;
 }
 
@@ -511,6 +668,9 @@ testResultINI_t testDeleteSettingInvalidGrammerSection() {
   if(errINI != INI_NIL) { return INI_FAIL; }
 
   errINI = deleteSetting(ini, "sec tion", "key");
+
+  freeINI(ini);
+
   return  (errINI == INI_INVALID_SECTION) ? INI_PASS : INI_FAIL;
 }
 
@@ -521,6 +681,9 @@ testResultINI_t testDeleteSettingInvalidGrammerKey() {
   if(errINI != INI_NIL) { return INI_FAIL; }
 
   errINI = deleteSetting(ini, "section", "ke y");
+
+  freeINI(ini);
+
   return  (errINI == INI_INVALID_KEY) ? INI_PASS : INI_FAIL;
 }
 
@@ -531,6 +694,9 @@ testResultINI_t testDeleteSettingNonPresentSetting() {
   if(errINI != INI_NIL) { return INI_FAIL; }
 
   errINI = deleteSetting(ini, "nowhere", "key");
+
+  freeINI(ini);
+
   return  (errINI == INI_NIL) ? INI_PASS : INI_FAIL;
 }
 
@@ -546,6 +712,9 @@ testResultINI_t testDeleteSettingValid() {
   if(errINI != INI_NIL) { return INI_FAIL; }
 
   errINI = deleteSetting(ini, "section", "key");
+
+  freeINI(ini);
+
   return  (errINI == INI_NIL) ? INI_PASS : INI_FAIL;
 }
 
@@ -564,6 +733,9 @@ testResultINI_t testSettingLookupDeleted() {
   if(errINI != INI_NIL) { return INI_FAIL; }
 
   errINI = lookupSetting(ini, "section", "key", &setting);
+
+  freeINI(ini);
+
   return  (errINI == INI_NIL && !setting) ? INI_PASS : INI_FAIL;
 }
 
@@ -586,6 +758,9 @@ testResultINI_t testSettingCompleteFlow() {
   if(setting1 != setting2) { return INI_FAIL; }
 
   errINI = deleteSetting(ini, "section", "key");
+
+  freeINI(ini);
+
   return (errINI == INI_NIL) ? INI_PASS : INI_FAIL;
 }
 
@@ -608,6 +783,9 @@ testResultINI_t testSettingTypeNilType() {
   if(errINI != INI_NIL) { return INI_FAIL; }
 
   errINI = settingType(setting, NULL);
+
+  freeINI(ini);
+
   return (errINI == INI_NIL_TYPE) ? INI_PASS : INI_FAIL;
 }
 
@@ -625,6 +803,9 @@ testResultINI_t testSettingTypeValid() {
   typeINI_t typeINI;
 
   errINI = settingType(setting, &typeINI);
+
+  freeINI(ini);
+
   return (errINI == INI_NIL && typeINI == UNINITIALIZED) ? INI_PASS : INI_FAIL;
 }
 
@@ -647,6 +828,9 @@ testResultINI_t testSettingKeyLengthNilLength() {
   if(errINI != INI_NIL) { return INI_FAIL; }
 
   errINI = settingKeyLength(setting, NULL);
+
+  freeINI(ini);
+
   return (errINI == INI_NIL_LENGTH) ? INI_PASS : INI_FAIL;
 }
 
@@ -664,6 +848,9 @@ testResultINI_t testSettingKeyLengthValid() {
   int len;
 
   errINI = settingKeyLength(setting, &len);
+
+  freeINI(ini);
+
   return (errINI == INI_NIL && len == 3) ? INI_PASS : INI_FAIL;
 }
 
@@ -686,6 +873,9 @@ testResultINI_t testSettingKeyNilKey() {
   if(errINI != INI_NIL) { return INI_FAIL; }
 
   errINI = settingKey(setting, NULL);
+
+  freeINI(ini);
+
   return (errINI == INI_NIL_KEY) ? INI_PASS : INI_FAIL;
 }
 
@@ -708,6 +898,9 @@ testResultINI_t testSettingKeyValid() {
   char keycpy[len];
 
   errINI = settingKey(setting, keycpy); 
+
+  freeINI(ini);
+
   return (errINI == INI_NIL && !strncmp(keycpy, "key", 3)) ? INI_PASS : INI_FAIL;
 }
 
@@ -730,6 +923,9 @@ testResultINI_t testSettingLengthNilLength() {
   if(errINI != INI_NIL) { return INI_FAIL; }
 
   errINI = settingLength(setting, NULL);
+
+  freeINI(ini);
+
   return (errINI == INI_NIL_LENGTH) ? INI_PASS : INI_FAIL;
 }
 
@@ -747,6 +943,9 @@ testResultINI_t testSettingLengthValid() {
   int len;
 
   errINI = settingLength(setting, &len);
+
+  freeINI(ini);
+
   return (errINI == INI_NIL && !len) ? INI_PASS : INI_FAIL;
 }
 
@@ -769,6 +968,9 @@ testResultINI_t testSettingElemLengthNilLength() {
   if(errINI != INI_NIL) { return INI_FAIL; }
 
   errINI = settingElemLength(setting, 0, NULL);
+
+  freeINI(ini);
+
   return (errINI == INI_NIL_LENGTH) ? INI_PASS : INI_FAIL;
 }
 
@@ -786,6 +988,9 @@ testResultINI_t testSettingElemLengthInvalidIndex() {
   int len;
 
   errINI = settingElemLength(setting, -1, &len);
+
+  freeINI(ini);
+
   return (errINI == INI_INVALID_INDEX) ? INI_PASS : INI_FAIL;
 }
 
@@ -803,6 +1008,9 @@ testResultINI_t testSettingElemLengthTypeMismatch() {
   int len;
 
   errINI = settingElemLength(setting, 0, &len);
+
+  freeINI(ini);
+
   return (errINI == INI_TYPE_MISMATCH) ? INI_PASS : INI_FAIL;
 }
 
@@ -823,6 +1031,9 @@ testResultINI_t testSettingElemLengthValid() {
   int len;
 
   errINI = settingElemLength(setting, 0, &len);
+
+  freeINI(ini);
+
   return (errINI == INI_NIL && len == 6) ? INI_PASS : INI_FAIL;
 }
 
@@ -846,6 +1057,9 @@ testResultINI_t testSettingSetIntTypeMismatch() {
   if(errINI != INI_NIL) { return INI_FAIL; }
 
   errINI = settingSetInt(setting, 0);
+
+  freeINI(ini);
+
   return (errINI == INI_TYPE_MISMATCH) ? INI_PASS : INI_FAIL;
 }
 
@@ -861,6 +1075,9 @@ testResultINI_t testSettingSetIntValid() {
   if(errINI != INI_NIL) { return INI_FAIL; }
 
   errINI = settingSetInt(setting, 0);
+
+  freeINI(ini);
+
   return (errINI == INI_NIL) ? INI_PASS : INI_FAIL;
 }
 
@@ -884,6 +1101,9 @@ testResultINI_t testSettingSetFloatTypeMismatch() {
   if(errINI != INI_NIL) { return INI_FAIL; }
 
   errINI = settingSetFloat(setting, 0.0);
+
+  freeINI(ini);
+
   return (errINI == INI_TYPE_MISMATCH) ? INI_PASS : INI_FAIL;
 }
 
@@ -899,6 +1119,9 @@ testResultINI_t testSettingSetFloatValid() {
   if(errINI != INI_NIL) { return INI_FAIL; }
 
   errINI = settingSetFloat(setting, 5.34);
+
+  freeINI(ini);
+
   return (errINI == INI_NIL) ? INI_PASS : INI_FAIL;
 }
 
@@ -922,6 +1145,9 @@ testResultINI_t testSettingSetBoolTypeMismatch() {
   if(errINI != INI_NIL) { return INI_FAIL; }
 
   errINI = settingSetBool(setting, 0);
+
+  freeINI(ini);
+
   return (errINI == INI_TYPE_MISMATCH) ? INI_PASS : INI_FAIL;
 }
 
@@ -937,6 +1163,9 @@ testResultINI_t testSettingSetBoolInvalidValue() {
   if(errINI != INI_NIL) { return INI_FAIL; }
 
   errINI = settingSetBool(setting, 3);
+
+  freeINI(ini);
+
   return (errINI == INI_INVALID_VALUE) ? INI_PASS : INI_FAIL;
 }
 
@@ -952,6 +1181,9 @@ testResultINI_t testSettingSetBoolValid() {
   if(errINI != INI_NIL) { return INI_FAIL; }
 
   errINI = settingSetBool(setting, 1);
+
+  freeINI(ini);
+
   return (errINI == INI_NIL) ? INI_PASS : INI_FAIL;
 }
 
@@ -975,6 +1207,9 @@ testResultINI_t testSettingSetCharTypeMismatch() {
   if(errINI != INI_NIL) { return INI_FAIL; }
 
   errINI = settingSetChar(setting, 'f');
+
+  freeINI(ini);
+
   return (errINI == INI_TYPE_MISMATCH) ? INI_PASS : INI_FAIL;
 }
 
@@ -990,6 +1225,9 @@ testResultINI_t testSettingSetCharValid() {
   if(errINI != INI_NIL) { return INI_FAIL; }
 
   errINI = settingSetChar(setting, 'f');
+
+  freeINI(ini);
+
   return (errINI == INI_NIL) ? INI_PASS : INI_FAIL;
 }
 
@@ -1013,6 +1251,9 @@ testResultINI_t testSettingSetStringTypeMismatch() {
   if(errINI != INI_NIL) { return INI_FAIL; }
 
   errINI = settingSetString(setting, "f");
+
+  freeINI(ini);
+
   return (errINI == INI_TYPE_MISMATCH) ? INI_PASS : INI_FAIL;
 }
 
@@ -1028,6 +1269,9 @@ testResultINI_t testSettingSetStringNilValue() {
   if(errINI != INI_NIL) { return INI_FAIL; }
 
   errINI = settingSetString(setting, NULL);
+
+  freeINI(ini);
+
   return (errINI == INI_NIL_VALUE) ? INI_PASS : INI_FAIL;
 }
 
@@ -1045,6 +1289,9 @@ testResultINI_t testSettingSetStringValid() {
   if(errINI != INI_NIL) { return INI_FAIL; }
 
   errINI = settingSetString(setting, "f");
+
+  freeINI(ini);
+
   return (errINI == INI_NIL) ? INI_PASS : INI_FAIL;
 }
                                 
@@ -1068,6 +1315,9 @@ testResultINI_t testSettingSetIntElemTypeMismatch() {
   if(errINI != INI_NIL) { return INI_FAIL; }
 
   errINI = settingSetIntElem(setting, 0, 10);
+
+  freeINI(ini);
+
   return (errINI == INI_TYPE_MISMATCH) ? INI_PASS : INI_FAIL;
 }
 
@@ -1083,6 +1333,9 @@ testResultINI_t testSettingSetIntElemInvalidIndex() {
   if(errINI != INI_NIL) { return INI_FAIL; }
 
   errINI = settingSetIntElem(setting, 1, 10);
+
+  freeINI(ini);
+
   return (errINI == INI_INVALID_INDEX) ? INI_PASS : INI_FAIL;
 }
 
@@ -1100,6 +1353,9 @@ testResultINI_t testSettingSetIntElemValid() {
   if(errINI != INI_NIL) { return INI_FAIL; }
 
   errINI = settingSetIntElem(setting, 0, 10);
+
+  freeINI(ini);
+
   return (errINI == INI_NIL) ? INI_PASS : INI_FAIL;
 }
 
@@ -1123,6 +1379,9 @@ testResultINI_t testSettingSetFloatElemTypeMismatch() {
   if(errINI != INI_NIL) { return INI_FAIL; }
 
   errINI = settingSetFloatElem(setting, 0, -10.2);
+
+  freeINI(ini);
+
   return (errINI == INI_TYPE_MISMATCH) ? INI_PASS : INI_FAIL;
 }
 
@@ -1138,6 +1397,9 @@ testResultINI_t testSettingSetFloatElemInvalidIndex() {
   if(errINI != INI_NIL) { return INI_FAIL; }
 
   errINI = settingSetFloatElem(setting, 1, 10.234);
+
+  freeINI(ini);
+
   return (errINI == INI_INVALID_INDEX) ? INI_PASS : INI_FAIL;
 }
 
@@ -1155,6 +1417,9 @@ testResultINI_t testSettingSetFloatElemValid() {
   if(errINI != INI_NIL) { return INI_FAIL; }
 
   errINI = settingSetFloatElem(setting, 0, 1.00);
+
+  freeINI(ini);
+
   return (errINI == INI_NIL) ? INI_PASS : INI_FAIL;
 }
 
@@ -1178,6 +1443,9 @@ testResultINI_t testSettingSetBoolElemTypeMismatch() {
   if(errINI != INI_NIL) { return INI_FAIL; }
 
   errINI = settingSetBoolElem(setting, 0, 1);
+
+  freeINI(ini);
+
   return (errINI == INI_TYPE_MISMATCH) ? INI_PASS : INI_FAIL;
 }
 
@@ -1193,6 +1461,9 @@ testResultINI_t testSettingSetBoolElemInvalidValue() {
   if(errINI != INI_NIL) { return INI_FAIL; }
 
   errINI = settingSetBoolElem(setting, 0, 3);
+
+  freeINI(ini);
+
   return (errINI == INI_INVALID_VALUE) ? INI_PASS : INI_FAIL;
 }
 
@@ -1208,6 +1479,9 @@ testResultINI_t testSettingSetBoolElemInvalidIndex() {
   if(errINI != INI_NIL) { return INI_FAIL; }
 
   errINI = settingSetBoolElem(setting, 1, 1);
+
+  freeINI(ini);
+
   return (errINI == INI_INVALID_INDEX) ? INI_PASS : INI_FAIL;
 }
 
@@ -1225,6 +1499,9 @@ testResultINI_t testSettingSetBoolElemValid() {
   if(errINI != INI_NIL) { return INI_FAIL; }
 
   errINI = settingSetBoolElem(setting, 0, 1);
+
+  freeINI(ini);
+
   return (errINI == INI_NIL) ? INI_PASS : INI_FAIL;
 }
 
@@ -1248,6 +1525,9 @@ testResultINI_t testSettingSetCharElemTypeMismatch() {
   if(errINI != INI_NIL) { return INI_FAIL; }
 
   errINI = settingSetCharElem(setting, 0, 'c');
+
+  freeINI(ini);
+
   return (errINI == INI_TYPE_MISMATCH) ? INI_PASS : INI_FAIL;
 }
 
@@ -1263,6 +1543,9 @@ testResultINI_t testSettingSetCharElemInvalidIndex() {
   if(errINI != INI_NIL) { return INI_FAIL; }
 
   errINI = settingSetCharElem(setting, 1, 'c');
+
+  freeINI(ini);
+
   return (errINI == INI_INVALID_INDEX) ? INI_PASS : INI_FAIL;
 }
 
@@ -1280,6 +1563,9 @@ testResultINI_t testSettingSetCharElemValid() {
   if(errINI != INI_NIL) { return INI_FAIL; }
 
   errINI = settingSetCharElem(setting, 0, 'c');
+
+  freeINI(ini);
+
   return (errINI == INI_NIL) ? INI_PASS : INI_FAIL;
 }
 
@@ -1303,6 +1589,9 @@ testResultINI_t testSettingSetStringElemTypeMismatch() {
   if(errINI != INI_NIL) { return INI_FAIL; }
 
   errINI = settingSetStringElem(setting, 0, "c");
+
+  freeINI(ini);
+
   return (errINI == INI_TYPE_MISMATCH) ? INI_PASS : INI_FAIL;
 }
 
@@ -1318,6 +1607,9 @@ testResultINI_t testSettingSetStringElemInvalidIndex() {
   if(errINI != INI_NIL) { return INI_FAIL; }
 
   errINI = settingSetStringElem(setting, 1, "c");
+
+  freeINI(ini);
+
   return (errINI == INI_INVALID_INDEX) ? INI_PASS : INI_FAIL;
 }
 
@@ -1333,6 +1625,9 @@ testResultINI_t testSettingSetStringElemNilValue() {
   if(errINI != INI_NIL) { return INI_FAIL; }
 
   errINI = settingSetString(setting, NULL);
+
+  freeINI(ini);
+
   return (errINI == INI_NIL_VALUE) ? INI_PASS : INI_FAIL;
 }
 
@@ -1350,6 +1645,9 @@ testResultINI_t testSettingSetStringElemValid() {
   if(errINI != INI_NIL) { return INI_FAIL; }
 
   errINI = settingSetStringElem(setting, 0, "c");
+
+  freeINI(ini);
+
   return (errINI == INI_NIL) ? INI_PASS : INI_FAIL;
 }
 
@@ -1374,6 +1672,9 @@ testResultINI_t testSettingGetIntValueUninitialized() {
   int value;
 
   errINI = settingGetInt(setting, &value);
+
+  freeINI(ini);
+
   return (errINI == INI_VALUE_UNINITIALIZED) ? INI_PASS : INI_FAIL;
 }
 
@@ -1394,6 +1695,9 @@ testResultINI_t testSettingGetIntTypeMismatch() {
   int value;
 
   errINI = settingGetInt(setting, &value);
+
+  freeINI(ini);
+
   return (errINI == INI_TYPE_MISMATCH) ? INI_PASS : INI_FAIL;
 }
 
@@ -1412,6 +1716,9 @@ testResultINI_t testSettingGetIntNilValue() {
   if(errINI != INI_NIL) { return INI_FAIL; }
 
   errINI = settingGetInt(setting, NULL);
+
+  freeINI(ini);
+
   return (errINI == INI_NIL_VALUE) ? INI_PASS : INI_FAIL;
 }
 
@@ -1432,6 +1739,9 @@ testResultINI_t testSettingGetIntValid() {
   int value;
 
   errINI = settingGetInt(setting, &value);
+
+  freeINI(ini);
+
   return (errINI == INI_NIL && value == 10) ? INI_PASS : INI_FAIL;
 }
 
@@ -1456,6 +1766,9 @@ testResultINI_t testSettingGetFloatValueUninitialized() {
   float value;
 
   errINI = settingGetFloat(setting, &value);
+
+  freeINI(ini);
+
   return (errINI == INI_VALUE_UNINITIALIZED) ? INI_PASS : INI_FAIL;
 }
 
@@ -1476,6 +1789,9 @@ testResultINI_t testSettingGetFloatTypeMismatch() {
   float value;
 
   errINI = settingGetFloat(setting, &value);
+
+  freeINI(ini);
+
   return (errINI == INI_TYPE_MISMATCH) ? INI_PASS : INI_FAIL;
 }
 
@@ -1494,6 +1810,9 @@ testResultINI_t testSettingGetFloatNilValue() {
   if(errINI != INI_NIL) { return INI_FAIL; }
 
   errINI = settingGetFloat(setting, NULL);
+
+  freeINI(ini);
+
   return (errINI == INI_NIL_VALUE) ? INI_PASS : INI_FAIL;
 }
 
@@ -1517,6 +1836,9 @@ testResultINI_t testSettingGetFloatValid() {
   if(errINI != INI_NIL) { return INI_FAIL; }
 
   float e = 0.009; // epsilon
+
+  freeINI(ini);
+
   return ((value <= (10.45+e)) && (value >= (10.45-e))) ? INI_PASS : INI_FAIL;
 }
 
@@ -1541,6 +1863,9 @@ testResultINI_t testSettingGetBoolValueUninitialized() {
   int value;
 
   errINI = settingGetBool(setting, &value);
+
+  freeINI(ini);
+
   return (errINI == INI_VALUE_UNINITIALIZED) ? INI_PASS : INI_FAIL;
 }
 
@@ -1561,6 +1886,9 @@ testResultINI_t testSettingGetBoolTypeMismatch() {
   int value;
 
   errINI = settingGetBool(setting, &value);
+
+  freeINI(ini);
+
   return (errINI == INI_TYPE_MISMATCH) ? INI_PASS : INI_FAIL;
 }
 
@@ -1579,6 +1907,9 @@ testResultINI_t testSettingGetBoolNilValue() {
   if(errINI != INI_NIL) { return INI_FAIL; }
 
   errINI = settingGetBool(setting, NULL);
+
+  freeINI(ini);
+
   return (errINI == INI_NIL_VALUE) ? INI_PASS : INI_FAIL;
 }
 
@@ -1599,6 +1930,9 @@ testResultINI_t testSettingGetBoolValid() {
   int value;
 
   errINI = settingGetBool(setting, &value);
+
+  freeINI(ini);
+
   return (errINI == INI_NIL && value) ? INI_PASS : INI_FAIL;
 }
 
@@ -1623,6 +1957,9 @@ testResultINI_t testSettingGetCharValueUninitialized() {
   char value;
 
   errINI = settingGetChar(setting, &value);
+
+  freeINI(ini);
+
   return (errINI == INI_VALUE_UNINITIALIZED) ? INI_PASS : INI_FAIL;
 }
 
@@ -1643,6 +1980,9 @@ testResultINI_t testSettingGetCharTypeMismatch() {
   char value;
 
   errINI = settingGetChar(setting, &value);
+
+  freeINI(ini);
+
   return (errINI == INI_TYPE_MISMATCH) ? INI_PASS : INI_FAIL;
 }
 
@@ -1661,6 +2001,9 @@ testResultINI_t testSettingGetCharNilValue() {
   if(errINI != INI_NIL) { return INI_FAIL; }
 
   errINI = settingGetChar(setting, NULL);
+
+  freeINI(ini);
+
   return (errINI == INI_NIL_VALUE) ? INI_PASS : INI_FAIL;
 }
 
@@ -1681,6 +2024,9 @@ testResultINI_t testSettingGetCharValid() {
   char value;
 
   errINI = settingGetChar(setting, &value);
+
+  freeINI(ini);
+
   return (errINI == INI_NIL && value == 'c') ? INI_PASS : INI_FAIL;
 }
 
@@ -1705,6 +2051,9 @@ testResultINI_t testSettingGetStringValueUninitialized() {
   char value[5];
 
   errINI = settingGetString(setting, value);
+
+  freeINI(ini);
+
   return (errINI == INI_VALUE_UNINITIALIZED) ? INI_PASS : INI_FAIL;
 }
 
@@ -1725,6 +2074,9 @@ testResultINI_t testSettingGetStringTypeMismatch() {
   char value[4];
 
   errINI = settingGetString(setting, value);
+
+  freeINI(ini);
+
   return (errINI == INI_TYPE_MISMATCH) ? INI_PASS : INI_FAIL;
 }
 
@@ -1743,6 +2095,9 @@ testResultINI_t testSettingGetStringNilValue() {
   if(errINI != INI_NIL) { return INI_FAIL; }
 
   errINI = settingGetString(setting, NULL);
+
+  freeINI(ini);
+
   return (errINI == INI_NIL_VALUE) ? INI_PASS : INI_FAIL;
 }
 
@@ -1763,6 +2118,9 @@ testResultINI_t testSettingGetStringValid() {
   char value[1];
 
   errINI = settingGetString(setting, value);
+
+  freeINI(ini);
+
   return (errINI == INI_NIL && !strncmp(value, "c", 1)) ? INI_PASS : INI_FAIL;
 }
 
@@ -1787,6 +2145,9 @@ testResultINI_t testSettingGetIntElemValueUninitialized() {
   int value;
 
   errINI = settingGetIntElem(setting, 0, &value);
+
+  freeINI(ini);
+
   return (errINI == INI_VALUE_UNINITIALIZED) ? INI_PASS : INI_FAIL;
 }
 
@@ -1807,6 +2168,9 @@ testResultINI_t testSettingGetIntElemTypeMismatch() {
   int value;
 
   errINI = settingGetIntElem(setting, 0, &value);
+
+  freeINI(ini);
+
   return (errINI == INI_TYPE_MISMATCH) ? INI_PASS : INI_FAIL;
 }
 
@@ -1827,6 +2191,9 @@ testResultINI_t testSettingGetIntElemInvalidIndex() {
   int value;
 
   errINI = settingGetIntElem(setting, 1, &value);
+
+  freeINI(ini);
+
   return (errINI == INI_INVALID_INDEX) ? INI_PASS : INI_FAIL;
 }
 
@@ -1845,6 +2212,9 @@ testResultINI_t testSettingGetIntElemNilValue() {
   if(errINI != INI_NIL) { return INI_FAIL; }
 
   errINI = settingGetIntElem(setting, 0, NULL);
+
+  freeINI(ini);
+
   return (errINI == INI_NIL_VALUE) ? INI_PASS : INI_FAIL;
 }
 
@@ -1865,6 +2235,9 @@ testResultINI_t testSettingGetIntElemValid() {
   int value;
 
   errINI = settingGetIntElem(setting, 0, &value);
+
+  freeINI(ini);
+
   return (errINI == INI_NIL && value == 678) ? INI_PASS : INI_FAIL;
 }
 
@@ -1895,6 +2268,8 @@ testResultINI_t testSettingGetIntElemsValid() {
     if(val != elems[i]) { return INI_FAIL; }
   }
 
+  freeINI(ini);
+
   return INI_PASS;
 }
 
@@ -1919,6 +2294,9 @@ testResultINI_t testSettingGetFloatElemValueUninitialized() {
   float value;
 
   errINI = settingGetFloatElem(setting, 0, &value);
+
+  freeINI(ini);
+
   return (errINI == INI_VALUE_UNINITIALIZED) ? INI_PASS : INI_FAIL;
 }
 
@@ -1939,6 +2317,9 @@ testResultINI_t testSettingGetFloatElemTypeMismatch() {
   float value;
 
   errINI = settingGetFloatElem(setting, 0, &value);
+
+  freeINI(ini);
+
   return (errINI == INI_TYPE_MISMATCH) ? INI_PASS : INI_FAIL;
 }
 
@@ -1959,6 +2340,9 @@ testResultINI_t testSettingGetFloatElemInvalidIndex() {
   float value;
 
   errINI = settingGetFloatElem(setting, 1, &value);
+
+  freeINI(ini);
+
   return (errINI == INI_INVALID_INDEX) ? INI_PASS : INI_FAIL;
 }
 
@@ -1977,6 +2361,9 @@ testResultINI_t testSettingGetFloatElemNilValue() {
   if(errINI != INI_NIL) { return INI_FAIL; }
 
   errINI = settingGetFloatElem(setting, 0, NULL);
+
+  freeINI(ini);
+
   return (errINI == INI_NIL_VALUE) ? INI_PASS : INI_FAIL;
 }
 
@@ -2000,6 +2387,9 @@ testResultINI_t testSettingGetFloatElemValid() {
   if(errINI != INI_NIL) { return INI_FAIL; }
 
   float e = .009;
+
+  freeINI(ini);
+
   return (value <= 678.45+e && value >= 678.45-e) ? INI_PASS : INI_FAIL;
 }
 
@@ -2032,6 +2422,8 @@ testResultINI_t testSettingGetFloatElemsValid() {
     if(val < elems[i]-e || val > elems[i]+e) { return INI_FAIL; }
   }
 
+  freeINI(ini);
+
   return INI_PASS;
 }
 
@@ -2056,6 +2448,9 @@ testResultINI_t testSettingGetBoolElemValueUninitialized() {
   int value;
 
   errINI = settingGetBoolElem(setting, 0, &value);
+
+  freeINI(ini);
+
   return (errINI == INI_VALUE_UNINITIALIZED) ? INI_PASS : INI_FAIL;
 }
 
@@ -2076,6 +2471,9 @@ testResultINI_t testSettingGetBoolElemTypeMismatch() {
   int value;
 
   errINI = settingGetBoolElem(setting, 0, &value);
+
+  freeINI(ini);
+
   return (errINI == INI_TYPE_MISMATCH) ? INI_PASS : INI_FAIL;
 }
 
@@ -2096,6 +2494,9 @@ testResultINI_t testSettingGetBoolElemInvalidIndex() {
   int value;
 
   errINI = settingGetBoolElem(setting, 1, &value);
+
+  freeINI(ini);
+
   return (errINI == INI_INVALID_INDEX) ? INI_PASS : INI_FAIL;
 }
 
@@ -2114,6 +2515,9 @@ testResultINI_t testSettingGetBoolElemNilValue() {
   if(errINI != INI_NIL) { return INI_FAIL; }
 
   errINI = settingGetBoolElem(setting, 0, NULL);
+
+  freeINI(ini);
+
   return (errINI == INI_NIL_VALUE) ? INI_PASS : INI_FAIL;
 }
 
@@ -2134,6 +2538,9 @@ testResultINI_t testSettingGetBoolElemValid() {
   int value;
 
   errINI = settingGetBoolElem(setting, 0, &value);
+
+  freeINI(ini);
+
   return (errINI == INI_NIL && value == 0) ? INI_PASS : INI_FAIL;
 }
 
@@ -2164,6 +2571,8 @@ testResultINI_t testSettingGetBoolElemsValid() {
     if(val != elems[i]) { return INI_FAIL; }
   }
 
+  freeINI(ini);
+
   return INI_PASS;
 }
 
@@ -2188,6 +2597,9 @@ testResultINI_t testSettingGetCharElemValueUninitialized() {
   char value;
 
   errINI = settingGetCharElem(setting, 0, &value);
+
+  freeINI(ini);
+
   return (errINI == INI_VALUE_UNINITIALIZED) ? INI_PASS : INI_FAIL;
 }
 
@@ -2208,6 +2620,9 @@ testResultINI_t testSettingGetCharElemTypeMismatch() {
   char value;
 
   errINI = settingGetCharElem(setting, 0, &value);
+
+  freeINI(ini);
+
   return (errINI == INI_TYPE_MISMATCH) ? INI_PASS : INI_FAIL;
 }
 
@@ -2228,6 +2643,9 @@ testResultINI_t testSettingGetCharElemInvalidIndex() {
   char value;
 
   errINI = settingGetCharElem(setting, 1, &value);
+
+  freeINI(ini);
+
   return (errINI == INI_INVALID_INDEX) ? INI_PASS : INI_FAIL;
 }
 
@@ -2246,6 +2664,9 @@ testResultINI_t testSettingGetCharElemNilValue() {
   if(errINI != INI_NIL) { return INI_FAIL; }
 
   errINI = settingGetCharElem(setting, 0, NULL);
+
+  freeINI(ini);
+
   return (errINI == INI_NIL_VALUE) ? INI_PASS : INI_FAIL;
 }
 
@@ -2266,6 +2687,9 @@ testResultINI_t testSettingGetCharElemValid() {
   char value;
 
   errINI = settingGetCharElem(setting, 0, &value);
+
+  freeINI(ini);
+
   return (errINI == INI_NIL && value == 'c') ? INI_PASS : INI_FAIL;
 }
 
@@ -2296,6 +2720,8 @@ testResultINI_t testSettingGetCharElemsValid() {
     if(val != elems[i]) { return INI_FAIL; }
   }
 
+  freeINI(ini);
+
   return INI_PASS;
 }
 
@@ -2320,6 +2746,9 @@ testResultINI_t testSettingGetStringElemValueUninitialized() {
   char value[1];
 
   errINI = settingGetStringElem(setting, 0, value);
+
+  freeINI(ini);
+
   return (errINI == INI_VALUE_UNINITIALIZED) ? INI_PASS : INI_FAIL;
 }
 
@@ -2340,6 +2769,9 @@ testResultINI_t testSettingGetStringElemTypeMismatch() {
   char value[1];
 
   errINI = settingGetStringElem(setting, 0, value);
+
+  freeINI(ini);
+
   return (errINI == INI_TYPE_MISMATCH) ? INI_PASS : INI_FAIL;
 }
 
@@ -2360,6 +2792,9 @@ testResultINI_t testSettingGetStringElemInvalidIndex() {
   char value[4];
 
   errINI = settingGetStringElem(setting, 1, value);
+
+  freeINI(ini);
+
   return (errINI == INI_INVALID_INDEX) ? INI_PASS : INI_FAIL;
 }
 
@@ -2378,6 +2813,9 @@ testResultINI_t testSettingGetStringElemNilValue() {
   if(errINI != INI_NIL) { return INI_FAIL; }
 
   errINI = settingGetStringElem(setting, 0, NULL);
+
+  freeINI(ini);
+
   return (errINI == INI_NIL_VALUE) ? INI_PASS : INI_FAIL;
 }
 
@@ -2403,6 +2841,9 @@ testResultINI_t testSettingGetStringElemValid() {
   char value[len];
 
   errINI = settingGetStringElem(setting, 0, value);
+
+  freeINI(ini);
+
   return (errINI == INI_NIL && !strncmp(value, "c", 1)) ? INI_PASS : INI_FAIL;
 }
 
@@ -2433,12 +2874,264 @@ testResultINI_t testSettingGetStringElemsValid() {
     if(strncmp(val, elems[i], 1)) { return INI_FAIL; }
   }
 
+  freeINI(ini);
+
   return INI_PASS;
 }
 
 testResultINI_t testCompleteIOFlow() {
-// TODO: read in a written conf constructed programatically then do comparison
-  return INI_FAIL;
+  char *_section = "test_section";
+  char *_ini = "[test_section]\n"
+               "integer=45\n"
+               "floatingPoint=4.52\n"
+               "boolean=true\n"
+               "character='r'\n"
+               "string=\"foobar\"\n"
+               "iarr={0, 1, 2, 3, 4}\n"
+               "farr={0.5, 1.5, 2.5, 3.5, 4.5}\n"
+               "barr={0, 0, 1, 0, 1}\n"
+               "carr={'a', 'b', 'c', 'd', 'e'}\n"
+               "sarr={\"foo\", \"bar\", \"baz\", \"zip\", \"zap\"}\n";
+  ini_t *ini;
+
+  errINI_t errINI = makeINI(&ini);
+  if(errINI != INI_NIL) { return INI_FAIL; }
+
+  setting_t *setting;
+
+  errINI = createSetting(ini, _section, "integer", &setting);
+  if(errINI != INI_NIL) { return INI_FAIL; }
+  errINI = settingSetInt(setting, 45);
+  if(errINI != INI_NIL) { return INI_FAIL; }
+
+  errINI = createSetting(ini, _section, "floatingPoint", &setting);
+  if(errINI != INI_NIL) { return INI_FAIL; }
+  errINI = settingSetFloat(setting, 4.52);
+  if(errINI != INI_NIL) { return INI_FAIL; }
+
+  errINI = createSetting(ini, _section, "boolean", &setting);
+  if(errINI != INI_NIL) { return INI_FAIL; }
+  errINI = settingSetBool(setting, 1);
+  if(errINI != INI_NIL) { return INI_FAIL; }
+
+  errINI = createSetting(ini, _section, "character", &setting);
+  if(errINI != INI_NIL) { return INI_FAIL; }
+  errINI = settingSetChar(setting, 'r');
+  if(errINI != INI_NIL) { return INI_FAIL; }
+
+  errINI = createSetting(ini, _section, "string", &setting);
+  if(errINI != INI_NIL) { return INI_FAIL; }
+  errINI = settingSetString(setting, "foobar");
+  if(errINI != INI_NIL) { return INI_FAIL; }
+
+  int i;
+
+  int iarr[] = {0, 1, 2, 3, 4};
+  errINI = createSetting(ini, _section, "iarr", &setting);
+  if(errINI != INI_NIL) { return INI_FAIL; }
+  for(i = 0; i < 5; i++) {
+    errINI = settingSetIntElem(setting, i, iarr[i]);
+    if(errINI != INI_NIL) { return INI_FAIL; }
+  }
+  
+  float farr[] = {0.5, 1.5, 2.5, 3.5, 4.5};
+  errINI = createSetting(ini, _section, "farr", &setting);
+  if(errINI != INI_NIL) { return INI_FAIL; }
+  for(i = 0; i < 5; i++) {
+    errINI = settingSetFloatElem(setting, i, farr[i]);
+    if(errINI != INI_NIL) { return INI_FAIL; }
+  }
+
+  int barr[] = {0, 0, 1, 0, 1};
+  errINI = createSetting(ini, _section, "barr", &setting);
+  if(errINI != INI_NIL) { return INI_FAIL; }
+  for(i = 0; i < 5; i++) {
+    errINI = settingSetBoolElem(setting, i, barr[i]);
+    if(errINI != INI_NIL) { return INI_FAIL; }
+  }
+
+  char carr[] = {'a', 'b', 'c', 'd', 'e'};
+  errINI = createSetting(ini, _section, "carr", &setting);
+  if(errINI != INI_NIL) { return INI_FAIL; }
+  for(i = 0; i < 5; i++) {
+    errINI = settingSetCharElem(setting, i, carr[i]);
+    if(errINI != INI_NIL) { return INI_FAIL; }
+  }
+
+  char *sarr[] = {"foo", "bar", "baz", "zip", "zap"};
+  errINI = createSetting(ini, _section, "sarr", &setting);
+  if(errINI != INI_NIL) { return INI_FAIL; }
+  for(i = 0; i < 5; i++) {
+    errINI = settingSetStringElem(setting, i, sarr[i]);
+    if(errINI != INI_NIL) { return INI_FAIL; }
+  }
+
+  char *tmpfile = "testCompleteIOFlow.txt";
+  FILE *fp;
+
+  if(!(fp = fopen(tmpfile, "w"))) { return INI_FAIL; }
+  fprintf(fp, "%s", _ini);
+  fclose(fp);
+
+  ini_t *rini;
+  errINI = readINI(&rini, tmpfile);
+  if(remove(tmpfile)) { return INI_FAIL; }
+  if(errINI != INI_NIL) { return INI_FAIL; }
+
+  errINI = lookupSetting(rini, _section, "integer", &setting);
+  if(errINI != INI_NIL) { return INI_FAIL; }
+
+  typeINI_t typeINI;
+  errINI = settingType(setting, &typeINI);
+  if(errINI != INI_NIL || typeINI != INT) { return INI_FAIL; }
+
+  errINI = settingLength(setting, &i);
+  if(errINI != INI_NIL || i) { return INI_FAIL; }
+
+  errINI = settingGetInt(setting, &i);
+  if(errINI != INI_NIL || i != 45) { return INI_FAIL; }
+
+  errINI = lookupSetting(rini, _section, "floatingPoint", &setting);
+  if(errINI != INI_NIL) { return INI_FAIL; }
+
+  errINI = settingType(setting, &typeINI);
+  if(errINI != INI_NIL || typeINI != FLOAT) { return INI_FAIL; }
+
+  errINI = settingLength(setting, &i);
+  if(errINI != INI_NIL || i) { return INI_FAIL; }
+
+  float f;
+  float e = 0.009;
+  errINI = settingGetFloat(setting, &f);
+  if(errINI != INI_NIL || f < 4.52-e || f > 4.52+e) { return INI_FAIL; }
+
+  errINI = lookupSetting(rini, _section, "boolean", &setting);
+  if(errINI != INI_NIL) { return INI_FAIL; }
+
+  errINI = settingType(setting, &typeINI);
+  if(errINI != INI_NIL || typeINI != BOOL) { return INI_FAIL; }
+
+  errINI = settingLength(setting, &i);
+  if(errINI != INI_NIL || i) { return INI_FAIL; }
+
+  errINI = settingGetBool(setting, &i);
+  if(errINI != INI_NIL || i != 1) { return INI_FAIL; }
+
+  errINI = lookupSetting(rini, _section, "character", &setting);
+  if(errINI != INI_NIL) { return INI_FAIL; }
+
+  errINI = settingType(setting, &typeINI);
+  if(errINI != INI_NIL || typeINI != CHAR) { return INI_FAIL; }
+
+  errINI = settingLength(setting, &i);
+  if(errINI != INI_NIL || i) { return INI_FAIL; }
+
+  char c;
+  errINI = settingGetChar(setting, &c);
+  if(errINI != INI_NIL || c != 'r') { return INI_FAIL; }
+
+  errINI = lookupSetting(rini, _section, "string", &setting);
+  if(errINI != INI_NIL) { return INI_FAIL; }
+
+  errINI = settingType(setting, &typeINI);
+  if(errINI != INI_NIL || typeINI != STRING) { return INI_FAIL; }
+
+  errINI = settingLength(setting, &i);
+  if(errINI != INI_NIL || i != 6) { return INI_FAIL; }
+
+  char str[6];
+  errINI = settingGetString(setting, str);
+  if(errINI != INI_NIL || strncmp("foobar", str, 6)) { return INI_FAIL; }
+
+  errINI = lookupSetting(rini, _section, "iarr", &setting);
+  if(errINI != INI_NIL) { return INI_FAIL; }
+
+  errINI = settingType(setting, &typeINI);
+  if(errINI != INI_NIL || typeINI != INT_ARRAY) { return INI_FAIL; }
+
+  errINI = settingLength(setting, &i);
+  if(errINI != INI_NIL || i != 5) { return INI_FAIL; }
+
+  int j;
+  for(i = 0; i < 5; i++) {
+    errINI = settingElemLength(setting, i, &j);
+    if(errINI != INI_NIL || j) { return INI_FAIL; }
+
+    errINI = settingGetIntElem(setting, i, &j);
+    if(errINI != INI_NIL || j != iarr[i]) { return INI_FAIL; }
+  }
+
+  errINI = lookupSetting(rini, _section, "farr", &setting);
+  if(errINI != INI_NIL) { return INI_FAIL; }
+
+  errINI = settingType(setting, &typeINI);
+  if(errINI != INI_NIL || typeINI != FLOAT_ARRAY) { return INI_FAIL; }
+
+  errINI = settingLength(setting, &i);
+  if(errINI != INI_NIL || i != 5) { return INI_FAIL; }
+
+  for(i = 0; i < 5; i++) {
+    errINI = settingElemLength(setting, i, &j);
+    if(errINI != INI_NIL || j) { return INI_FAIL; }
+
+    errINI = settingGetFloatElem(setting, i, &f);
+    if(errINI != INI_NIL || f > farr[i]+e || f < farr[i]-e) { return INI_FAIL; }
+  }
+
+  errINI = lookupSetting(rini, _section, "barr", &setting);
+  if(errINI != INI_NIL) { return INI_FAIL; }
+
+  errINI = settingType(setting, &typeINI);
+  if(errINI != INI_NIL || typeINI != BOOL_ARRAY) { return INI_FAIL; }
+
+  errINI = settingLength(setting, &i);
+  if(errINI != INI_NIL || i != 5) { return INI_FAIL; }
+
+  for(i = 0; i < 5; i++) {
+    errINI = settingElemLength(setting, i, &j);
+    if(errINI != INI_NIL || j) { return INI_FAIL; }
+
+    errINI = settingGetBoolElem(setting, i, &j);
+    if(errINI != INI_NIL || j != barr[i]) { return INI_FAIL; }
+  }
+
+  errINI = lookupSetting(rini, _section, "carr", &setting);
+  if(errINI != INI_NIL) { return INI_FAIL; }
+
+  errINI = settingType(setting, &typeINI);
+  if(errINI != INI_NIL || typeINI != CHAR_ARRAY) { return INI_FAIL; }
+
+  errINI = settingLength(setting, &i);
+  if(errINI != INI_NIL || i != 5) { return INI_FAIL; }
+
+  for(i = 0; i < 5; i++) {
+    errINI = settingElemLength(setting, i, &j);
+    if(errINI != INI_NIL || j) { return INI_FAIL; }
+
+    errINI = settingGetCharElem(setting, i, &c);
+    if(errINI != INI_NIL || c != carr[i]) { return INI_FAIL; }
+  }
+
+  errINI = lookupSetting(rini, _section, "sarr", &setting);
+  if(errINI != INI_NIL) { return INI_FAIL; }
+
+  errINI = settingType(setting, &typeINI);
+  if(errINI != INI_NIL || typeINI != STRING_ARRAY) { return INI_FAIL; }
+
+  errINI = settingLength(setting, &i);
+  if(errINI != INI_NIL || i != 5) { return INI_FAIL; }
+
+  for(i = 0; i < 5; i++) {
+    errINI = settingElemLength(setting, i, &j);
+    if(errINI != INI_NIL || j != 3) { return INI_FAIL; }
+
+    errINI = settingGetStringElem(setting, i, str);
+    if(errINI != INI_NIL || strcmp(sarr[i], str)) { return INI_FAIL; }
+  }
+
+  freeINI(ini);
+
+  return INI_PASS;
 }
 
 /******************************************************************************
@@ -2478,7 +3171,9 @@ void *TESTS[TOTAL_TESTS][2] = {
   { testReadINIOpenFailure,                      "testReadINIOpenFailure"                         },
   //  { testReadINICloseFailure,                     "testReadINICloseFailure"                        },
   //  { testReadINIOutOfMemory,                      "testReadINIOutOfMemory"                         },
+  { testReadININilSection,                       "testReadININilSection"                          },
   { testReadINIInvalidSection,                   "testReadINIInvalidSection"                      },
+  { testReadININilKey,                           "testReadININilKey"                              },
   { testReadINIInvalidKey,                       "testReadINIInvalidKey"                          },
   { testReadINIInvalidArrayComma,                "testReadINIInvalidArrayComma"                   },
   { testReadINIInvalidArrayType,                 "testReadINIInvalidArrayType"                    },
