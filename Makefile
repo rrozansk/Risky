@@ -7,8 +7,12 @@ INCLUDES = -I/include/ -Iinclude/
 # all the files to include in the generated .tar
 TAR_FILES = include/*.h src/*.c test/*.c LICENSE.txt Makefile README.md conf.ini
 # risky executable
-MAIN_SRCS = src/ini.c src/log.c src/dna.c src/risk.c src/main.c
-MAIN_OBJS = $(MAIN_SRCS:.c=.o)
+MAIN_DEPS = include/ini.h src/ini.c \
+            include/log.h src/log.c \
+            include/dna.h src/dna.c \
+            include/risk.h src/risk.c \
+            src/main.c
+MAIN_OBJS = $(MAIN_DEPS:.c=.o)
 MAIN = risky
 # log library test executable
 LOG_DEPS = include/log.h src/log.c test/testLOG.c
@@ -48,21 +52,29 @@ install:  rebuild
 	\cp $(MAIN) /usr/bin/
 
 clean:
-	\rm -f *.o *~ src/*.o test/*.o $(MAIN) $(DNA_TEST) $(INI_TEST) $(RISK_TEST) $(LOG_TEST)
+	\rm -f *.o *~ src/*.o src/*~ test/*.o test/*~ $(MAIN) $(DNA_TEST) $(INI_TEST) $(RISK_TEST) $(LOG_TEST)
 
 tar:
-	tar -cvf $(MAIN).tar $(TAR_FILES)
+	\tar -cvf $(MAIN).tar $(TAR_FILES)
 
 tests: $(DNA_TEST) $(INI_TEST) $(RISK_TEST) $(LOG_TEST)
 
 $(DNA_TEST): $(DNA_OBJS)
 	$(CC) $(CFLAGS) $(INCLUDES) -o $(DNA_TEST) $(DNA_OBJS)
+	./$(DNA_TEST)
+	\rm -f *.o *~ src/*.o src/*~ test/*.o test/*~ $(DNA_TEST)
 
 $(INI_TEST): $(INI_OBJS)
 	$(CC) $(CFLAGS) $(INCLUDES) -o $(INI_TEST) $(INI_OBJS)
+	./$(INI_TEST)
+	\rm -f *.o *~ src/*.o src/*~ test/*.o test/*~ $(INI_TEST)
 
 $(RISK_TEST): $(RISK_OBJS)
 	$(CC) $(CFLAGS) $(INCLUDES) -o $(RISK_TEST) $(RISK_OBJS)
+	./$(RISK_TEST)
+	\rm -f *.o *~ src/*.o src/*~ test/*.o test/*~ $(RISK_TEST)
 
 $(LOG_TEST): $(LOG_OBJS)
 	$(CC) $(CFLAGS) $(INCLUDES) -o $(LOG_TEST) $(LOG_OBJS)
+	./$(LOG_TEST)
+	\rm -f *.o *~ src/*.o src/*~ test/*.o test/*~ $(LOG_TEST)
