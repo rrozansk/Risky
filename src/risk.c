@@ -2,7 +2,7 @@
  * FILE:    risk.c                                                            *
  * AUTHOR:  Ryan Rozanski                                                     *
  * CREATED: 4/4/17                                                            *
- * EDITED:  5/13/17                                                           *
+ * EDITED:  9/9/17                                                            *
  * INFO:    Implementation of the interface located in risk.h.                *
  *                                                                            *
  ******************************************************************************/
@@ -23,44 +23,31 @@
  ******************************************************************************/
 struct risk {
   /* PLAYERS */
-  char **names;        /* array of player names */
-  int size;            /* # human */
+  char **players;                 /* array of player names */
+  char playersN;
   /* TROOPS */
-  int beginning;       /* # troops at game start */
-  int minimum;         /* minimum troop/turn */
-  int bonus;           /* #countries/troop bonus */
-  int random;          /* randomly assign troops to countries */
+  int starting;                   /* troops at game start */
+  int minimum;                    /* minimum troop/turn */
+  int bonus;                      /* countries/troop bonus */
+  char randomTroops;              /* randomly distribute player troops at game start */
   /* CARDS */
-  char **cardTypes;    /* array of card types */
-  int numTypes;        /* # card types */
-  int wilds;           /* # wilds */
-  int *tradeIns;       /* array of trade in bonuses */
-  int numTrades;       /* # trade ins */
-  int tradeIncr;       /* constant trade increment */
+  char **types;                   /* array of card types */
+  int typesN;                     /* number of types and the required number of cards per trade in */
+  int wilds;
+  int *tradeRewards;              /* array of trade in bonuses */
+  int tradeRewardsN;               
+  int tradeIncrReward;            /* constant trade increment */
   /* MAP */
-  char **continents;   /* array of continents */
-  int *contBonuses;    /* array of contnent bonuses */
-  int numConts;        /* # continents and continent bonuses */
-  char **countries;    /* array of countries */
-  int numCountries;    /* # countries */
-  int randomCountries; /* random countries at game start */
-  int **board;         /* adjacency matrix */
-  // TODO: use board to track player ownage and army count?
-  // TODO: holding deck information?
-  int playing;
+  char **continents;              /* array of continents */
+  int continentsN;
+  int *continentBonuses;          /* array of contnent bonuses */
+  int continentBonusesN;          
+  char **countries;               /* array of countries */
+  int countriesN;
+  char randomCountries;           /* randomly assign countries to players at game start */
+  char validated;                 /* track if user validated game so we dont have to at start */
+  char playing;                   /* locks game settings during gameplay */
 };
-
-typedef struct card { 
-  char *country;
-  char *type;
-  char *owner;
-} card_t;
-
-typedef struct deck { 
-  int size;
-  int currCard;
-  card_t *cards;
-} deck_t;
 
 /******************************************************************************
  *                                                                            *
@@ -69,51 +56,52 @@ typedef struct deck {
  ******************************************************************************/
 const char *strErrRISK(errRISK_t errRISK) {
   switch(errRISK) {
+    // MISC ERRORS
     case RISK_OUT_OF_MEMORY: return "out of memory";
-    case RISK_GAME_PLAY_MUTATION: return "you cannot change game setting while in play";
-    case RISK_COUNTRIES_MISMATCH: return "countries size does not match game board dimensions";
-    case RISK_INVALID_PLAYERS: return "number of players must be 0-8";
-    case RISK_INVALID_RAND: return "rand must be 1 or 0";
-    case RISK_INVALID_BEGINNING: return "troop beginning must be between 0-2^8";
-    case RISK_INVALID_MINIMUM: return "troop minimum must be between 0-2^8";
-    case RISK_INVALID_BONUS: return "troop bonus must be between 0-2^8";
-    case RISK_INVALID_WILDS: return "wild card must be between 0-2^8";
-    case RISK_INVALID_INCR: return "trade increment must be between 0-2^8";
-    case RISK_INVALID_DECK: return "types of wilds must be between 0-2^8";
-    case RISK_INVALID_TRADES_SET: return "number of defined trades must be between 0-2^8";
-    case RISK_INVALID_COUNTRIES_SIZE: return "number of defined countries must be between 0-2^8";
-    case RISK_INVALID_CONTINENTS_SIZE: return "number of defined continents must be between 0-2^8";
-    case RISK_INVALID_BOARD_SIZE: return "number of adjacencies must be between 0-2^8";
-    case RISK_INVALID_COUNTRY_CONTINENT: return "number of defined countries must be greater than or equal to number of defined continents";
-    case RISK_INVALID_DEFENCE: return "invalid defence";
-    case RISK_INVALID_ATTACK: return "invalid attack";
-    case RISK_NIL_DEST: return "nil dest";
-    case RISK_NIL_SRC: return "nil src";
-    case RISK_NIL_RESULT: return "nil result";
-    case RISK_NIL_CARD: return "nil card";
-    case RISK_NIL_TROOPS: return "nil troops";
-    case RISK_NIL_PLAYER: return "nil players";
+    case RISK_GAMEPLAY_MUTATION: return "mutation of game setting during gameplay is prohibited";
+    // INVALID ERRORS
+    case RISK_INVALID_PLAYER_COUNT: return "players must be between 2-8";
+    case RISK_INVALID_INDEX: return "invalid index";
+    case RISK_INVALID_STARTING_TROOPS: return "starting troop count must be >= 0";
+    case RISK_INVALID_TROOP_BONUS: return "troop bonus must be >=0";
+    case RISK_INVALID_TROOP_MINIMUM: return "troop minimum must be >=0";
+    case RISK_INVALID_TROOP_RANDOM: return "troop random must be 0 or 1";
+    case RISK_INVALID_DECK_WILDS: return "deck wilds must be >= 0";
+    case RISK_INVALID_CARD_TYPES_COUNT: return "deck card types must be between >= 0";
+    case RISK_INVALID_REWARDS_COUNT: return "rewards length must be >= 0";
+    case RISK_INVALID_LENGTH: return "n must be >= 0 and < length of the array";
+    case RISK_INVALID_INCREMENT: return "increment must be >= 0";
+    case RISK_INVALID_COUNTRIES_COUNT: return "countries must be >= 0";
+    case RISK_INVALID_RANDOM: return "random must be 1 or 0";
+    // NIL ERRORS
     case RISK_NIL_GAME: return "nil game";
-    case RISK_NIL_CARD_TYPES: return "nil card types";
-    case RISK_NIL_TRADEINS: return "nil trade in values";
-    case RISK_NIL_NAMES: return "nil names";
-    case RISK_NIL_COUNTRY_BONUSES: return "nil country bonuses";
-    case RISK_NIL_BOARD: return "nil board";
-    case RISK_NIL_COUNTRY: return "nil country";
-    case RISK_NIL_CONFLICTS: return "nil conflicts";
-    case RISK_NIL_COUNTRIES: return "nil countries";
-    case RISK_NIL_TRADES: return "nil trades";
-    case RISK_NIL_INCR: return "nil incr";
-    case RISK_NIL_START: return "nil start";
-    case RISK_NIL_MIN: return "nil minimum";
-    case RISK_NIL_BONUS: return "nil bonus";
-    case RISK_NIL_PLAYERS: return "nil players";
-    case RISK_NIL_WILDS: return "nil wilds";
-    case RISK_NIL_TYPES: return "nil types";
-    case RISK_NIL_SIZE: return "nil size";
-    case RISK_NIL_CONTINENTS: return "nil continents";
-    case RISK_NIL_CONTINENT: return "nil continent";
-    case RISK_NIL_BONUSES: return "nil bonuses";
+    case RISK_NIL_ARR_PLAYERS: return "player names array is nil";
+    case RISK_NIL_ARR_PLAYER: return "player names array contains a nil name";
+    case RISK_NIL_PLAYERS: return "players must be non nil";
+    case RISK_NIL_PLAYER: return "player must be non nil";
+    case RISK_NIL_LENGTH: return "n must be non nil";
+    case RISK_NIL_STARTING_TROOPS: return "starting troop count must be non nil";
+    case RISK_NIL_TROOP_BONUS: return "troop bonus must be non nil";
+    case RISK_NIL_TROOP_MINIMUM: return "troop minimum must be non nil";
+    case RISK_NIL_TROOP_RANDOM: return "troop random must be non nil";
+    case RISK_NIL_DECK_WILDS: return "deck wilds must be non nil";
+    case RISK_NIL_CARD_TYPES: return "deck card types must be non nil";
+    case RISK_NIL_TYPES: return "deck card types must be non nil";
+    case RISK_NIL_TYPE: return "deck card type must be non nil";
+    case RISK_NIL_ARR_REWARDS: return "rewards must be non nil";
+    case RISK_NIL_REWARDS: return "rewards must be non nil";
+    case RISK_NIL_INCREMENT: return "increment must be non nil";
+    case RISK_NIL_ARR_CONTINENTS: return "continents array must be non nil";
+    case RISK_NIL_ARR_CONTINENT: return "continents array contains a nil element";
+    case RISK_NIL_CONTINENTS: return "continents must be non nil";
+    case RISK_NIL_CONTINENT: return "continent must be non nil";
+    case RISK_NIL_ARR_BONUSES: return "bonuses array must be non nil";
+    case RISK_NIL_BONUSES: return "bonuses must be non nil";
+    case RISK_NIL_ARR_COUNTRIES: return "countries must be non nil";
+    case RISK_NIL_ARR_COUNTRY: return "country in countries array must be non nil";
+    case RISK_NIL_COUNTRIES: return "countries must be non nil";
+    case RISK_NIL_COUNTRY: return "country must be non nil";
+    case RISK_NIL_RANDOM: return "random must be non nil";
     case RISK_NIL: return "";
     default: return "unrecognized errRISK_t";
   }
@@ -127,360 +115,619 @@ errRISK_t makeRISK(risk_t **game) {
   return RISK_NIL;
 }
 
-errRISK_t freeRISK(risk_t *game) { // TODO: redo with free API above
-  if(!game) { return RISK_NIL_GAME; }
+errRISK_t freeRISK(risk_t *game) {
+  if(!game) { return RISK_NIL; }
 
-  if(game->names) { 
-    for(; game->size; game->size--) { free(game->names[game->size-1]); }
-    free(game->names);
-  }
-  if(game->cardTypes) {
-    for(; game->numTypes; game->numTypes--) { free(game->cardTypes[game->numTypes-1]); }
-    free(game->cardTypes);
-  }
-  if(game->tradeIns) { free(game->tradeIns); }
-  if(game->contBonuses) { free(game->contBonuses); }
-  if(game->continents) {
-    for(; game->numConts; game->numConts--) { free(game->continents[game->numConts-1]); }
-    free(game->continents);
-  }
-  int tmp = game->numCountries;
-  if(game->countries) {
-    for(; tmp; tmp--) { free(game->countries[tmp-1]); }
-    free(game->countries);
-  }
-  if(game->board) {
-    for(; game->numCountries; game->numCountries--) { free(game->board[game->numCountries-1]); }
-    free(game->board);
-  }
+  for(; game->playersN; game->playersN--) { free(game->players[game->playersN-1]); }
+  free(game->players);
+
+  for(; game->typesN; game->typesN--) { free(game->types[game->typesN-1]); }
+  free(game->types);
+
+  free(game->tradeRewards);
+
+  for(; game->continentsN; game->continentsN--) { free(game->continents[game->continentsN-1]); }
+  free(game->continents);
+  
+  free(game->continentBonuses);
+
+  for(; game->countriesN; game->countriesN--) { free(game->countries[game->countriesN-1]); }
+  free(game->countries);
+
   free(game);
-  //*game = NULL; // TODO make it risk_t **game??
 
   return RISK_NIL;
 }
 
-errRISK_t setPlayers(risk_t *game, int n, char **names) {
+errRISK_t setPlayers(risk_t *game, int n, char *players[]) {
   if(!game) { return RISK_NIL_GAME; }
-  if(n > 8 || n < 2) { return RISK_INVALID_PLAYERS; }
-  if(!names) { return RISK_NIL_NAMES; }
-  if(game->playing) { return RISK_GAME_PLAY_MUTATION; }
+  if(n > 8 || n < 2) { return RISK_INVALID_PLAYER_COUNT; }
+  if(!players) { return RISK_NIL_ARR_PLAYERS; }
+  if(game->playing) { return RISK_GAMEPLAY_MUTATION; }
+ 
+  game->validated = 0;
 
-  //freeArr2D(&game->humans, game->hps);
-  game->size = n;
-  game->names = names; // TODO: copy
+  for(; game->playersN; game->playersN--) { free(game->players[game->playersN-1]); }
+  free(game->players);
+
+  game->playersN = n;
+
+  for(; n; n--) { if(!players[n-1]) { return RISK_NIL_ARR_PLAYER; } }
+
+  if(!(game->players = malloc(sizeof(char *) * game->playersN))) {
+    game->players = NULL;
+    game->playersN = 0;
+    return RISK_OUT_OF_MEMORY;
+  }
+
+  for(n = 0; n < game->playersN; n++) {
+    if(!(game->players[n] = calloc(strlen(players[n])+1, sizeof(char)))) {
+      for(; n; n--) { free(game->players[n-1]); }
+      free(game->players);
+      game->players = NULL;
+      game->playersN = 0;
+      return RISK_OUT_OF_MEMORY;
+    }
+
+    strcpy(game->players[n], players[n]);
+  }
 
   return RISK_NIL;
 }
 
-errRISK_t getPlayers(risk_t *game, char ***names, int *players) {
+errRISK_t getLengthPlayers(risk_t *game, int *players) {
   if(!game) { return RISK_NIL_GAME; }
-  if(!names) { return RISK_NIL_NAMES; }
   if(!players) { return RISK_NIL_PLAYERS; }
 
+  *players = game->playersN;
+
   return RISK_NIL;
 }
 
-errRISK_t setTroops(risk_t *game, int beginning, int min, int bonus, int rand) {
+errRISK_t getLengthPlayersElem(risk_t *game, int idx, int *n) {
   if(!game) { return RISK_NIL_GAME; }
-  if(beginning < 0 || beginning > 256) { return RISK_INVALID_BEGINNING; }
-  if(min < 0 || min > 256) { return RISK_INVALID_MINIMUM; }
-  if(bonus < 0 || bonus > 256) { return RISK_INVALID_BONUS; }
-  if(!(rand == 0 || rand == 1)) { return RISK_INVALID_RAND; }
-  if(game->playing) { return RISK_GAME_PLAY_MUTATION; }
+  if(idx < 0 || idx >= game->playersN) { return RISK_INVALID_INDEX; }
+  if(!n) { return RISK_NIL_LENGTH; }
 
-  game->beginning = beginning;
-  game->minimum = min;
+  *n = strlen(game->players[idx]);
+
+  return RISK_NIL;
+}
+
+errRISK_t getPlayer(risk_t *game, int idx, char *player) {
+  if(!game) { return RISK_NIL_GAME; }
+  if(idx < 0 || idx >= game->playersN) { return RISK_INVALID_INDEX; }
+  if(!player) { return RISK_NIL_PLAYER; }
+
+  strcpy(player, game->players[idx]);
+
+  return RISK_NIL;  
+}
+
+errRISK_t setStartingTroopCount(risk_t *game, int start) {
+  if(!game) { return RISK_NIL_GAME; }
+  if(start < 0) { return RISK_INVALID_STARTING_TROOPS; }
+  if(game->playing) { return RISK_GAMEPLAY_MUTATION; }
+
+  game->validated = 0;
+  game->starting = start;
+
+  return RISK_NIL;  
+}
+
+errRISK_t getStartingTroopCount(risk_t *game, int *start) {
+  if(!game) { return RISK_NIL_GAME; }
+  if(!start) { return RISK_NIL_STARTING_TROOPS; }
+
+  *start = game->starting;
+
+  return RISK_NIL;  
+}
+
+errRISK_t setTroopTerritoryBonus(risk_t *game, int bonus) {
+  if(!game) { return RISK_NIL_GAME; }
+  if(bonus < 0) { return RISK_INVALID_TROOP_BONUS; }
+  if(game->playing) { return RISK_GAMEPLAY_MUTATION; }
+
+  game->validated = 0;
   game->bonus = bonus;
-  game->random = rand;
 
   return RISK_NIL;
 }
 
-errRISK_t getTroops(risk_t *game, int *start, int *min, int *bonus) {
+errRISK_t getTroopTerritoryBonus(risk_t *game, int *bonus) {
   if(!game) { return RISK_NIL_GAME; }
-  if(!start) { return RISK_NIL_START; }
-  if(!min) { return RISK_NIL_MIN; }
-  if(!bonus) { return RISK_NIL_BONUS; }
+  if(!bonus) { return RISK_NIL_TROOP_BONUS; }
 
-  return RISK_NIL;
+  *bonus = game->bonus;
+
+  return RISK_NIL;  
 }
 
-errRISK_t setDeck(risk_t *game, int wilds, char **types, int n) {
+errRISK_t setMinimumTroopHandout(risk_t *game, int minimum) {
   if(!game) { return RISK_NIL_GAME; }
-  if(!types) { return RISK_NIL_CARD_TYPES; }
-  if(wilds < 0 || wilds > 256) { return RISK_INVALID_WILDS; }
-  if(n < 0 || n > 256) { return RISK_INVALID_DECK; }
-  if(game->playing) { return RISK_GAME_PLAY_MUTATION; }
+  if(minimum < 0) { return RISK_INVALID_TROOP_MINIMUM; }
+  if(game->playing) { return RISK_GAMEPLAY_MUTATION; }
 
-  //freeArr2D(game->cardTypes, game->numTypes);
+  game->validated = 0;
+  game->minimum = minimum;
+
+  return RISK_NIL;  
+}
+
+errRISK_t getMinimumTroopHandout(risk_t *game, int *minimum) {
+  if(!game) { return RISK_NIL_GAME; }
+  if(!minimum) { return RISK_NIL_TROOP_MINIMUM; }
+
+  *minimum = game->minimum;
+
+  return RISK_NIL;  
+}
+
+errRISK_t setRandomTroops(risk_t *game, int random) {
+  if(!game) { return RISK_NIL_GAME; }
+  if(!(random == 0 || random == 1)) { return RISK_INVALID_TROOP_RANDOM; }
+  if(game->playing) { return RISK_GAMEPLAY_MUTATION; }
+
+  game->validated = 0;
+  game->randomTroops = random;
+
+  return RISK_NIL;  
+}
+
+errRISK_t getRandomTroops(risk_t *game, int *random) {
+  if(!game) { return RISK_NIL_GAME; }
+  if(!random) { return RISK_NIL_TROOP_RANDOM; }
+
+  *random = game->randomTroops;
+
+  return RISK_NIL;  
+}
+
+errRISK_t setDeckWilds(risk_t *game, int wilds) {
+  if(!game) { return RISK_NIL_GAME; }
+  if(wilds < 0) { return RISK_INVALID_DECK_WILDS; }
+  if(game->playing) { return RISK_GAMEPLAY_MUTATION; }
+
+  game->validated = 0;
   game->wilds = wilds;
-  game->cardTypes = types;  // TODO: malloc and copy
-  game->numTypes = n;
 
-  return RISK_NIL;
+  return RISK_NIL;  
 }
 
-errRISK_t getDeck(risk_t *game, int *wilds, char ***types, int *size) {
+errRISK_t getDeckWilds(risk_t *game, int *wilds) {
   if(!game) { return RISK_NIL_GAME; }
-  if(!wilds) { return RISK_NIL_WILDS; }
+  if(!wilds) { return RISK_NIL_DECK_WILDS; }
+
+  *wilds = game->wilds;
+
+  return RISK_NIL;  
+}
+
+errRISK_t setDeckTypes(risk_t *game, int n, char *types[]) {
+  if(!game) { return RISK_NIL_GAME; }
+  if(n < 0) { return RISK_INVALID_CARD_TYPES_COUNT; }
+  if(!types) { return RISK_NIL_CARD_TYPES; }
+
+  if(game->playing) { return RISK_GAMEPLAY_MUTATION; }
+
+  game->validated = 0;
+
+  for(; game->typesN;) { free(game->types[game->typesN--]); }
+  free(game->types);
+
+  game->typesN = n;
+
+  for(; n; n--) { if(!types[n-1]) { return RISK_NIL_TYPE; } }
+
+  if(!(game->types = malloc(sizeof(char *) * game->typesN))) {
+    game->types = NULL;
+    game->typesN = 0;
+    return RISK_OUT_OF_MEMORY;
+  }
+
+  for(n = 0; n < game->typesN; n++) {
+    if(!(game->types[n] = calloc(strlen(types[n])+1, sizeof(char)))) {
+      for(; n; n--) { free(game->types[n-1]); }
+      free(game->types);
+      game->types = NULL;
+      game->typesN = 0;
+      return RISK_OUT_OF_MEMORY;
+    }
+
+    strcpy(game->types[n], types[n]);
+  }
+
+  return RISK_NIL;  
+}
+
+errRISK_t getLengthDeckTypes(risk_t *game, int *types) {
+  if(!game) { return RISK_NIL_GAME; }
   if(!types) { return RISK_NIL_TYPES; }
-  if(!size) { return RISK_NIL_SIZE; }
 
-  return RISK_NIL;
+  *types = game->typesN;
+
+  return RISK_NIL;  
 }
 
-errRISK_t setTrades(risk_t *game, int *trades, int n, int incr) {
+errRISK_t getLengthDeckTypesElem(risk_t *game, int idx, int *n) {
   if(!game) { return RISK_NIL_GAME; }
-  if(!trades) { return RISK_NIL_TRADEINS; }
-  if(incr < 0 || incr > 256) { return RISK_INVALID_INCR; }
-  if(n < 0 || n > 256) { return RISK_INVALID_TRADES_SET; }
-  if(game->playing) { return RISK_GAME_PLAY_MUTATION; }
+  if(idx < 0 || idx >= game->typesN) { return RISK_INVALID_INDEX; }
+  if(!n) { return RISK_NIL_LENGTH; }
 
-  //freeArr(&game->trades, game->numTrades);
-  game->tradeIns = trades;  // TODO: copy
-  game->numTrades = n;
-  game->tradeIncr = incr;
+  *n = strlen(game->types[idx]);
 
-  return RISK_NIL;
+  return RISK_NIL;  
 }
 
-errRISK_t getTrades(risk_t *game, int **trades, int *n, int *incr) {
+errRISK_t getDeckTypesElem(risk_t *game, int idx, char *type) {
   if(!game) { return RISK_NIL_GAME; }
-  if(!trades) { return RISK_NIL_TRADES; }
-  if(!n) { return RISK_NIL_SIZE; }
-  if(!incr) { return RISK_NIL_INCR; }
+  if(idx < 0 || idx >= game->typesN) { return RISK_INVALID_INDEX; }
+  if(!type) { return RISK_NIL_TYPE; }
 
-  return RISK_NIL;
+  strcpy(type, game->types[idx]);
+
+  return RISK_NIL;  
 }
 
-errRISK_t setContinents(risk_t *game, char **continents, int n) {
+errRISK_t setTradeRewards(risk_t *game, int n, int rewards[]) {
+  if(!game) { return RISK_NIL_GAME; }
+  if(n < 0) { return RISK_INVALID_REWARDS_COUNT; }
+  if(!rewards) { return RISK_NIL_ARR_REWARDS; }
+
+  if(game->playing) { return RISK_GAMEPLAY_MUTATION; }
+
+  game->validated = 0;
+
+  free(game->tradeRewards);
+
+  if(!(game->tradeRewards = calloc(n, sizeof(int)))) {
+    game->tradeRewards = NULL;
+    game->tradeRewardsN = 0;
+    return RISK_OUT_OF_MEMORY;
+  }
+
+  game->tradeRewardsN = n;
+  for(; n; n--) { game->tradeRewards[n-1] = rewards[n-1]; }
+
+  return RISK_NIL;  
+}
+
+errRISK_t getLengthTradeRewards(risk_t *game, int *rewards) {
+  if(!game) { return RISK_NIL_GAME; }
+  if(!rewards) { return RISK_NIL_REWARDS; }
+
+  *rewards = game->tradeRewardsN;
+
+  return RISK_NIL;  
+}
+
+errRISK_t getTradeRewards(risk_t *game, int n, int rewards[]) {
+  if(!game) { return RISK_NIL_GAME; }
+  if(n < 0 || n > game->tradeRewardsN) { return RISK_INVALID_LENGTH; }
+  if(!rewards) { return RISK_NIL_REWARDS; }
+
+  for(; n; n--) { rewards[n-1] = game->tradeRewards[n-1]; }
+
+  return RISK_NIL;  
+}
+
+errRISK_t setTradeIncrReward(risk_t *game, int incr) {
+  if(!game) { return RISK_NIL_GAME; }
+  if(incr< 0) { return RISK_INVALID_INCREMENT; }
+  if(game->playing) { return RISK_GAMEPLAY_MUTATION; }
+
+  game->validated = 0;
+  game->tradeIncrReward = incr;
+
+  return RISK_NIL;  
+}
+
+errRISK_t getTradeIncrReward(risk_t *game, int *incr) {
+  if(!game) { return RISK_NIL_GAME; }
+  if(!incr) { return RISK_NIL_INCREMENT; }
+
+  *incr = game->tradeIncrReward;
+
+  return RISK_NIL;  
+}
+
+errRISK_t setContinents(risk_t *game, int n, char *continents[]) {
+  if(!game) { return RISK_NIL_GAME; }
+  if(n < 0) { return RISK_INVALID_LENGTH; }
+  if(!continents) { return RISK_NIL_ARR_CONTINENTS; }
+
+  if(game->playing) { return RISK_GAMEPLAY_MUTATION; }
+
+  game->validated = 0;
+
+  for(; game->continentsN;) { free(game->continents[game->continentsN--]); }
+  free(game->continents);
+
+  game->continentsN = n;
+
+  for(; n; n--) { if(!continents[n-1]) { return RISK_NIL_ARR_CONTINENT; } }
+
+  if(!(game->continents = malloc(sizeof(char *) * game->continentsN))) {
+    game->continents = NULL;
+    game->continentsN = 0;
+    return RISK_OUT_OF_MEMORY;
+  }
+
+  for(n = 0; n < game->continentsN; n++) {
+    if(!(game->continents[n] = calloc(strlen(continents[n])+1, sizeof(char)))) {
+      for(; n; n--) { free(game->continents[n-1]); }
+      free(game->continents);
+      game->continents = NULL;
+      game->continentsN = 0;
+      return RISK_OUT_OF_MEMORY;
+    }
+
+    strcpy(game->continents[n], continents[n]);
+  }
+
+  return RISK_NIL;  
+}
+
+errRISK_t getLengthContinents(risk_t *game, int *continents) {
   if(!game) { return RISK_NIL_GAME; }
   if(!continents) { return RISK_NIL_CONTINENTS; }
-  if(n < 0 || n > 256) { return RISK_INVALID_CONTINENTS_SIZE; }
-  if(game->contBonuses && game->numConts != n) { return RISK_INVALID_CONTINENTS_SIZE; }
-  if(game->playing) { return RISK_GAME_PLAY_MUTATION; }
 
-  //freeArr2D(&game->continents, game->numConts);
-  game->continents = continents;  // TODO: copy
-  game->numConts = n;
+  *continents = game->continentsN;
+
+  return RISK_NIL;  
+}
+
+errRISK_t getLengthContinentsElem(risk_t *game, int idx, int *n) {
+  if(!game) { return RISK_NIL_GAME; }
+  if(idx < 0 || idx >= game->continentsN) { return RISK_INVALID_INDEX; }
+  if(!n) { return RISK_NIL_LENGTH; }
+
+  *n = strlen(game->continents[idx]);
 
   return RISK_NIL;
 }
 
-errRISK_t getContinents(risk_t *game, char ***continents, int *size) {
+errRISK_t getContinentElem(risk_t *game, int idx, char *continent) {
   if(!game) { return RISK_NIL_GAME; }
-  if(!continents) { return RISK_NIL_CONTINENTS; }
-  if(!size) { return RISK_NIL_SIZE; }
-
-  return RISK_NIL;
-}
-
-errRISK_t setContinentBonuses(risk_t *game, int *bonuses, int n) {
-  if(!game) { return RISK_NIL_GAME; }
-  if(!bonuses) { return RISK_NIL_COUNTRY_BONUSES; }
-  if(n < 0 || n > 256) { return RISK_INVALID_CONTINENTS_SIZE; }
-  if(game->continents && game->numConts != n) { return RISK_INVALID_CONTINENTS_SIZE; }
-  if(game->playing) { return RISK_GAME_PLAY_MUTATION; }
-
-  //freeArr2D(&game->contBonuses, game->contBonuses);
-  game->contBonuses = bonuses;  // TODO: copy
-  game->numConts = n;
-
-  return RISK_NIL;
-}
-
-errRISK_t getContinentBonus(risk_t *game, char *continent, int *bonus) {
-  if(!game) { return RISK_NIL_GAME; }
+  if(idx < 0 || idx >= game->continentsN) { return RISK_INVALID_INDEX; }
   if(!continent) { return RISK_NIL_CONTINENT; }
-  if(!bonus) { return RISK_NIL_BONUS; }
 
-  return RISK_NIL;
+  strcpy(continent, game->continents[idx]);
+
+  return RISK_NIL;  
 }
 
-errRISK_t getContinentBonuses(risk_t *game, int **bonuses, int *size) {
+errRISK_t setContinentBonuses(risk_t *game, int n, int bonuses[]) {
+  if(!game) { return RISK_NIL_GAME; }
+  if(n < 0) { return RISK_INVALID_LENGTH; }
+  if(!bonuses) { return RISK_NIL_ARR_BONUSES; }
+
+  if(game->continentBonuses) { return RISK_GAMEPLAY_MUTATION; }
+
+  game->validated = 0;
+
+  free(game->continentBonuses);
+
+  if(!(game->continentBonuses = calloc(n, sizeof(int)))) {
+    game->continentBonuses = NULL;
+    game->continentBonusesN = 0;
+    return RISK_OUT_OF_MEMORY;
+  }
+
+  game->continentBonusesN = n;
+  for(; n; n--) { game->continentBonuses[n-1] = bonuses[n-1]; }
+
+  return RISK_NIL;  
+}
+
+errRISK_t getLengthContinentBonuses(risk_t *game, int *bonuses) {
   if(!game) { return RISK_NIL_GAME; }
   if(!bonuses) { return RISK_NIL_BONUSES; }
-  if(!size) { return RISK_NIL_SIZE; }
 
-  return RISK_NIL;
+  *bonuses = game->continentBonusesN;
+
+  return RISK_NIL;  
 }
 
-errRISK_t setCountries(risk_t *game, char **countries, int n, int rand) {
+errRISK_t getContinentBonuses(risk_t *game, int n, int bonuses[]) {
   if(!game) { return RISK_NIL_GAME; }
-  if(!countries) { return RISK_NIL_COUNTRIES; }
-  if(!(rand == 1 || rand == 0)) { return RISK_INVALID_RAND; }
-  if(n < 0 || n > 256) { return RISK_INVALID_COUNTRIES_SIZE; }
-  if(game->playing) { return RISK_GAME_PLAY_MUTATION; }
-  if(game->board && game->numCountries != n) { return RISK_COUNTRIES_MISMATCH; }
+  if(n < 0 || n > game->continentBonusesN) { return RISK_INVALID_LENGTH; }
+  if(!bonuses) { return RISK_NIL_ARR_BONUSES; }
 
-  //freeArr2D(&game->countries, game->numCountries);
-  game->countries = countries;  // TODO: copy
-  game->numCountries = n;
-  game->randomCountries = rand;
+  for(; n; n--) { bonuses[n-1] = game->continentBonuses[n-1]; }
 
-  return RISK_NIL;
+  return RISK_NIL;  
 }
 
-errRISK_t getCountries(risk_t *game, char ***countries, int *size) {
+errRISK_t setCountries(risk_t *game, int n, char *countries[]) {
   if(!game) { return RISK_NIL_GAME; }
-  if(!countries) { return RISK_NIL_COUNTRIES; }
-  if(!size) { return RISK_NIL_SIZE; }
+  if(n < 0) { return RISK_INVALID_COUNTRIES_COUNT; }
+  if(!countries) { return RISK_NIL_ARR_COUNTRIES; }
 
-  return RISK_NIL;
-}
+  if(game->playing) { return RISK_GAMEPLAY_MUTATION; }
 
-errRISK_t setAdjacencies(risk_t *game, char *country, char **countries, int conflicts) {
-  if(!game) { return RISK_NIL_GAME; }
-  //if(!board) { return RISK_NIL_BOARD; }
-  //if(n < 0 || n > 256) { return RISK_INVALID_BOARD_SIZE; }
-  if(game->playing) { return RISK_GAME_PLAY_MUTATION; }
-  //if(game->countries && game->numCountries != n) { return RISK_COUNTRIES_MISMATCH; }
+  game->validated = 0;
 
-/*
-    for(; j; j--) {
-      for(k = n; k; k--) {
-        if(!strcmp(sarr1[k-1], sarr2[j-1])) {
-          matrix[i][k-1] = 1;
-          break;
-        }
-      }
+  for(; game->countriesN;) { free(game->countries[game->countriesN--]); }
+  free(game->countries);
+
+  game->countriesN = n;
+
+  for(; n; n--) { if(!countries[n-1]) { return RISK_NIL_ARR_COUNTRY; } }
+
+  if(!(game->countries = malloc(sizeof(char *) * game->countriesN))) {
+    game->countries = NULL;
+    game->countriesN = 0;
+    return RISK_OUT_OF_MEMORY;
+  }
+
+  for(n = 0; n < game->countriesN; n++) {
+    if(!(game->countries[n] = calloc(strlen(countries[n])+1, sizeof(char)))) {
+      for(; n; n--) { free(game->countries[n-1]); }
+      free(game->countries);
+      game->countries = NULL;
+      game->countriesN = 0;
+      return RISK_OUT_OF_MEMORY;
     }
- */
 
-  // freeArr2D(game->board, game->numCountries);
-  //game->board = board;  // TODO: copy
-  //game->numCountries = n;
+    strcpy(game->countries[n], countries[n]);
+  }
 
-  return RISK_NIL;
+  return RISK_NIL;  
 }
 
-errRISK_t getNeighbors(risk_t *game, char *country, char ***neighbors, int *size) {
+errRISK_t getLengthCountries(risk_t *game, int *countries) {
   if(!game) { return RISK_NIL_GAME; }
+  if(!countries) { return RISK_NIL_COUNTRIES; }
+
+  *countries = game->countriesN;
+
+  return RISK_NIL;  
+}
+
+errRISK_t getLengthCountriesElem(risk_t *game, int idx, int *n) {
+  if(!game) { return RISK_NIL_GAME; }
+  if(idx < 0 || idx >= game->countriesN) { return RISK_INVALID_INDEX; }
+  if(!n) { return RISK_NIL_LENGTH; }
+
+  *n = strlen(game->countries[idx]);
+
+  return RISK_NIL;  
+}
+
+errRISK_t getCountryElem(risk_t *game, int idx, char *country) {
+  if(!game) { return RISK_NIL_GAME; }
+  if(idx < 0 || idx >= game->countriesN) { return RISK_INVALID_INDEX; }
   if(!country) { return RISK_NIL_COUNTRY; }
-  if(!neighbors) { return RISK_NIL_CONFLICTS; }
-  if(!size) { return RISK_NIL_SIZE; }
 
-  return RISK_NIL;
+  strcpy(country, game->countries[idx]);
+
+  return RISK_NIL;  
 }
 
-errRISK_t isValid(risk_t *game) { // FIXME: make sure entire conf is sane
+errRISK_t setRandomCountries(risk_t *game, int random) {
   if(!game) { return RISK_NIL_GAME; }
-  if(!game->cardTypes) { return RISK_NIL_CARD_TYPES; }
-  if(!game->tradeIns) { return RISK_NIL_TRADEINS; }
-  if(!game->names) { return RISK_NIL_NAMES; }
-  if(!game->continents) { return RISK_NIL_CONTINENTS; }
-  if(!game->contBonuses) { return RISK_NIL_COUNTRY_BONUSES; }
-  if(!game->countries) { return RISK_NIL_COUNTRIES; }
-  if(!game->board) { return RISK_NIL_BOARD; }
-  if(game->size > 8 || game->size < 2) { return RISK_INVALID_PLAYERS; }
-  if(!(game->random == 0 || game->random == 1)) { return RISK_INVALID_RAND; }
-  if(!(game->randomCountries == 1 || game->randomCountries == 0)) { return RISK_INVALID_RAND; }
-  if(game->tradeIncr < 0 || game->tradeIncr > 256) { return RISK_INVALID_INCR; }
-  if(game->beginning < 0 || game->beginning > 256) { return RISK_INVALID_BEGINNING; }
-  if(game->minimum < 0 || game->minimum > 256) { return RISK_INVALID_MINIMUM; }
-  if(game->bonus < 0 || game->bonus > 256) { return RISK_INVALID_BONUS; }
-  if(game->wilds < 0 || game->wilds > 256) { return RISK_INVALID_WILDS; }
-  if(game->numTrades < 0 || game->numTrades > 256) { return RISK_INVALID_DECK; }
-  if(game->numTypes < 0 || game->numTypes > 256) { return RISK_INVALID_TRADES_SET; }
-  if(game->numConts < 0 || game->numConts > 256) { return RISK_INVALID_CONTINENTS_SIZE; }
-  if(game->numCountries < 0 || game->numCountries > 256) { return RISK_INVALID_COUNTRIES_SIZE; }
-  if(game->numCountries < game->numConts) { return RISK_INVALID_COUNTRY_CONTINENT; }
+  if(!(random == 0 || random == 1)) { return RISK_INVALID_RANDOM; }
+  if(game->playing) { return RISK_GAMEPLAY_MUTATION; }
+
+  game->validated = 0;
+  game->randomCountries = random;
+
+  return RISK_NIL;  
+}
+
+errRISK_t getRandomCountries(risk_t *game, int *random) {
+  if(!game) { return RISK_NIL_GAME; }
+  if(!random) { return RISK_NIL_RANDOM; }
+
+  *random = game->randomCountries;
+
+  return RISK_NIL;  
+}
+
+// TODO: these APIs need an internal board representation to work.
+// ... still need to work out the data structures for book keeping. 
+errRISK_t setBorders(risk_t *game, char *country, int n, char *countries[]) {
+  if(!game) { return RISK_NIL_GAME; }
+
+  return RISK_NIL;  
+}
+
+errRISK_t getLengthBorders(risk_t *game, char *country, int *countries) {
+  if(!game) { return RISK_NIL_GAME; }
+
+  return RISK_NIL;  
+}
+
+errRISK_t getLengthBordersElem(risk_t *game, char *country, int idx, int *n) {
+  if(!game) { return RISK_NIL_GAME; }
+
+  if(!n) { return RISK_NIL_LENGTH; }
+
+  return RISK_NIL;  
+}
+
+errRISK_t getBordersElem(risk_t *game, char *country, int idx, char *neighbor) {
+  if(!game) { return RISK_NIL_GAME; }
+
+  return RISK_NIL;  
+}
+
+errRISK_t setContinentSet(risk_t *game, char *continent, int n, char *countries[]) {
+  if(!game) { return RISK_NIL_GAME; }
+
+  return RISK_NIL;  
+}
+
+errRISK_t getContinentSetLength(risk_t *game, char *continent, int *countries) {
+  if(!game) { return RISK_NIL_GAME; }
+
+  return RISK_NIL;  
+}
+
+errRISK_t getContinentSetLengthElem(risk_t *game, char *continent, int idx, int *n) {
+  if(!game) { return RISK_NIL_GAME; }
+
+  if(!n) { return RISK_NIL_LENGTH; }
+
+  return RISK_NIL;  
+}
+
+errRISK_t getContinentSetElem(risk_t *game, char *continent, int idx, char *country) {
+  if(!game) { return RISK_NIL_GAME; }
+
   return RISK_NIL;  
 }
 
 errRISK_t setOwner(risk_t *game, char *country, char *player) {
   if(!game) { return RISK_NIL_GAME; }
-  if(!country) { return RISK_NIL_COUNTRY; }
-  if(!player) { return RISK_NIL_PLAYER; }
 
-  return RISK_NIL;
+  return RISK_NIL;  
 }
 
-errRISK_t getOwner(risk_t *game, char *country, char **player) {
+errRISK_t getOwnerLength(risk_t *game, char *country, int *n) {
   if(!game) { return RISK_NIL_GAME; }
-  if(!country) { return RISK_NIL_COUNTRY; }
-  if(!player) { return RISK_NIL_PLAYER; }
 
-  return RISK_NIL;
+  if(!n) { return RISK_NIL_LENGTH; }
+
+  return RISK_NIL;  
 }
 
-errRISK_t setArmies(risk_t *game, char *country, int troops) {
+errRISK_t getOwner(risk_t *game, char *country, char *player) {
   if(!game) { return RISK_NIL_GAME; }
-  if(!country) { return RISK_NIL_COUNTRY; }
-  if(!troops) { return RISK_NIL_TROOPS; }
 
-  return RISK_NIL;
+  return RISK_NIL;  
 }
 
-errRISK_t getArmies(risk_t *game, char *country, int *troops) {
+errRISK_t reinforce(risk_t *game, char *country, int troops) {
   if(!game) { return RISK_NIL_GAME; }
-  if(!country) { return RISK_NIL_COUNTRY; }
-  if(!troops) { return RISK_NIL_TROOPS; }
 
-  return RISK_NIL;
+  return RISK_NIL;  
 }
 
-errRISK_t setRandomCountries(risk_t *game, int rand) {
+errRISK_t getTroops(risk_t *game, char *country, int *troops) {
   if(!game) { return RISK_NIL_GAME; }
-  if(!(rand == 0 || rand == 1)) { return RISK_INVALID_RAND; }
 
-  return RISK_NIL;
+  return RISK_NIL;  
 }
 
-errRISK_t setRandomArmies(risk_t *game, int rand) {
+errRISK_t valid(risk_t *game) {
   if(!game) { return RISK_NIL_GAME; }
-  if(!(rand == 0 || rand == 1)) { return RISK_INVALID_RAND; }
 
-  return RISK_NIL;
+  return RISK_NIL;  
 }
 
-errRISK_t getNextTradeValue(risk_t *game, int *troops) {
+errRISK_t start(risk_t *game) {
   if(!game) { return RISK_NIL_GAME; }
-  if(!troops) { return RISK_NIL_TROOPS; }
 
-  return RISK_NIL;
+  game->playing = 1;
+
+  return RISK_NIL;  
 }
 
-errRISK_t drawCard(risk_t *game, char **card) {
-  if(!game) { return RISK_NIL_GAME; }
-  if(!card) { return RISK_NIL_CARD; }
-
-  return RISK_NIL;
-}
-
-errRISK_t tradeCards(risk_t *game, char **cards, int *troops) {
-  if(!game) { return RISK_NIL_GAME; }
-  if(!cards) { return RISK_NIL_CARD; }
-  if(!troops) { return RISK_NIL_TROOPS; }
-
-  return RISK_NIL;
-}
-
-errRISK_t attack(risk_t *game, char *src, int attack, char *dest, int defence, int *result) {
-  if(!game) { return RISK_NIL_GAME; }
-  if(!src) { return RISK_NIL_SRC; }
-  if(attack < 1 || attack > 3) { return RISK_INVALID_ATTACK; }
-  if(!dest) { return RISK_NIL_DEST; }
-  if(defence < 1 || defence > 2) { return RISK_INVALID_DEFENCE; }
-  if(!result) { return RISK_NIL_RESULT; }
-
-  return RISK_NIL;
-}
-
-errRISK_t initDeck(risk_t *game) {
+errRISK_t end(risk_t *game) {
   if(!game) { return RISK_NIL_GAME; }
 
-  return RISK_NIL;
-}
-
-errRISK_t initCountries(risk_t *game) {
-  if(!game) { return RISK_NIL_GAME; }
-
-  return RISK_NIL;
-}
-
-errRISK_t initArmies(risk_t *game) {
-  if(!game) { return RISK_NIL_GAME; }
-
-  return RISK_NIL;
+  return RISK_NIL;  
 }
