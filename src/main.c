@@ -2,7 +2,7 @@
  * FILE:    main.c                                                            *
  * AUTHOR:  Ryan Rozanski                                                     *
  * CREATED: 4/4/17                                                            *
- * EDITED:  7/14/17                                                           *
+ * EDITED:  9/12/17                                                           *
  * INFO:    main.c assimilates the ini, log, dna, and risk libraries into an  *
  *          easily configurable command line version of a risk like game. The *
  *          game supports logging and artificial intellegence whose behavior  *
@@ -31,17 +31,17 @@
  *   G L O B A L S                                                            *
  *                                                                            *
  ******************************************************************************/
-ini_t *ini = NULL;
-log_t *logger = NULL;
-dna_t *dna = NULL;
-risk_t *game = NULL;
+ini_t  *ini    = NULL;
+log_t  *logger = NULL;
+dna_t  *dna    = NULL;
+risk_t *game   = NULL;
 
 int SESSION = -1;
 
-errRISK_t errRISK;
-errINI_t errINI;
-errDNA_t errDNA;
-errLOG_t errLOG;
+errRISK_t errRISK = RISK_NIL;
+errINI_t  errINI  = INI_NIL;
+errDNA_t  errDNA  = DNA_NIL;
+errLOG_t  errLOG  = LOG_NIL;
 
 /******************************************************************************
  *                                                                            *
@@ -56,6 +56,16 @@ void printError(char *who, char *irritant) {
   else { fprintf(stderr, "who: %s\nirritant: %s\n", who, irritant); }
   fprintf(stderr, "exiting...\n");
   exit(EXIT_FAILURE);
+}
+
+// print an array of strings as an enumerated list
+void printChoices(char *elems[], int size) {
+  if(!elems) { printError("printChoices()", "nil elems"); }
+  if(size < 1) { printError("printChoices()", "invalid size"); }
+
+  int i;
+  for(i = 0; i < size; i++) { fprintf(stdout, "\t%i)\t%s\n", i, elems[i]);  }
+  fprintf(stdout, "\n");
 }
 
 // Read in an integer, only accepting input between the bounds. Optionally
@@ -86,18 +96,34 @@ void readInt(int lbound, int ubound, int *choice, int prompt) {
         continue;
       }
       if(c == 'y') { return; }
+      if(c == 'n') { break; }
     }
   }
 }
 
-// print an array of strings as an enumerated list
-void printChoices(char *elems[], int size) {
-  if(!elems) { printError("printChoices()", "nil elems"); }
-  if(size < 1) { printError("printChoices()", "invalid size"); }
+// attempt to retrieve and type check a setting from the conf file
+void getConfSetting(ini_t *ini, char *section, char *key, typeINI_t typeINI, setting_t **setting) {
+  char buffer[35+strlen(section)+strlen(key)];
+  if((errINI = lookupSetting(ini, section, key, setting)) != INI_NIL) {
+    sprintf(buffer, "lookupSetting(), section=%s, key=%s", section, key);
+    printError(buffer, (char *)strErrINI(errINI));
+  }
 
-  int i;
-  for(i = 0; i < size; i++) { fprintf(stdout, "\t%i) %s\n", i, elems[i]);  }
-  fprintf(stdout, "\n");
+  if(!setting) {
+    sprintf(buffer, "getConfSetting(), section=%s, key=%s", section, key);
+    printError(buffer, "setting not present in conf");
+  }
+  
+  typeINI_t tmpType;
+  if((errINI = settingType(*setting, &tmpType)) != INI_NIL) {
+    sprintf(buffer, "settingType(), section=%s, key=%s", section, key);
+    printError(buffer, (char *)strErrINI(errINI));
+  }
+
+  if(typeINI != tmpType) {
+    sprintf(buffer, "getConfSetting(), section=%s, key=%s", section, key);
+    printError(buffer, "unexpected type");
+  }
 }
 
 // TODO: implement. for now just promote higher traits.
@@ -145,25 +171,9 @@ int fitness(char *who, int chromosome[], int traits) {
 // attempt to set up the logger from the INI conf file.
 void setupLOGfromINI(ini_t *ini, log_t **logger) {
   setting_t *setting;
-  typeINI_t typeINI;
- 
-  if((errINI = lookupSetting(ini, "Logging", "log", &setting)) != INI_NIL) {
-    printError("lookupSetting(), section=Logging, key=log", (char *)strErrINI(errINI));
-  }
-
-  if(!setting) {
-    printError("setupLOGfromINI(), section=Logging, key=log", "setting not present in conf");
-  }
-
-  if((errINI = settingType(setting, &typeINI)) != INI_NIL) {
-    printError("settingType(), section=Logging, key=log", (char *)strErrINI(errINI));
-  }
-
-  if(typeINI != BOOL) {
-    printError("setupLOGfromINI()", "INI setting section=Logging, key=log must be of type bool");
-  }
 
   int log;
+  getConfSetting(ini, "Logging", "log", BOOL, &setting);
   if((errINI = settingGetBool(setting, &log)) != INI_NIL) {
     printError("settingGetBool(), section=Logging, key=log", (char *)strErrINI(errINI));
   }
@@ -173,22 +183,7 @@ void setupLOGfromINI(ini_t *ini, log_t **logger) {
     return;
   }
 
-  if((errINI = lookupSetting(ini, "Logging", "dir", &setting)) != INI_NIL) {
-    printError("lookupSetting(), section=Logging, key=dir", (char *)strErrINI(errINI));
-  }
-
-  if(!setting) {
-    printError("setupLOGfromINI(), section=Logging, key=dir", "setting not present in conf");
-  }
-
-  if((errINI = settingType(setting, &typeINI)) != INI_NIL) {
-    printError("settingType(), section=Logging, key=dir", (char *)strErrINI(errINI));
-  }
-
-  if(typeINI != STRING) {
-    printError("setupLOGfromINI()", "INI setting section=Logging, key=dir must be of type string");
-  }
-
+  getConfSetting(ini, "Logging", "dir", STRING, &setting);
   if((errINI = settingLength(setting, &log)) != INI_NIL) {
     printError("settingLength(), section=Logging, key=dir", (char *)strErrINI(errINI));
   }
@@ -198,22 +193,7 @@ void setupLOGfromINI(ini_t *ini, log_t **logger) {
     printError("settingGetString(), section=Logging, key=dir", (char *)strErrINI(errINI));
   }
 
-  if((errINI = lookupSetting(ini, "Logging", "columns", &setting)) != INI_NIL) {
-    printError("lookupSetting(), section=Logging, key=columns", (char *)strErrINI(errINI));
-  }
-
-  if(!setting) {
-    printError("setupLOGfromINI(), section=Logging, key=columns", "setting not present in conf");
-  }
-
-  if((errINI = settingType(setting, &typeINI)) != INI_NIL) {
-    printError("settingType(), section=Logging, key=columns", (char *)strErrINI(errINI));
-  }
-
-  if(typeINI != INT) {
-    printError("setupLOGfromINI()", "INI setting section=Logging, key=columns must be of type int");
-  }
-
+  getConfSetting(ini, "Logging", "columns", INT, &setting);
   if((errINI = settingGetInt(setting, &log)) != INI_NIL) {
     printError("settingGetInt(), section=Logging, key=columns", (char *)strErrINI(errINI));
   }
@@ -238,151 +218,45 @@ void setupLOGfromINI(ini_t *ini, log_t **logger) {
 // attempt to set up all the AI/chromosomes from the INI conf file
 void setupDNAfromINI(ini_t *ini, dna_t **dna) {
   setting_t *setting;
-  typeINI_t typeINI;
-
-  if((errINI = lookupSetting(ini, "Chromosomes", "traits", &setting)) != INI_NIL) {
-    printError("lookupSetting(), section=Chromosomes, key=traits", (char *)strErrINI(errINI));
-  }
-
-  if(!setting) {
-    printError("setupDNAfromINI(), section=Chromosomes, key=traits", "setting not present in conf");
-  }
-
-  if((errINI = settingType(setting, &typeINI)) != INI_NIL) {
-    printError("settingType(), section=Chromosomes, key=traits", (char *)strErrINI(errINI));
-  }
-
-  if(typeINI != INT) {
-    printError("setupDNAfromINI()", "INI setting section=Chromosomes, key=traits must be of type int");
-  }
 
   int traits;
+  getConfSetting(ini, "Chromosomes", "traits", INT, &setting);
   if((errINI = settingGetInt(setting, &traits)) != INI_NIL) {
     printError("settingGetInt(), section=Chromosomes, key=traits", (char *)strErrINI(errINI));
   }
 
-  if((errINI = lookupSetting(ini, "Chromosomes", "elitism", &setting)) != INI_NIL) {
-    printError("lookupSetting(), section=Chromosomes, key=elitism", (char *)strErrINI(errINI));
-  }
-
-  if(!setting) {
-    printError("setupDNAfromINI(), section=Chromosomes, key=elitism", "setting not present in conf");
-  }
-
-  if((errINI = settingType(setting, &typeINI)) != INI_NIL) {
-    printError("settingType(), section=Chromosomes, key=elitism", (char *)strErrINI(errINI));
-  }
-
-  if(typeINI != BOOL) {
-    printError("setupDNAfromINI()", "INI setting section=Chromosomes, key=elitism must be of type bool");
-  }
-
   int elitism;
+  getConfSetting(ini, "Chromosomes", "elitism", BOOL, &setting);
   if((errINI = settingGetBool(setting, &elitism)) != INI_NIL) {
     printError("settingGetBool(), section=Chromosomes, key=elitism", (char *)strErrINI(errINI));
   }
 
-  if((errINI = lookupSetting(ini, "Chromosomes", "percentile", &setting)) != INI_NIL) {
-    printError("lookupSetting(), section=Chromosomes, key=percentile", (char *)strErrINI(errINI));
-  }
-
-  if(!setting) {
-    printError("setupDNAfromINI(), section=Chromosomes, key=percentile", "setting not present in conf");
-  }
-
-  if((errINI = settingType(setting, &typeINI)) != INI_NIL) {
-    printError("settingType(), section=Chromosomes, key=percentile", (char *)strErrINI(errINI));
-  }
-
-  if(typeINI != FLOAT) {
-    printError("setupDNAfromINI()", "INI setting section=Chromosomes, key=percentile must be of type float");
-  }
-
   float percentile;
+  getConfSetting(ini, "Chromosomes", "percentile", FLOAT, &setting);
   if((errINI = settingGetFloat(setting, &percentile)) != INI_NIL) {
     printError("settingGetFloat(), section=Chromosomes, key=percentile", (char *)strErrINI(errINI));
   }
 
-  if((errINI = lookupSetting(ini, "Chromosomes", "mutation", &setting)) != INI_NIL) {
-    printError("lookupSetting(), section=Chromosomes, key=mutation", (char *)strErrINI(errINI));
-  }
-
-  if(!setting) {
-    printError("setupDNAfromINI(), section=Chromosomes, key=mutation", "setting not present in conf");
-  }
-
-  if((errINI = settingType(setting, &typeINI)) != INI_NIL) {
-    printError("settingType(), section=Chromosomes, key=mutation", (char *)strErrINI(errINI));
-  }
-
-  if(typeINI != FLOAT) {
-    printError("setupDNAfromINI()", "INI setting section=Chromosomes, key=mutation must be of type float");
-  }
-
   float rate;
+  getConfSetting(ini, "Chromosomes", "mutation", FLOAT, &setting);
   if((errINI = settingGetFloat(setting, &rate)) != INI_NIL) {
     printError("settingGetFloat(), section=Chromosomes, key=mutation", (char *)strErrINI(errINI));
   }
 
-  if((errINI = lookupSetting(ini, "Chromosomes", "ubound", &setting)) != INI_NIL) {
-    printError("lookupSetting(), section=Chromosomes, key=ubound", (char *)strErrINI(errINI));
-  }
-
-  if(!setting) {
-    printError("setupDNAfromINI(), section=Chromosomes, key=ubound", "setting not present in conf");
-  }
-
-  if((errINI = settingType(setting, &typeINI)) != INI_NIL) {
-    printError("settingType(), section=Chromosomes, key=ubound", (char *)strErrINI(errINI));
-  }
-
-  if(typeINI != INT) {
-    printError("setupDNAfromINI()", "INI setting section=Chromosomes, key=ubound must be of type int");
-  }
-
   int ubound;
+  getConfSetting(ini, "Chromosomes", "ubound", INT, &setting);
   if((errINI = settingGetInt(setting, &ubound)) != INI_NIL) {
     printError("settingGetInt(), section=Chromosomes, key=ubound", (char *)strErrINI(errINI));
   }
 
-  if((errINI = lookupSetting(ini, "Chromosomes", "lbound", &setting)) != INI_NIL) {
-    printError("lookupSetting(), section=Chromosomes, key=lbound", (char *)strErrINI(errINI));
-  }
-
-  if(!setting) {
-    printError("setupDNAfromINI(), section=Chromosomes, key=lbound", "setting not present in conf");
-  }
-
-  if((errINI = settingType(setting, &typeINI)) != INI_NIL) {
-    printError("settingType(), section=Chromosomes, key=lbound", (char *)strErrINI(errINI));
-  }
-
-  if(typeINI != INT) {
-    printError("setupDNAfromINI()", "INI setting section=Chromosomes, key=lbound must be of type int");
-  }
-
   int lbound;
+  getConfSetting(ini, "Chromosomes", "lbound", INT, &setting);
   if((errINI = settingGetInt(setting, &lbound)) != INI_NIL) {
     printError("settingGetInt(), section=Chromosomes, key=lbound", (char *)strErrINI(errINI));
   }
 
-  if((errINI = lookupSetting(ini, "Chromosomes", "cps", &setting)) != INI_NIL) {
-    printError("lookupSetting(), section=Chromosomes, key=cps", (char *)strErrINI(errINI));
-  }
-
-  if(!setting) {
-    printError("setupDNAfromINI(), section=Chromosomes, key=cps", "setting not present in conf");
-  }
-
-  if((errINI = settingType(setting, &typeINI)) != INI_NIL) {
-    printError("settingType(), section=Chromosomes, key=cps", (char *)strErrINI(errINI));
-  }
-
-  if(typeINI != STRING_ARRAY) {
-    printError("setupDNAfromINI()", "INI setting section=Chromosomes, key=cps must be of type string array");
-  }
-
   int cps;
+  getConfSetting(ini, "Chromosomes", "cps", STRING_ARRAY, &setting);
   if((errINI = settingLength(setting, &cps)) != INI_NIL) {
     printError("settingGetInt(), section=Chromosomes, key=cps", (char *)strErrINI(errINI));
   }
@@ -420,22 +294,7 @@ void setupDNAfromINI(ini_t *ini, dna_t **dna) {
 
   int chromosome[traits];
   for(i = 0; i < cps; i++) {
-    if((errINI = lookupSetting(ini, "Chromosomes", ids[i], &setting)) != INI_NIL) {
-      printError("lookupSetting(), section=Chromosomes, key=??", (char *)strErrINI(errINI));
-    }
-
-    if(!setting) {
-      printError("setupDNAfromINI(), section=Chromosomes, key=??", "setting not present in conf");
-    }
-
-    if((errINI = settingType(setting, &typeINI)) != INI_NIL) {
-      printError("settingType(), section=Chromosomes, key=??", (char *)strErrINI(errINI));
-    }
-
-    if(typeINI != INT_ARRAY) {
-      printError("setupDNAfromINI()", "INI setting section=Chromosomes, key=?? must be of type int array");
-    }
-
+    getConfSetting(ini, "Chromosomes", ids[i], INT_ARRAY, &setting);
     if((errINI = settingLength(setting, &j)) != INI_NIL) {
       printError("settingLength(), section=Chromosomes, key=??", (char *)strErrINI(errINI));
     }
@@ -454,6 +313,44 @@ void setupDNAfromINI(ini_t *ini, dna_t **dna) {
       printError("setStrand()", (char *)strErrDNA(errDNA));
     }
     free(ids[i]);
+  }
+}
+
+// output changes in ai dna to ini configuration
+void outputNewDNAtoINI(dna_t *dna, ini_t *ini) {
+  int strands, traits, i;
+  setting_t *setting;
+
+  if((errDNA = getChromosomes(dna, &strands, &traits)) != DNA_NIL) {
+    printError("getChromosomes()", (char *)strErrDNA(errDNA));
+  }
+
+  char ids[strands][36]; // TODO: update
+  if((errDNA = getIDs(dna, (char **)ids)) != DNA_NIL) {
+    printError("getIDs()", (char *)strErrDNA(errDNA));
+  }
+
+  int strand[traits];
+  for(; strands; strands--) {
+    errDNA = getStrand(dna, ids[strands-1], strand, &traits);
+    if(errDNA != DNA_NIL) {
+      printError("getStrands()", (char *)strErrDNA(errDNA));
+    }
+
+    getConfSetting(ini, "Chromosomes", ids[strands-1], INT_ARRAY, &setting);
+    if((errINI = settingLength(setting, &i)) != INI_NIL) {
+      printError("settingLength(), section=Chromosomes, key=??", (char *)strErrINI(errINI));
+    }
+
+    if(i != traits) {
+      printError("main()", "failure to overwrite strand, length mismatch");
+    }
+
+    for(; i; i--) {
+      if((errINI = settingSetIntElem(setting, i-1, strand[i-1])) != INI_NIL) {
+        printError("settingSetIntElem(), section=Chromosomes, key=??", (char *)strErrINI(errINI));
+      }
+    }
   }
 }
 
@@ -548,477 +445,267 @@ void setupRISKfromINI(ini_t *ini, risk_t **game) {
     printError("makeRISK()", (char *)strErrRISK(errRISK));
   }
 
+  int i, j, k, n;
   setting_t *setting;
-  typeINI_t typeINI;
 
   // TROOP SETTINGS
-  if((errINI = lookupSetting(ini, "Troops", "beginning", &setting)) != INI_NIL) {
-    printError("lookupSetting(), section=Troops, key=beginning", (char *)strErrINI(errINI));
-  }
-    
-  if(!setting) {
-    printError("setupRISKfromINI(), section=Troops , key=beginning", "setting not present in conf");
-  }
-
-  if((errINI = settingType(setting, &typeINI)) != INI_NIL) {
-    printError("settingType(), section=Troops, key=beginning", (char *)strErrINI(errINI));
-  }
-
-  if(typeINI != INT) {
-    printError("setupRISKfromINI()", "INI setting section=Troops, key=beginning must be of type int");
-  }
-
-  int i;
+  getConfSetting(ini, "Troops", "beginning", INT, &setting);
   if((errINI = settingGetInt(setting, &i)) != INI_NIL) {
     printError("settingGetInt(), section=Troops, key=beginning", (char *)strErrINI(errINI));
   }
 
-  if((errINI = lookupSetting(ini, "Troops", "minimum", &setting)) != INI_NIL) {
-    printError("lookupSetting(), section=Troops, key=minimum", (char *)strErrINI(errINI));
+  if((errINI = setStartingTroopCount(*game, i)) != INI_NIL) {
+    printError("setStartingTroopCount()", (char *)strErrINI(errINI));
   }
 
-  if(!setting) {
-    printError("setupRISKfromINI(), section=Troops , key=minimum", "setting not present in conf");
-  }
-
-  if((errINI = settingType(setting, &typeINI)) != INI_NIL) {
-    printError("settingType(), section=Troops, key=minimum", (char *)strErrINI(errINI));
-  }
-
-  if(typeINI != INT) {
-    printError("setupRISKfromINI()", "INI setting section=Troops, key=minimum must be of type int");
-  }
-
-  int j;
-  if((errINI = settingGetInt(setting, &j)) != INI_NIL) {
+  getConfSetting(ini, "Troops", "minimum", INT, &setting);
+  if((errINI = settingGetInt(setting, &i)) != INI_NIL) {
     printError("settingGetInt(), section=Troops, key=minimum", (char *)strErrINI(errINI));
   }
 
-  if((errINI = lookupSetting(ini, "Troops", "bonus", &setting)) != INI_NIL) {
-    printError("lookupSetting(), section=Troops, key=bonus", (char *)strErrINI(errINI));
+  if((errINI = setMinimumTroopHandout(*game, i)) != INI_NIL) {
+    printError("setMinimumTroopHandout()", (char *)strErrINI(errINI));
   }
 
-  if(!setting) {
-    printError("setupRISKfromINI(), section=Troops , key=bonus", "setting not present in conf");
-  }
-
-  if((errINI = settingType(setting, &typeINI)) != INI_NIL) {
-    printError("settingType(), section=Troops, key=bonus", (char *)strErrINI(errINI));
-  }
-
-  if(typeINI != INT) {
-    printError("setupRISKfromINI()", "INI setting section=Troops, key=bonus must be of type int");
-  }
-
-  int k;
-  if((errINI = settingGetInt(setting, &k)) != INI_NIL) {
+  getConfSetting(ini, "Troops", "bonus", INT, &setting);
+  if((errINI = settingGetInt(setting, &i)) != INI_NIL) {
     printError("settingGetInt(), section=Troops, key=bonus", (char *)strErrINI(errINI));
   }
 
-  if((errINI = lookupSetting(ini, "Troops", "random", &setting)) != INI_NIL) {
-    printError("lookupSetting(), section=Troops, key=random", (char *)strErrINI(errINI));
+  if((errINI = setTroopTerritoryBonus(*game, i)) != INI_NIL) {
+    printError("setTroopTerritoryBonus()", (char *)strErrINI(errINI));
   }
 
-  if(!setting) {
-    printError("setupRISKfromINI(), section=Troops , key=random", "setting not present in conf");
-  }
-
-  if((errINI = settingType(setting, &typeINI)) != INI_NIL) {
-    printError("settingType(), section=Troops, key=random", (char *)strErrINI(errINI));
-  }
-
-  if(typeINI != BOOL) {
-    printError("setupRISKfromINI()", "INI setting section=Troops, key=random must be of type bool");
-  }
-
-  int n;
-  if((errINI = settingGetBool(setting, &n)) != INI_NIL) {
+  getConfSetting(ini, "Troops", "random", BOOL, &setting);
+  if((errINI = settingGetBool(setting, &i)) != INI_NIL) {
     printError("settingGetBool(), section=Troops, key=random", (char *)strErrINI(errINI));
   }
 
-  if((errRISK = setTroops(*game, i, j, k, n)) != RISK_NIL) {
-    printError("setTroops()", (char *)strErrRISK(errRISK));
+  if((errINI = setRandomTroops(*game, i)) != INI_NIL) {
+    printError("setRandomTroops()", (char *)strErrINI(errINI));
   }
 
   // CARD SETTINGS
-  if((errINI = lookupSetting(ini, "Cards", "types", &setting)) != INI_NIL) {
-    printError("lookupSetting(), section=Cards, key=types", (char *)strErrINI(errINI));
-  }
-
-  if(!setting) {
-    printError("setupRISKfromINI(), section=Cards, key=types", "setting not present in conf");
-  }
-
-  if((errINI = settingType(setting, &typeINI)) != INI_NIL) {
-    printError("settingType(), section=Cards, key=types", (char *)strErrINI(errINI));
-  }
-
-  if(typeINI != STRING_ARRAY) {
-    printError("setupRISKfromINI()", "INI setting section=Cards, key=types must be of type string array");
-  }
-
-  if((errINI = settingLength(setting, &j)) != INI_NIL) {
+  getConfSetting(ini, "Cards", "types", STRING_ARRAY, &setting);
+  if((errINI = settingLength(setting, &i)) != INI_NIL) {
     printError("settingLength()", (char *)strErrINI(errINI));  
   }
 
-  char *wilds[j];
-  for(i = 0; i < j; i++) {
-    if((errINI = settingElemLength(setting, i, &k)) != INI_NIL) {
+  char *types[i];
+  for(j = 0; j < i; j++) {
+    if((errINI = settingElemLength(setting, j, &k)) != INI_NIL) {
       printError("settingElemLength()", (char *)strErrINI(errINI));  
     }
 
-    if(!(wilds[i] = calloc(k+1, sizeof(char)))) {
+    if(!(types[j] = calloc(k+1, sizeof(char)))) {
       printError("setupRISKfromINI(), section=Cards , key=??", "failed to allocate copy");
     }
 
-    if((errINI = settingGetStringElem(setting, i, wilds[i])) != INI_NIL) {
+    if((errINI = settingGetStringElem(setting, j, types[j])) != INI_NIL) {
       printError("settingGetStringElem(), section=Cards, key=??", (char *)strErrINI(errINI));
     }
   }
 
-  if((errINI = lookupSetting(ini, "Cards", "wilds", &setting)) != INI_NIL) {
-    printError("lookupSetting(), section=Cards, key=wilds", (char *)strErrINI(errINI));
+  if((errINI = setDeckTypes(*game, i, types)) != INI_NIL) {
+    printError("setDeckTypes()", (char *)strErrINI(errINI));
   }
 
-  if(!setting) {
-    printError("setupRISKfromINI(), section=Cards, key=wilds", "setting not present in conf");
+  for(; i; i--) { free(types[i-1]); }
+
+  getConfSetting(ini, "Cards", "wilds", INT, &setting);
+  if((errINI = settingGetInt(setting, &i)) != INI_NIL) {
+    printError("settingGetInt(), section=Cards, key=wilds", (char *)strErrINI(errINI));
   }
 
-  if((errINI = settingType(setting, &typeINI)) != INI_NIL) {
-    printError("settingType(), section=Cards, key=wilds", (char *)strErrINI(errINI));
+  if((errINI = setDeckWilds(*game, i)) != INI_NIL) {
+    printError("setDeckWilds()", (char *)strErrINI(errINI));
   }
 
-  if(typeINI != INT) {
-    printError("setupRISKfromINI()", "INI setting section=Cards, key=wilds must be of type int");
-  }
-
-  if((errINI = settingGetInt(setting, &n)) != INI_NIL) {
-    printError("settingGetBool(), section=Cards, key=wilds", (char *)strErrINI(errINI));
-  }
-
-  if((errRISK = setDeck(*game, n, wilds, j)) != RISK_NIL) {
-    printError("setDeck()", (char *)strErrRISK(errRISK));
-  }
-
-  for(i = 0; i < j; i++) { free(wilds[i]); }
-
-  if((errINI = lookupSetting(ini, "Cards", "trades", &setting)) != INI_NIL) {
-    printError("lookupSetting(), section=Cards, key=trades", (char *)strErrINI(errINI));
-  }
-
-  if(!setting) {
-    printError("setupRISKfromINI(), section=Cards, key=trades", "setting not present in conf");
-  }
-
-  if((errINI = settingType(setting, &typeINI)) != INI_NIL) {
-    printError("settingType(), section=Cards, key=trades", (char *)strErrINI(errINI));
-  }
-
-  if(typeINI != INT_ARRAY) {
-    printError("setupRISKfromINI()", "INI setting section=Cards, key=trades must be of type int array");
-  }
-
-  if((errINI = settingLength(setting, &n)) != INI_NIL) {
+  getConfSetting(ini, "Cards", "trades", INT_ARRAY, &setting);
+  if((errINI = settingLength(setting, &i)) != INI_NIL) {
     printError("settingLength()", (char *)strErrINI(errINI));  
   }
 
-  int trades[n];
-  for(i = 0; i < n; i++) {
-    if((errINI = settingGetIntElem(setting, i, &trades[i])) != INI_NIL) {
+  int trades[i];
+  for(j = 0; j < i; j++) {
+    if((errINI = settingGetIntElem(setting, j, &trades[j])) != INI_NIL) {
       printError("settingGetIntElem(), section=Cards, key=trades", (char *)strErrINI(errINI));
     }
   }
+
+  if((errINI = setTradeRewards(*game, i, trades)) != INI_NIL) {
+    printError("setTradeRewards()", (char *)strErrINI(errINI));
+  }
   
-  if((errINI = lookupSetting(ini, "Cards", "incr", &setting)) != INI_NIL) {
-    printError("lookupSetting(), section=Cards, key=incr", (char *)strErrINI(errINI));
+  getConfSetting(ini, "Cards", "incr", INT, &setting);
+  if((errINI = settingGetInt(setting, &i)) != INI_NIL) {
+    printError("settingGetInt(), section=Cards, key=incr", (char *)strErrINI(errINI));
   }
 
-  if(!setting) {
-    printError("setupRISKfromINI(), section=Cards, key=incr", "setting not present in conf");
-  }
-
-  if((errINI = settingType(setting, &typeINI)) != INI_NIL) {
-    printError("settingType(), section=Cards, key=incr", (char *)strErrINI(errINI));
-  }
-
-  if(typeINI != INT) {
-    printError("setupRISKfromINI()", "INI setting section=Cards, key=incr must be of type int");
-  }
-
-  if((errINI = settingGetInt(setting, &k)) != INI_NIL) {
-    printError("settingGetBool(), section=Cards, key=incr", (char *)strErrINI(errINI));
-  }
-
-  if((errRISK = setTrades(*game, trades, n, k)) != RISK_NIL) {
-    printError("setTrades()", (char *)strErrRISK(errRISK));
+  if((errINI = setTradeIncrReward(*game, i)) != INI_NIL) {
+    printError("setTradeIncrReward()", (char *)strErrINI(errINI));
   }
 
   // MAP SETTINGS
-  if((errINI = lookupSetting(ini, "Map", "continents", &setting)) != INI_NIL) {
-    printError("lookupSetting(), section=Map, key=continents", (char *)strErrINI(errINI));
-  }
-
-  if(!setting) {
-    printError("setupRISKfromINI(), section=Map, key=continents", "setting not present in conf");
-  }
-
-  if((errINI = settingType(setting, &typeINI)) != INI_NIL) {
-    printError("settingType(), section=Map, key=continents", (char *)strErrINI(errINI));
-  }
-
-  if(typeINI != STRING_ARRAY) {
-    printError("setupRISKfromINI()", "INI setting section=Map, key=continents must be of type string array");
-  }
-
-  if((errINI = settingLength(setting, &n)) != INI_NIL) {
+  getConfSetting(ini, "Map", "continents", STRING_ARRAY, &setting);
+  if((errINI = settingLength(setting, &i)) != INI_NIL) {
     printError("settingLength()", (char *)strErrINI(errINI));  
   }
 
-  char *continents[n];
-  for(i = 0; i < n; i++) {
-    if((errINI = settingElemLength(setting, i, &k)) != INI_NIL) {
+  char *continents[i];
+  for(j = 0; j < i; j++) {
+    if((errINI = settingElemLength(setting, j, &k)) != INI_NIL) {
       printError("settingElemLength()", (char *)strErrINI(errINI));  
     }
 
-    if(!(continents[i] = calloc(k+1, sizeof(char)))) {
+    if(!(continents[j] = calloc(k+1, sizeof(char)))) {
       printError("setupRISKfromINI(), section=Map, key=continents", "failed to allocate copy");
     }
 
-    if((errINI = settingGetStringElem(setting, i, continents[i])) != INI_NIL) {
+    if((errINI = settingGetStringElem(setting, j, continents[j])) != INI_NIL) {
       printError("settingGetIntElem(), section=Map, key=continents", (char *)strErrINI(errINI));
     }
   }
 
-  if((errRISK = setContinents(*game, continents, n)) != RISK_NIL) {
-    printError("setContinents()", (char *)strErrRISK(errRISK));
+  if((errINI = setContinents(*game, i, continents)) != INI_NIL) {
+    printError("setContinents()", (char *)strErrINI(errINI));
   }
 
-  for(i = 0; i < n; i++) { free(continents[i]); }
+  for(; i; i--) { free(continents[i-1]); }
 
-  if((errINI = lookupSetting(ini, "Map", "continents_bonus", &setting)) != INI_NIL) {
-    printError("lookupSetting(), section=Map, key=continents_bonus", (char *)strErrINI(errINI));
-  }
-
-  if(!setting) {
-    printError("setupRISKfromINI(), section=Map, key=continents_bonus", "setting not present in conf");
-  }
-
-  if((errINI = settingType(setting, &typeINI)) != INI_NIL) {
-    printError("settingType(), section=Map, key=continents_bonus", (char *)strErrINI(errINI));
-  }
-
-  if(typeINI != INT_ARRAY) {
-    printError("setupRISKfromINI()", "INI setting section=Map, key=continents_bonus must be of type int array");
-  }
-
-  if((errINI = settingLength(setting, &n)) != INI_NIL) {
+  getConfSetting(ini, "Map", "continents_bonus", INT_ARRAY, &setting);
+  if((errINI = settingLength(setting, &i)) != INI_NIL) {
     printError("settingLength()", (char *)strErrINI(errINI));  
   }
 
-  int continents_bonus[n];
-  for(i = 0; i < n; i++) {
-    if((errINI = settingGetIntElem(setting, i, &continents_bonus[i])) != INI_NIL) {
+  int continents_bonus[i];
+  for(j = 0; j < i; j++) {
+    if((errINI = settingGetIntElem(setting, j, &continents_bonus[j])) != INI_NIL) {
       printError("settingGetIntElem(), section=Map, key=continents_bonus", (char *)strErrINI(errINI));
     }
   }
- 
-  if((errRISK = setContinentBonuses(*game, continents_bonus, n)) != RISK_NIL) {
-    printError("setContinentBonuses()", (char *)strErrRISK(errRISK));
+
+  if((errINI = setContinentBonuses(*game, i, continents_bonus)) != INI_NIL) {
+    printError("setContinentBonuses()", (char *)strErrINI(errINI));
   }
 
-  if((errINI = lookupSetting(ini, "Map", "random", &setting)) != INI_NIL) {
-    printError("lookupSetting(), section=Map, key=random", (char *)strErrINI(errINI));
-  }
-
-  if(!setting) {
-    printError("setupDNAfromINI(), section=Map, key=random", "setting not present in conf");
-  }
-
-  if((errINI = settingType(setting, &typeINI)) != INI_NIL) {
-    printError("settingType(), section=Map, key=random", (char *)strErrINI(errINI));
-  }
-
-  if(typeINI != BOOL) {
-    printError("setupDNAfromINI()", "INI setting section=Map, key=random must be of type bool");
-  }
-
-  if((errINI = settingGetBool(setting, &k)) != INI_NIL) {
+  getConfSetting(ini, "Map", "random", BOOL, &setting);
+  if((errINI = settingGetBool(setting, &i)) != INI_NIL) {
     printError("settingGetBool(), section=Map, key=random", (char *)strErrINI(errINI));
   }
 
-  if((errINI = lookupSetting(ini, "Map", "countries", &setting)) != INI_NIL) {
-    printError("lookupSetting(), section=Map, key=countries", (char *)strErrINI(errINI));
+  if((errINI = setRandomCountries(*game, i)) != INI_NIL) {
+    printError("setRandomCountries()", (char *)strErrINI(errINI));
   }
 
-  if(!setting) {
-    printError("setupRISKfromINI(), section=Map, key=countries", "setting not present in conf");
-  }
-
-  if((errINI = settingType(setting, &typeINI)) != INI_NIL) {
-    printError("settingType(), section=Map, key=countries", (char *)strErrINI(errINI));
-  }
-
-  if(typeINI != STRING_ARRAY) {
-    printError("setupRISKfromINI()", "INI setting section=Map, key=countries must be of type string array");
-  }
-
-  if((errINI = settingLength(setting, &n)) != INI_NIL) {
+  getConfSetting(ini, "Map", "countries", STRING_ARRAY, &setting);
+  if((errINI = settingLength(setting, &i)) != INI_NIL) {
     printError("settingLength()", (char *)strErrINI(errINI));  
   }
 
-  char *countries[n];
-  for(i = 0; i < n; i++) {
-    if((errINI = settingElemLength(setting, i, &j)) != INI_NIL) {
+  char *countries[i];
+  for(j = 0; j < i; j++) {
+    if((errINI = settingElemLength(setting, j, &k)) != INI_NIL) {
       printError("settingElemLength()", (char *)strErrINI(errINI));  
     }
 
-    if(!(countries[i] = calloc(j+1, sizeof(char)))) {
+    if(!(countries[j] = calloc(k+1, sizeof(char)))) {
       printError("setupRISKfromINI(), section=Map, key=countries", "failed to allocate copy");
     }
 
-    if((errINI = settingGetStringElem(setting, i, countries[i])) != INI_NIL) {
+    if((errINI = settingGetStringElem(setting, j, countries[j])) != INI_NIL) {
       printError("settingGetIntElem(), section=Map, key=countries", (char *)strErrINI(errINI));
     }
   }
 
-  if((errRISK = setCountries(*game, countries, n, k)) != RISK_NIL) {
-    printError("setCountries()", (char *)strErrRISK(errRISK));
+  if((errINI = setCountries(*game, i, countries)) != INI_NIL) {
+    printError("setCountries()", (char *)strErrINI(errINI));
   }
 
-  for(i = 0; i < n; i++) {
-    if((errINI = lookupSetting(ini, "Map", countries[i], &setting)) != INI_NIL) {
-      printError("lookupSetting(), section=Map, key=??", (char *)strErrINI(errINI));
-    }
-
-    if(!setting) {
-      printError("setupRISKfromINI(), section=Map, key=??", "setting not present in conf");
-    }
-
-    if((errINI = settingType(setting, &typeINI)) != INI_NIL) {
-      printError("settingType(), section=Map, key=??", (char *)strErrINI(errINI));
-    }
-
-    if(typeINI != STRING_ARRAY) {
-      printError("setupRISKfromINI()", "INI setting section=Map, key=?? must be of type string array");
-    }
-
-    if((errINI = settingLength(setting, &k)) != INI_NIL) {
+  /* TODO: setup country adjacencies and country<-continent assignement 
+  for(j = 0; j < i; j++) {
+    getConfSetting(ini, "Map", countries[j], STRING_ARRAY, &setting);
+    if((errINI = settingLength(setting, &n)) != INI_NIL) {
       printError("settingLength()", (char *)strErrINI(errINI));  
     }
 
-    char *adjacencies[k];
+    char *adjacencies[n];
     int l;
-    for(j = 0; j < k; j++) {
-      if((errINI = settingElemLength(setting, j, &l)) != INI_NIL) {
+    for(k = 0; k < n; k++) {
+      if((errINI = settingElemLength(setting, k, &l)) != INI_NIL) {
         printError("settingElemLength()", (char *)strErrINI(errINI));  
       }
 
-      if(!(adjacencies[j] = calloc(l+1, sizeof(char)))) {
+      if(!(adjacencies[k] = calloc(l+1, sizeof(char)))) {
         printError("setupRISKfromINI(), section=Map, key=??", "failed to allocate copy");
       }
 
-      if((errINI = settingGetStringElem(setting, i, adjacencies[i])) != INI_NIL) {
+      if((errINI = settingGetStringElem(setting, k, adjacencies[k])) != INI_NIL) {
         printError("settingGetIntElem(), section=Map, key=??", (char *)strErrINI(errINI));
       }
     }
 
-    if((errRISK = setAdjacencies(*game, countries[i], adjacencies, k)) != RISK_NIL) {
-      printError("setAdjacencies()", (char *)strErrRISK(errRISK));
-    }
-
-    for(i = 0; i < k; i++) { free(adjacencies[i]); }
+    // setBorders()
+    for(; i; i--) { free(adjacencies[i-1]); }
 
     free(countries[i]);
   }
+  */
 
   // PLAYERS
-  if((errINI = lookupSetting(ini, "Players", "humans", &setting)) != INI_NIL) {
-    printError("lookupSetting(), section=Players, key=humans", (char *)strErrINI(errINI));
-  }
-
-  if(!setting) {
-    printError("setupRISKfromINI(), section=Players, key=humans", "setting not present in conf");
-  }
-
-  if((errINI = settingType(setting, &typeINI)) != INI_NIL) {
-    printError("settingType(), section=Players, key=humans", (char *)strErrINI(errINI));
-  }
-
-  if(typeINI != STRING_ARRAY) {
-    printError("setupRISKfromINI()", "INI setting section=Players, key=humans must be of type string array");
-  }
-
-  if((errINI = settingLength(setting, &n)) != INI_NIL) {
+  getConfSetting(ini, "Players", "humans", STRING_ARRAY, &setting);
+  if((errINI = settingLength(setting, &i)) != INI_NIL) {
     printError("settingLength()", (char *)strErrINI(errINI));  
   }
 
-  char *humans[n];
-  for(i = 0; i < n; i++) {
-    if((errINI = settingElemLength(setting, i, &j)) != INI_NIL) {
+  char *humans[i];
+  for(j = 0; j < i; j++) {
+    if((errINI = settingElemLength(setting, j, &k)) != INI_NIL) {
       printError("settingElemLength()", (char *)strErrINI(errINI));  
     }
 
-    if(!(humans[i] = calloc(j+1, sizeof(char)))) {
+    if(!(humans[j] = calloc(k+1, sizeof(char)))) {
       printError("setupRISKfromINI(), section=Players, key=humans", "failed to allocate copy");
     }
 
-    if((errINI = settingGetStringElem(setting, i, humans[i])) != INI_NIL) {
+    if((errINI = settingGetStringElem(setting, j, humans[j])) != INI_NIL) {
       printError("settingGetStringElem(), section=Players, key=humans", (char *)strErrINI(errINI));
     }
   }
 
-  if((errINI = lookupSetting(ini, "Players", "computers", &setting)) != INI_NIL) {
-    printError("lookupSetting(), section=Players, key=computers", (char *)strErrINI(errINI));
-  }
-
-  if(!setting) {
-    printError("setupRISKfromINI(), section=Players, key=computers", "setting not present in conf");
-  }
-
-  if((errINI = settingType(setting, &typeINI)) != INI_NIL) {
-    printError("settingType(), section=Players, key=computers", (char *)strErrINI(errINI));
-  }
-
-  if(typeINI != STRING_ARRAY) {
-    printError("setupRISKfromINI()", "INI setting section=Players, key=computers must be of type string array");
-  }
-
-  if((errINI = settingLength(setting, &j)) != INI_NIL) {
+  getConfSetting(ini, "Players", "computers", STRING_ARRAY, &setting);
+  if((errINI = settingLength(setting, &n)) != INI_NIL) {
     printError("settingLength()", (char *)strErrINI(errINI));  
   }
 
-  char *computers[j];
-  for(i = 0; i < j; i++) {
-    if((errINI = settingElemLength(setting, i, &k)) != INI_NIL) {
+  char *computers[n];
+  for(j = 0; j < n; j++) {
+    if((errINI = settingElemLength(setting, j, &k)) != INI_NIL) {
       printError("settingElemLength()", (char *)strErrINI(errINI));  
     }
 
-    if(!(computers[i] = calloc(k+1, sizeof(char)))) {
+    if(!(computers[j] = calloc(k+1, sizeof(char)))) {
       printError("setupRISKfromINI(), section=Players, key=computers", "failed to allocate copy");
     }
 
-    if((errINI = settingGetStringElem(setting, i, computers[i])) != INI_NIL) {
+    if((errINI = settingGetStringElem(setting, j, computers[j])) != INI_NIL) {
       printError("settingGetStringElem(), section=Players, key=computers", (char *)strErrINI(errINI));
     }
   }
 
-  char *players[n+j];
-  for(i = 0; i < n; i++) { players[i] = humans[i]; }
-  for(i = 0; i < j; i++) { players[n+i] = computers[i]; }
+  char *players[i+n];
+  for(j = 0; j < i; j++) { players[j] = humans[j]; }
+  for(j = 0; j < n; j++) { players[i+j] = computers[j]; }
 
-  if((errRISK = setPlayers(*game, n+j, players)) != RISK_NIL) {
+  if((errRISK = setPlayers(*game, i+n, players)) != RISK_NIL) {
     printError("setPlayers()", (char *)strErrRISK(errRISK));
   }
 
-  for(i = 0; i < n+j; i++) { free(players[i]); }
+  for(i = i+n; 1; i--) { free(players[i-1]); }
 }
 
 // log the game setup
 void logRISK(risk_t *game, log_t *logger) {
-  int i, j, k;
-  char **names;
-  int *trades;
-
   if((errLOG = logHeader(logger, "S E T T I N G S")) != LOG_NIL) {
     printError("logHeader(), header=S E T T I N G S", (char *)strErrLOG(errLOG));  
   }
@@ -1028,32 +715,66 @@ void logRISK(risk_t *game, log_t *logger) {
     printError("logSection(), header=PLAYERS", (char *)strErrLOG(errLOG));  
   }
 
-  if((errRISK = getPlayers(game, &names, &i)) != RISK_NIL) {
-    printError("getPlayers()", (char *)strErrRISK(errRISK));  
+  int i, j, k;
+  if((errRISK = getLengthPlayers(game, &i)) != RISK_NIL) {
+      printError("getLengthPlayers()", (char *)strErrRISK(errRISK));  
   }
 
-  if((errLOG = logStrArr(logger, names, i)) != LOG_NIL) {
+  char *players[i];
+  for(j = 0; j < i; j++) {
+    if((errRISK = getLengthPlayersElem(game, j, &k)) != RISK_NIL) {
+        printError("getLengthPlayersElem()", (char *)strErrRISK(errRISK));  
+    }
+
+    if(!(players[j] = calloc(k, sizeof(char)))) {
+        printError("logRISK()", "out of memory");
+    }
+
+    if((errRISK = getPlayer(game, j, players[j])) != RISK_NIL) {
+        printError("getPlayer()", (char *)strErrRISK(errRISK));  
+    }
+  }
+
+  if((errLOG = logStrArr(logger, players, i)) != LOG_NIL) {
     printError("logStrArr()", (char *)strErrLOG(errLOG));   
   }
+
+  for(; i; i--) { free(players[i-1]); }
 
   // TROOPS
   if((errLOG = logSection(logger, "TROOPS")) != LOG_NIL) {
     printError("logSection(), section=TROOPS", (char *)strErrLOG(errLOG));  
   }
 
-  if((errRISK = getTroops(game, &i, &j, &k)) != RISK_NIL) {
-    printError("getTroops()", (char *)strErrRISK(errRISK));
+  if((errRISK = getStartingTroopCount(game, &i)) != RISK_NIL) {
+    printError("getStartingTroopCount()", (char *)strErrRISK(errRISK));
   }
 
   if((errLOG = logIntSetting(logger, "Beginning count", i)) != LOG_NIL) {
     printError("logHeader(), header=S E T T I N G S", (char *)strErrLOG(errLOG));  
   }
 
-  if((errLOG = logIntSetting(logger, "Minimum/turn", j)) != LOG_NIL) {
+  if((errRISK = getMinimumTroopHandout(game, &i)) != RISK_NIL) {
+    printError("getMinimumTroopHandout()", (char *)strErrRISK(errRISK));
+  }
+
+  if((errLOG = logIntSetting(logger, "Minimum/turn", i)) != LOG_NIL) {
     printError("logHeader(), header=S E T T I N G S", (char *)strErrLOG(errLOG));  
   }
 
-  if((errLOG = logIntSetting(logger, "Extra troop/#countries", k)) != LOG_NIL) {
+  if((errRISK = getTroopTerritoryBonus(game, &i)) != RISK_NIL) {
+    printError("getTroopTerritoryBonus()", (char *)strErrRISK(errRISK));
+  }
+
+  if((errLOG = logIntSetting(logger, "Extra troop/#countries", i)) != LOG_NIL) {
+    printError("logHeader(), header=S E T T I N G S", (char *)strErrLOG(errLOG));  
+  }
+
+  if((errRISK = getRandomTroops(game, &i)) != RISK_NIL) {
+    printError("getRandomTroops()", (char *)strErrRISK(errRISK));
+  }
+
+  if((errLOG = logBoolSetting(logger, "Randomly distribute at game start", i)) != LOG_NIL) {
     printError("logHeader(), header=S E T T I N G S", (char *)strErrLOG(errLOG));  
   }
 
@@ -1062,27 +783,57 @@ void logRISK(risk_t *game, log_t *logger) {
     printError("logSection(), section=CARDS", (char *)strErrLOG(errLOG));  
   }
 
-  if((errRISK = getDeck(game, &i, &names, &j)) != RISK_NIL) {
-    printError("getDeck()", (char *)strErrRISK(errRISK));  
+  if((errRISK = getDeckWilds(game, &i)) != RISK_NIL) {
+    printError("getDeckWilds()", (char *)strErrRISK(errRISK));  
   }
 
   if((errLOG = logIntSetting(logger, "Wilds", i)) != LOG_NIL) {
     printError("logIntSetting(), setting=Wilds", (char *)strErrLOG(errLOG));  
   }
 
-  if((errLOG = logStrArr(logger, names, i)) != LOG_NIL) {
+  if((errRISK = getLengthDeckTypes(game, &i)) != RISK_NIL) {
+    printError("getLengthDeckTypes()", (char *)strErrRISK(errRISK));  
+  }
+
+  char *types[i];
+  for(j = 0; j < i; j++) {
+    if((errRISK = getLengthDeckTypesElem(game, j, &k)) != RISK_NIL) {
+      printError("getLengthDeckTypesElem()", (char *)strErrRISK(errRISK));  
+    }
+
+    if(!(types[j] = calloc(k, sizeof(char)))) {
+        printError("logRISK()", "out of memory");
+    }
+
+    if((errRISK = getDeckTypesElem(game, j, types[j])) != RISK_NIL) {
+      printError("getDeckTypesElem()", (char *)strErrRISK(errRISK));  
+    }
+  }
+
+  if((errLOG = logStrArr(logger, types, i)) != LOG_NIL) {
     printError("logStrArray()", (char *)strErrLOG(errLOG));  
   }
 
-  if((errRISK = getTrades(game, &trades, &i, &j)) != RISK_NIL) {
-    printError("getTrades()", (char *)strErrRISK(errRISK));  
+  for(; i; i--) { free(types[i-1]); }
+
+  if((errRISK = getLengthTradeRewards(game, &i)) != RISK_NIL) {
+    printError("getLengthTradeRewards()", (char *)strErrRISK(errRISK));  
   }
 
-  if((errLOG = logIntArr(logger, trades, i)) != LOG_NIL) {
+  int rewards[i];
+  if((errRISK = getTradeRewards(game, i, rewards)) != RISK_NIL) {
+    printError("getTradeRewards()", (char *)strErrRISK(errRISK));  
+  }
+
+  if((errLOG = logIntArr(logger, rewards, i)) != LOG_NIL) {
     printError("logIntArr()", (char *)strErrLOG(errLOG));  
   }
 
-  if((errLOG = logIntSetting(logger, "Trade increment", j)) != LOG_NIL) {
+  if((errRISK = getTradeIncrReward(game, &i)) != RISK_NIL) {
+    printError("getTradeIncrReward()", (char *)strErrRISK(errRISK));  
+  }
+
+  if((errLOG = logIntSetting(logger, "Trade increment", i)) != LOG_NIL) {
     printError("logIntSetting(), setting=Trade increment", (char *)strErrLOG(errLOG));  
   }
 
@@ -1091,35 +842,79 @@ void logRISK(risk_t *game, log_t *logger) {
     printError("logSection(), section=MAP", (char *)strErrLOG(errLOG));  
   }
 
-  if((errRISK = getContinents(game, &names, &i)) != RISK_NIL) {
-    printError("getContinents()", (char *)strErrRISK(errRISK));  
+  if((errRISK = getLengthContinents(game, &i)) != RISK_NIL) {
+    printError("getLengthContinents()", (char *)strErrRISK(errRISK));  
   }
 
-  if((errLOG = logStrArr(logger, names, i)) != LOG_NIL) {
+  char *continents[i];
+  for(j = 0; j < i; j++) {
+    if((errRISK = getLengthContinentsElem(game, j, &k)) != RISK_NIL) {
+      printError("getLengthContinentsElem()", (char *)strErrRISK(errRISK));  
+    }
+
+    if(!(types[j] = calloc(k, sizeof(char)))) {
+        printError("logRISK()", "out of memory");
+    }
+
+    if((errRISK = getContinentElem(game, j, types[j])) != RISK_NIL) {
+      printError("getContinentElem()", (char *)strErrRISK(errRISK));  
+    }
+  }
+
+  if((errLOG = logStrArr(logger, continents, i)) != LOG_NIL) {
     printError("logStrArr()", (char *)strErrLOG(errLOG));  
   }
 
-  if((errRISK = getCountries(game, &names, &i)) != RISK_NIL) {
-    printError("getCountries()", (char *)strErrRISK(errRISK));  
+  for(; i; i--) { free(continents[i-1]); }
+
+  if((errRISK = getLengthContinentBonuses(game, &i)) != RISK_NIL) {
+    printError("getLengthContinents()", (char *)strErrRISK(errRISK));  
   }
 
-  if((errLOG = logStrArr(logger, names, i)) != LOG_NIL) {
-    printError("logStrArr()", (char *)strErrLOG(errLOG));  
-  }
+  int bonuses[i];
 
-  if((errRISK = getContinentBonuses(game, &trades, &j)) != RISK_NIL) {
+  if((errRISK = getContinentBonuses(game, i, bonuses)) != RISK_NIL) {
     printError("getContinentBonuses()", (char *)strErrRISK(errRISK));  
   }
 
-  if((errLOG = logIntArr(logger, trades, j)) != LOG_NIL) {
-    printError("logSection(), section=CARDS", (char *)strErrLOG(errLOG));  
+  if((errLOG = logIntArr(logger, bonuses, i)) != LOG_NIL) {
+    printError("logIntArr()", (char *)strErrLOG(errLOG));  
   }
 
-  for(k = 0; k < i; k++) { // FIXME: finish
-    //logEvent(logger, "Adjacency Matrix:\n");
-    //getNeighbors(game, char *country, char ***neighbors, int *size);
-    //logIntArr2D(logger, game->board, game->numCountries, game->numCountries);
+  if((errRISK = getLengthCountries(game, &i)) != RISK_NIL) {
+    printError("getLengthCountries()", (char *)strErrRISK(errRISK));  
   }
+
+  char *countries[i];
+  for(j = 0; j < i; j++) {
+    if((errRISK = getLengthCountriesElem(game, j, &k)) != RISK_NIL) {
+      printError("getLengthCountriesElem()", (char *)strErrRISK(errRISK));  
+    }
+
+    if(!(countries[j] = calloc(k, sizeof(char)))) {
+        printError("logRISK()", "out of memory");
+    }
+
+    if((errRISK = getCountryElem(game, j, countries[j])) != RISK_NIL) {
+      printError("getCountryElem()", (char *)strErrRISK(errRISK));  
+    }
+  }
+
+  if((errLOG = logStrArr(logger, countries, i)) != LOG_NIL) {
+    printError("logStrArr()", (char *)strErrLOG(errLOG));  
+  }
+
+  for(; i; i--) { free(countries[i-1]); }
+
+  if((errRISK = getRandomCountries(game, &i)) != RISK_NIL) {
+    printError("getRandomCountries()", (char *)strErrRISK(errRISK));  
+  }
+
+  if((errLOG = logBoolSetting(logger, "Randomly distribute at game start", i)) != LOG_NIL) {
+    printError("logIntSetting(), setting=", (char *)strErrLOG(errLOG));  
+  }
+
+// TODO: Adjacency Matrix + country/continent relationship
 }
 
 // log game statistics.
@@ -1131,13 +926,43 @@ void logGameStats(log_t *logger, int seconds) {
   char val[40];
   sprintf(val, "[%ih-%im-%is]", hours, minutes, seconds);
 
-  if((errLOG = logHeader(logger, "Total Game Time")) != LOG_NIL) {
-    printError("logHeader(), header=Total Game Time", (char *)strErrLOG(errLOG));  
+  if((errLOG = logHeader(logger, "Gameplay Statistics")) != LOG_NIL) {
+    printError("logHeader(), header=Gameplay Statistics", (char *)strErrLOG(errLOG));  
   }
 
   if((errLOG = logStrSetting(logger, "Elapsed game time", val)) != LOG_NIL) {
     printError("logHeader(), key=Elapsed game time", (char *)strErrLOG(errLOG));  
   }
+  // TODO: expand information logged
+  // - time each player took
+  // - list players places (reverse order or losers)
+  // - min/max # countries a player held
+  // - min/max # armies a player held
+  // - who got what bonuses, and how many times
+  // -   etc...
+}
+
+void printCardsInfo(risk_t *game) { // TODO
+  if(!game) { printError("printCardsInfo()", "nil game parameter"); }
+
+  /*
+    |***********************|
+    | card | country | type |
+    |-----------------------|
+    | 0    |                |
+    |-----------------------|
+    | 1    |                |
+    |-----------------------|
+    | ...  |                |
+    |-----------------------|
+    | n-1  |  ---    | wild |
+    |-----------------------|
+    | n    |                |
+    |-----------------------|
+    |_______________________|
+  */
+
+  printError("printCardsInfo()", "NOT IMPLEMENTED");
 }
 
 void printBoard(risk_t *game) { // TODO
@@ -1173,47 +998,60 @@ void humanTurn(risk_t *game, char *player, log_t *logger) { // TODO
   int queryChoices = 5;
   char *queryMenu[] = {"Players", "Countries", "Continents", "Cards", "Main Menu"};
 
-  int done = 0;
-  while(!done) { // TODO: if winner then
-    //if(game->log) { fprintf(game->fp, "congratuations %s, you've achieved world domination!\n", player); }
+  for(;;) {
     fprintf(stdout, "%s's turn...\n", player);
     printChoices(mainMenu, mainChoices);
     readInt(0, mainChoices-1, &choice, prompt);
     switch(choice) {
       case 0: // TRADE
         fprintf(stderr, "error! NOT IMPLEMENTED\nexiting...\n");
-        // get which cards getCards(player, *arr, *size);
+        // get which cards getCards(player, *arr, *size); through menu choices??
         // place troops
-        //    -- enfore trade rules, timeing(1/turn and beginning?)
+        //    -- enfore trade rules, timeing(1/turn and beginning?) -> plus if
+        //    take over a person and have to enforece card trades and palcements
         break;
       case 1: // ATTACK
         fprintf(stderr, "error! NOT IMPLEMENTED\nexiting...\n");
-        // src, dest (adjacency)
-        // how many
-        // ask defender how many (1 or 2)
-        //  - draw card (if win), kill ememy (get card/enfore trade)
+        // src, dest (adjacency), how many (attacker [1-3] AND defender [1-2])
+        //  - draw card (if win), kill ememy (get card/enfore trade) but only ONCE/turn
         break;
       case 2: // MANEUVER
         fprintf(stderr, "error! NOT IMPLEMENTED\nexiting...\n");
-        // src, dest (chain reachable)
-        // how many
-        done = 1;
-        break;
+        // get src
+        // get dest
+        // how many -- API does all error handling?? 
+        return;
       case 3: // QUERY
         printChoices(queryMenu, queryChoices);
         readInt(0, queryChoices-1, &choice, prompt);
         switch(choice) {
           case 0: // PLAYERS
             fprintf(stderr, "error! NOT IMPLEMENTED\nexiting...\n");
+            //printPlayerInfo();
+            // list players
+            // get input
+            // list countries owned w/ troop count, continent bonuses held,
+            // #cards
             break;
           case 1: // COUNTRIES
             fprintf(stderr, "error! NOT IMPLEMENTED\nexiting...\n");
+            //printCountryInfo();
+            // list countries
+            // get input
+            // list owner, armies, continent, adjacnecies
             break;
           case 2: // CONTINENTS
             fprintf(stderr, "error! NOT IMPLEMENTED\nexiting...\n");
+            //printContinentInfo(game, continent);
+            // list continents 
+            // get input
+            // list bonus, bonus holder, total armies?, countries contained
+            // (+army count?) and list % ownerships of continent?? 
+            // can only do last one if tablularize like the rest. no one
+            // specific continent can be queried??
             break;
           case 3: // CARDS
-            fprintf(stderr, "error! NOT IMPLEMENTED\nexiting...\n");
+            printCardsInfo(game);
             break;
           case 4: // MAIN MENU
             break;
@@ -1225,8 +1063,6 @@ void humanTurn(risk_t *game, char *player, log_t *logger) { // TODO
         printBoard(game);
         break;
       case 5: // END
-        done = 1;
-        break;
       default:
         return;
     }
@@ -1235,24 +1071,53 @@ void humanTurn(risk_t *game, char *player, log_t *logger) { // TODO
 
 void computerTurn(risk_t *game, dna_t *dna, char *player, log_t *logger) { // TODO
   if(!game) { printError("computerTurn()", "nil game"); }
-
   if(!dna) { printError("computerTurn()", "nil dna"); }
-
   if(!player) { printError("computerTurn()", "nil player"); }
 
   printError("computerTurn()", "NOT IMPLEMENTED");
 }
 
+
 int getType(risk_t *game, dna_t *dna, char *player) { // TODO
   if(!game) { printError("getType()", "nil game"); }
-
   if(!dna) { printError("getType()", "nil dna"); }
-
   if(!player) { printError("getType()", "nil player"); }
 
   printError("getType()", "NOT IMPLEMENTED");
 
   return 0;
+}
+
+void createNextGeneration(dna_t *dna, log_t *logger) {
+  if((errDNA = nextGeneration(dna)) != DNA_NIL) {
+    printError("nextGeneration()", (char *)strErrDNA(errDNA));
+  }
+
+  if((errLOG = logHeader(logger, "N E W   G E N E R A T I O N")) != LOG_NIL) {
+    printError("logHeader()", (char *)strErrLOG(errLOG));
+  }
+
+  int chromosomes, traits;
+  if((errDNA = getChromosomes(dna, &chromosomes, &traits)) != DNA_NIL) {
+    printError("getChromosomes()", (char *)strErrDNA(errDNA));
+  }
+
+  char ids[chromosomes][36];
+  if((errDNA = getIDs(dna, (char **)ids)) != DNA_NIL) {
+    printError("getIDs()", (char *)strErrDNA(errDNA));
+  }
+
+  int strand[traits];
+  for(; chromosomes; chromosomes--) {
+    errDNA = getStrand(dna, ids[chromosomes-1], strand, &traits);
+    if(errDNA != DNA_NIL) {
+      printError("getStrand()", (char *)strErrDNA(errDNA));
+    }
+
+    if((errLOG = logIntArr(logger, strand, traits)) != LOG_NIL) {
+      printError("logIntArr()", (char *)strErrLOG(errLOG));
+    }
+  }
 }
 
 // play the game, taking care to reset between games if training
@@ -1261,34 +1126,28 @@ void risky(risk_t *game, dna_t *dna, int games) {
     fprintf(stdout, "training sessions requested: %d\ntraining...\n", games);
   }
 
+  int gameTimeSecs;
+  time_t _start;
+
   do {
-    SESSION = games;
-    setupLOGfromINI(ini, &logger);
+    SESSION = games; // TODO: better mech for passing log name down
+    setupLOGfromINI(ini, &logger); // new logger each game
     if(logger) {
       logRISK(game, logger);
       logDNA(dna, logger);
     }
 
-    if(games > 0) { fprintf(stdout, "sessions left: %i\n", games); }
+    if(games > 0) { fprintf(stdout, "games left: %i\n", games); }
 
-    // [re]set game
-    /*
-    if((errRISK = initDeck(game)) != RISK_NIL) {
-      printError("initDeck()", (char *)strErrRISK(errRISK));
+    if((errRISK = start(game)) != RISK_NIL) {
+      printError("start()", (char *)strErrRISK(errRISK));
     }
-    if((errRISK = initCountries(game)) != RISK_NIL) {
-      printError("initCountries()", (char *)strErrRISK(errRISK));
-    }
-    if((errRISK = initArmies(game)) != RISK_NIL) {
-      printError("initArmies()", (char *)strErrRISK(errRISK));
-    }
-    */
 
     //char *player = NULL;
     if(logger) { logHeader(logger, "G A M E P L A Y"); }
-    time_t start = time(NULL);
     char tmp[] = "starting game...\n";
     logEvent(logger, 1, tmp);
+    _start = time(NULL);
 
     // sleep(1) hack
     //while(difftime(time(NULL), start) < 1.0);
@@ -1299,51 +1158,35 @@ void risky(risk_t *game, dna_t *dna, int games) {
       //if(!getType(game, dna, player)) { computerTurn(game, dna, player, logger); }
       //else { humanTurn(game, player, logger); }
     //}
+    //if(game->log) { fprintf(game->fp, "congratuations %s, you've achieved world domination!\n", player); }
+
     char tmp2[] = "ending game...\n";
     if((errLOG = logEvent(logger, 1, tmp2)) != LOG_NIL) {
       printError("logEvent()", (char *)strErrLOG(errLOG));
     }
 
-    int seconds = (int)difftime(time(NULL), start);
-
-    if(games) {
-      if((errDNA = nextGeneration(dna)) != DNA_NIL) {
-        printError("nextGeneration()", (char *)strErrDNA(errDNA));
-      }
-
-      if((errLOG = logHeader(logger, "N E W   G E N E R A T I O N")) != LOG_NIL) {
-        printError("logHeader()", (char *)strErrLOG(errLOG));
-      }
-
-      int chromosomes, traits;
-      if((errDNA = getChromosomes(dna, &chromosomes, &traits)) != DNA_NIL) {
-        printError("getChromosomes()", (char *)strErrDNA(errDNA));
-      }
-
-      char ids[chromosomes][36];
-      if((errDNA = getIDs(dna, (char **)ids)) != DNA_NIL) {
-        printError("getIDs()", (char *)strErrDNA(errDNA));
-      }
-
-      int strand[traits];
-      for(; chromosomes; chromosomes--) {
-        errDNA = getStrand(dna, ids[chromosomes-1], strand, &traits);
-        if(errDNA != DNA_NIL) {
-          printError("getStrand()", (char *)strErrDNA(errDNA));
-        }
-
-        if((errLOG = logIntArr(logger, strand, traits)) != LOG_NIL) {
-          printError("logIntArr()", (char *)strErrLOG(errLOG));
-        }
-      }
+    if((errRISK = end(game)) != RISK_NIL) {
+      printError("end()", (char *)strErrRISK(errRISK));
     }
 
+    gameTimeSecs = (int)difftime(time(NULL), _start);
+
+    if(games) { createNextGeneration(dna, logger); }
+
     if(logger) {
-      logGameStats(logger, seconds);
+      logGameStats(logger, gameTimeSecs);
       freeLOG(logger);
       logger = NULL;
     }
   } while(--games > 0);
+}
+
+void getTrainingSessions(ini_t *ini, int *sessions) {
+  setting_t *setting;
+  getConfSetting(ini, "Training", "games", INT, &setting);
+  if((errINI = settingGetInt(setting, sessions)) != INI_NIL) {
+    printError("settingGetInt(), section=Training, key=games", (char *)strErrINI(errINI));
+  }
 }
 
 // free all memory we alloc'd, if any, ignoring any errors. This is the reason
@@ -1361,93 +1204,26 @@ int main(int argc, char *argv[]) {
   if(argc != 2) { printError("main()", "must specify a conf file"); }
 
   atexit(cleanup); // register cleanup() to be called upon exit()
+
   if((errINI = readINI(&ini, argv[1])) != INI_NIL) {
     printError("readINI()", (char *)strErrINI(errINI));
   }
 
-  setting_t *setting;
-  typeINI_t typeINI;
-
-  if((errINI = lookupSetting(ini, "Training", "games", &setting)) != INI_NIL) {
-    printError("lookupSetting(), section=Training, key=games", (char *)strErrINI(errINI));
-  }
-
-  if(!setting) {
-    printError("main(), section=Training, key=games", "setting not present in conf");
-  }
-
-  if((errINI = settingType(setting, &typeINI)) != INI_NIL) {
-    printError("settingType(), section=Training, key=games", (char *)strErrINI(errINI));
-  }
-
-  if(typeINI != INT) {
-    printError("main()", "INI setting section=Training, key=games must be of type int");
-  }
-
-  if((errINI = settingGetInt(setting, &argc)) != INI_NIL) {
-    printError("settingGetInt(), section=Training, key=games", (char *)strErrINI(errINI));
-  }
+  getTrainingSessions(ini, &argc);
 
   setupDNAfromINI(ini, &dna);
-
   setupRISKfromINI(ini, &game);
+/*
   if((errRISK = isValid(game)) != RISK_NIL) {
     printError("isValid()", (char *)strErrRISK(errRISK));
   }
+*/
+  srand(time(NULL)); // seed random for risk and dna libs
 
-  srand(time(NULL)); // set random for risk and dna libs
-  risky(game, dna, 1);
+//  risky(game, dna, argc); // play
 
-  if(argc > 1) { // replace all chromosomes in conf once, when done training
-    int strands, traits;
-    if((errDNA = getChromosomes(dna, &strands, &traits)) != DNA_NIL) {
-      printError("getChromosomes()", (char *)strErrDNA(errDNA));
-    }
-
-    char ids[strands][36];
-    if((errDNA = getIDs(dna, (char **)ids)) != DNA_NIL) {
-      printError("getIDs()", (char *)strErrDNA(errDNA));
-    }
-
-    int strand[traits];
-    for(; strands; strands--) {
-      errDNA = getStrand(dna, ids[strands-1], strand, &traits);
-      if(errDNA != DNA_NIL) {
-        printError("getStrands()", (char *)strErrDNA(errDNA));
-      }
-
-      if((errINI = lookupSetting(ini, "Chromosomes", ids[strands-1], &setting)) != INI_NIL) {
-        printError("lookupSetting(), section=Chromosomes, key=??", (char *)strErrINI(errINI));
-      }
-
-      if(!setting) {
-        printError("main(), section=Chromosomes, key=??", "setting not present in conf");
-      }
-
-      if((errINI = settingType(setting, &typeINI)) != INI_NIL) {
-        printError("settingType(), section=Chromosomes, key=??", (char *)strErrINI(errINI));
-      }
-
-      if(typeINI != INT_ARRAY) {
-        printError("main()", "INI setting section=Chromosomes, key=?? must be of type int array");
-      }
-
-      int i;
-      if((errINI = settingLength(setting, &i)) != INI_NIL) {
-        printError("settingLength(), section=Chromosomes, key=??", (char *)strErrINI(errINI));
-      }
-
-      if(i != traits) {
-        printError("main()", "failure to overwrite strand, length mismatch");
-      }
-
-      for(; i; i--) {
-        if((errINI = settingSetIntElem(setting, i-1, strand[i-1])) != INI_NIL) {
-          printError("settingSetIntElem(), section=Chromosomes, key=??", (char *)strErrINI(errINI));
-        }
-      }
-    }
-
+  if(argc > 1) { // replace all chromosomes in conf if there was any training
+    outputNewDNAtoINI(dna, ini);
     if((errINI = writeINI(ini, argv[1])) != INI_NIL) {
       printError("writeINI()", (char *)strErrINI(errINI));
     }
